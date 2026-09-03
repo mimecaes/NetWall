@@ -1,0 +1,22 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="NetWall.IDE.Controls.PetWidget"
+             Height="42">
+
+    <Border Background="{DynamicResource TerminalBackgroundBrush}"
+            BorderBrush="{DynamicResource IdeBorderBrush}"
+            BorderThickness="0,0,0,1"
+            ClipToBounds="True">
+        <Border.Resources>
+            <ImageBrush x:Key="GrassBrush" Source="avares://NetWall.IDE/Assets/pet/grass_tile.png"
+                        TileMode="Tile" Stretch="Fill" AlignmentX="Left" AlignmentY="Top"
+                        DestinationRect="0,0,72,42" />
+        </Border.Resources>
+        <Canvas Name="PetCanvas" Background="{StaticResource GrassBrush}"
+                RenderOptions.BitmapInterpolationMode="None">
+            <Image Name="Sprite" Width="40" Height="40"
+                   Stretch="Fill"
+                   RenderOptions.BitmapInterpolationMode="None" />
+        </Canvas>
+    </Border>
+</UserControl>
