@@ -8,11 +8,19 @@
 
   <ItemGroup>
     <Folder Include="Models\" />
-    <AvaloniaResource Include="Assets\**" />
+    <!-- Assets/pet/ holds the downloaded sprite-sheet source pack (.aseprite project files,
+         a labeled reference sheet, the original filenames); only the three clean-named
+         cat-*.png color variants are actually used by PetWidget, so only those are bundled. -->
+    <AvaloniaResource Include="Assets\**" Exclude="Assets\pet\**" />
+    <AvaloniaResource Include="Assets\pet\cat-gray.png" />
+    <AvaloniaResource Include="Assets\pet\cat-orange.png" />
+    <AvaloniaResource Include="Assets\pet\cat-white.png" />
+    <AvaloniaResource Include="Assets\pet\grass_tile.png" />
   </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="Avalonia" Version="11.3.20" />
+    <PackageReference Include="Avalonia.AvaloniaEdit" Version="11.3.0" />
     <PackageReference Include="Avalonia.Desktop" Version="11.3.20" />
     <PackageReference Include="Avalonia.Svg.Skia" Version="11.2.7" />
     <PackageReference Include="Avalonia.Themes.Fluent" Version="11.3.20" />
@@ -22,5 +30,6 @@
       <PrivateAssets Condition="'$(Configuration)' != 'Debug'">All</PrivateAssets>
     </PackageReference>
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />
+    <PackageReference Include="Lucide.Avalonia" Version="0.2.19" />
   </ItemGroup>
 </Project>

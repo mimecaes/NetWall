@@ -1,24 +1,36 @@
 using System;
+using System.Collections.Generic;
 using System.Globalization;
+using System.IO;
 using Avalonia.Data.Converters;
-using Avalonia.Media;
-using NetWall.IDE.Models;
+using Lucide.Avalonia;
 
 namespace NetWall.IDE.Converters;
 
-public sealed class NodeIconConverter : IValueConverter
+
+public sealed class NodeIconConverter : IMultiValueConverter
 {
     public static readonly NodeIconConverter Instance = new();
 
-    private const string FolderData = "M1.5,4 L6,4 L7.2,5.5 L14.5,5.5 L14.5,13 L1.5,13 Z";
-    private const string FileData = "M4,1.5 L9,1.5 L12.5,5 L12.5,14.5 L4,14.5 Z M9,1.5 L9,5 L12.5,5";
-
-    public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
+    public object Convert(IList<object?> values, Type targetType, object? parameter, CultureInfo culture)
     {
-        var isFolder = value is FileTreeNode { IsFolder: true };
-        return Geometry.Parse(isFolder ? FolderData : FileData);
-    }
+        if (values is not [bool isFolder, bool isExpanded, string name, ..])
+        {
+            return LucideIconKind.File;
+        }
 
-    public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
-        => throw new NotSupportedException();
+        if (isFolder)
+        {
+            return isExpanded ? LucideIconKind.FolderOpen : LucideIconKind.Folder;
+        }
+
+        return Path.GetExtension(name).ToLowerInvariant() switch
+        {
+            ".json" => LucideIconKind.FileBraces,
+            ".md" or ".txt" => LucideIconKind.FileText,
+            ".nw" or ".cs" or ".xaml" or ".axaml" or ".xml"
+                or ".yml" or ".yaml" or ".py" or ".js" or ".ts" or ".html" or ".css" => LucideIconKind.FileCode,
+            _ => LucideIconKind.File,
+        };
+    }
 }

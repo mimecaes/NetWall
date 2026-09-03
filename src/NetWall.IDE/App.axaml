@@ -13,13 +13,13 @@
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
                 <ResourceInclude Source="avares://NetWall.IDE/Themes/DarkTheme.axaml" />
-                <ResourceInclude Source="avares://NetWall.IDE/Themes/Icons.axaml" />
             </ResourceDictionary.MergedDictionaries>
         </ResourceDictionary>
     </Application.Resources>
 
     <Application.Styles>
         <FluentTheme />
+        <StyleInclude Source="avares://AvaloniaEdit/Themes/Fluent/AvaloniaEdit.xaml" />
         <StyleInclude Source="avares://NetWall.IDE/Themes/IdeStyles.axaml" />
     </Application.Styles>
 </Application>
