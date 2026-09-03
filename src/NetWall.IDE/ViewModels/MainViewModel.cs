@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
@@ -13,7 +14,6 @@ namespace NetWall.IDE.ViewModels;
 public partial class MainViewModel : ViewModelBase
 {
     private TerminalSession? _terminal;
-    private int _untitledCounter;
 
     [ObservableProperty]
     public partial string RootPath { get; set; } = Environment.CurrentDirectory;
@@ -21,8 +21,34 @@ public partial class MainViewModel : ViewModelBase
     [ObservableProperty]
     public partial string RootName { get; set; } = "NO FOLDER OPENED";
 
+    partial void OnRootNameChanged(string value) => OnPropertyChanged(nameof(StatusBarPath));
+
+    public string StatusBarPath
+    {
+        get
+        {
+            if (SelectedTab?.FilePath is { Length: > 0 } path)
+            {
+                var relative = Path.GetRelativePath(RootPath, path).Replace('\\', '/');
+                return $"{RootName}/{relative}";
+            }
+
+            return RootName;
+        }
+    }
+
     [ObservableProperty]
     public partial bool IsFolderOpen { get; set; }
+
+    partial void OnIsFolderOpenChanged(bool value)
+    {
+        NewFileCommand.NotifyCanExecuteChanged();
+        OnPropertyChanged(nameof(ShowTree));
+        OnPropertyChanged(nameof(ShowSearchResults));
+        OnPropertyChanged(nameof(ShowNoTabPrompt));
+    }
+
+    public bool ShowNoTabPrompt => IsFolderOpen && SelectedTab is null;
 
     [ObservableProperty]
     public partial bool IsSidebarVisible { get; set; } = true;
@@ -39,7 +65,64 @@ public partial class MainViewModel : ViewModelBase
     [ObservableProperty]
     public partial EditorTabViewModel? SelectedTab { get; set; }
 
+    partial void OnSelectedTabChanged(EditorTabViewModel? value)
+    {
+        OnPropertyChanged(nameof(StatusBarPath));
+        OnPropertyChanged(nameof(ShowNoTabPrompt));
+
+        if (value?.FilePath is not { } path)
+        {
+            return;
+        }
+
+        var node = FindNode(RootNodes, path);
+        if (node is null)
+        {
+            return;
+        }
+
+        for (var ancestor = node.Parent; ancestor is not null; ancestor = ancestor.Parent)
+        {
+            ancestor.IsExpanded = true;
+        }
+
+        SelectedTreeNode = node;
+    }
+
+    [ObservableProperty]
+    public partial FileTreeNode? SelectedTreeNode { get; set; }
+
+    partial void OnSelectedTreeNodeChanged(FileTreeNode? value)
+    {
+        if (value is { IsFolder: false })
+        {
+            OpenNode(value);
+        }
+    }
+
+    [ObservableProperty]
+    public partial string FileFilter { get; set; } = string.Empty;
+
+    partial void OnFileFilterChanged(string value)
+    {
+        RebuildFilteredNodes();
+        OnPropertyChanged(nameof(IsFiltering));
+        OnPropertyChanged(nameof(ShowTree));
+        OnPropertyChanged(nameof(ShowSearchResults));
+    }
+
+    public bool IsFiltering => !string.IsNullOrWhiteSpace(FileFilter);
+
+    public bool ShowTree => IsFolderOpen && !IsFiltering;
+
+    public bool ShowSearchResults => IsFolderOpen && IsFiltering;
+
     public ObservableCollection<FileTreeNode> RootNodes { get; } = [];
+
+    public ObservableCollection<FileSearchResult> FilteredNodes { get; } = [];
+
+    [ObservableProperty]
+    public partial bool HasSearchResults { get; set; }
 
     public ObservableCollection<EditorTabViewModel> OpenTabs { get; } = [];
 
@@ -47,15 +130,383 @@ public partial class MainViewModel : ViewModelBase
 
     public event Action? RequestOpenFolder;
 
-    [RelayCommand]
+    public event Func<FileTreeNode, Task<bool>>? RequestDeleteConfirmation;
+
+    private bool CanCreateNewFile() => IsFolderOpen;
+
+    [RelayCommand(CanExecute = nameof(CanCreateNewFile))]
     private void NewFile()
     {
-        var suffix = _untitledCounter == 0 ? string.Empty : $"-{_untitledCounter}";
-        _untitledCounter++;
+        var fileName = UniqueFileName(RootPath, "untitled", ".nw");
+        var fullPath = Path.Combine(RootPath, fileName);
+        if (!TryWriteEmptyFile(fullPath))
+        {
+            return;
+        }
 
-        var tab = new EditorTabViewModel { Title = $"untitled{suffix}.nw" };
+        InsertNode(RootNodes, new FileTreeNode { Name = fileName, FullPath = fullPath, Level = 0 });
+
+        var newTab = new EditorTabViewModel { Title = fileName, FilePath = fullPath };
+        OpenTabs.Add(newTab);
+        SelectTab(newTab);
+    }
+
+    [RelayCommand]
+    private void NewFileInFolder(FileTreeNode? folder)
+    {
+        if (folder is not { IsFolder: true })
+        {
+            return;
+        }
+
+        var fileName = UniqueFileName(folder.FullPath, "untitled", ".nw");
+        var fullPath = Path.Combine(folder.FullPath, fileName);
+        if (!TryWriteEmptyFile(fullPath))
+        {
+            return;
+        }
+
+        var node = new FileTreeNode { Name = fileName, FullPath = fullPath, Level = folder.Level + 1, Parent = folder };
+        InsertNode(folder.Children, node);
+        folder.IsExpanded = true;
+
+        var tab = new EditorTabViewModel { Title = fileName, FilePath = fullPath };
         OpenTabs.Add(tab);
         SelectTab(tab);
+    }
+
+    [RelayCommand]
+    private void NewFolderInFolder(FileTreeNode? parentFolder)
+    {
+        if (parentFolder is not { IsFolder: true })
+        {
+            return;
+        }
+
+        var folderName = UniqueFolderName(parentFolder.FullPath, "New Folder");
+        var fullPath = Path.Combine(parentFolder.FullPath, folderName);
+
+        try
+        {
+            Directory.CreateDirectory(fullPath);
+        }
+        catch (Exception ex)
+        {
+            AppendTerminalLine($"Failed to create folder '{fullPath}': {ex.Message}");
+            return;
+        }
+
+        var node = new FileTreeNode
+        {
+            Name = folderName,
+            FullPath = fullPath,
+            IsFolder = true,
+            Level = parentFolder.Level + 1,
+            Parent = parentFolder,
+        };
+        InsertNode(parentFolder.Children, node);
+        parentFolder.IsExpanded = true;
+
+        BeginRename(node);
+    }
+
+    [RelayCommand]
+    private void BeginRename(FileTreeNode? node)
+    {
+        if (node is null)
+        {
+            return;
+        }
+
+        node.EditingName = node.Name;
+        node.IsEditing = true;
+    }
+
+    [RelayCommand]
+    private void CommitRename(FileTreeNode? node)
+    {
+        if (node is not { IsEditing: true })
+        {
+            return;
+        }
+
+        node.IsEditing = false;
+        var newName = node.EditingName.Trim();
+        if (string.IsNullOrEmpty(newName) || newName == node.Name)
+        {
+            return;
+        }
+
+        var parentPath = Path.GetDirectoryName(node.FullPath) ?? RootPath;
+        var newPath = Path.Combine(parentPath, newName);
+
+        try
+        {
+            if (node.IsFolder)
+            {
+                Directory.Move(node.FullPath, newPath);
+            }
+            else
+            {
+                File.Move(node.FullPath, newPath);
+            }
+        }
+        catch (Exception ex)
+        {
+            AppendTerminalLine($"Failed to rename '{node.FullPath}': {ex.Message}");
+            return;
+        }
+
+        var oldPath = node.FullPath;
+        node.FullPath = newPath;
+        node.Name = newName;
+
+        if (node.IsFolder)
+        {
+            node.Children.Clear();
+            foreach (var child in FileSystemExplorer.BuildChildren(newPath, node, node.Level + 1))
+            {
+                node.Children.Add(child);
+            }
+        }
+        else
+        {
+            var openTab = OpenTabs.FirstOrDefault(t => string.Equals(t.FilePath, oldPath, StringComparison.OrdinalIgnoreCase));
+            if (openTab is not null)
+            {
+                openTab.FilePath = newPath;
+                openTab.Title = newName;
+                if (openTab == SelectedTab)
+                {
+                    OnPropertyChanged(nameof(StatusBarPath));
+                }
+            }
+        }
+    }
+
+    [RelayCommand]
+    private void CancelRename(FileTreeNode? node)
+    {
+        if (node is null)
+        {
+            return;
+        }
+
+        node.IsEditing = false;
+    }
+
+    [RelayCommand]
+    private async Task DeleteNodeAsync(FileTreeNode? node)
+    {
+        if (node is null)
+        {
+            return;
+        }
+
+        var confirmed = RequestDeleteConfirmation is null || await RequestDeleteConfirmation(node);
+        if (!confirmed)
+        {
+            return;
+        }
+
+        try
+        {
+            if (node.IsFolder)
+            {
+                Directory.Delete(node.FullPath, recursive: true);
+            }
+            else
+            {
+                File.Delete(node.FullPath);
+            }
+        }
+        catch (Exception ex)
+        {
+            AppendTerminalLine($"Failed to delete '{node.FullPath}': {ex.Message}");
+            return;
+        }
+
+        (node.Parent?.Children ?? RootNodes).Remove(node);
+
+        var prefix = node.FullPath + Path.DirectorySeparatorChar;
+        var tabsToClose = OpenTabs
+            .Where(t => t.FilePath is { } p &&
+                        (string.Equals(p, node.FullPath, StringComparison.OrdinalIgnoreCase) ||
+                         (node.IsFolder && p.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))))
+            .ToList();
+
+        foreach (var tab in tabsToClose)
+        {
+            CloseTab(tab);
+        }
+    }
+
+    [RelayCommand]
+    private void CollapseAll()
+    {
+        foreach (var node in RootNodes)
+        {
+            CollapseRecursive(node);
+        }
+    }
+
+    private static void CollapseRecursive(FileTreeNode node)
+    {
+        if (!node.IsFolder)
+        {
+            return;
+        }
+
+        node.IsExpanded = false;
+        foreach (var child in node.Children)
+        {
+            CollapseRecursive(child);
+        }
+    }
+
+    [RelayCommand]
+    private void OpenSearchResult(FileTreeNode? node)
+    {
+        if (node is null)
+        {
+            return;
+        }
+
+        for (var ancestor = node.Parent; ancestor is not null; ancestor = ancestor.Parent)
+        {
+            ancestor.IsExpanded = true;
+        }
+
+        SelectedTreeNode = node;
+        FileFilter = string.Empty;
+    }
+
+    private void RebuildFilteredNodes()
+    {
+        FilteredNodes.Clear();
+        if (string.IsNullOrWhiteSpace(FileFilter))
+        {
+            HasSearchResults = false;
+            return;
+        }
+
+        foreach (var node in CollectMatchingFiles(RootNodes, FileFilter))
+        {
+            FilteredNodes.Add(new FileSearchResult(node, RelativeFolderOf(node)));
+        }
+
+        HasSearchResults = FilteredNodes.Count > 0;
+    }
+
+    private static IEnumerable<FileTreeNode> CollectMatchingFiles(IEnumerable<FileTreeNode> nodes, string filter)
+    {
+        foreach (var node in nodes)
+        {
+            if (node.IsFolder)
+            {
+                foreach (var match in CollectMatchingFiles(node.Children, filter))
+                {
+                    yield return match;
+                }
+            }
+            else if (node.Name.Contains(filter, StringComparison.OrdinalIgnoreCase))
+            {
+                yield return node;
+            }
+        }
+    }
+
+    private string RelativeFolderOf(FileTreeNode node)
+    {
+        var directory = Path.GetDirectoryName(node.FullPath) ?? RootPath;
+        var relative = Path.GetRelativePath(RootPath, directory);
+        return relative == "." ? RootName : relative.Replace('\\', '/');
+    }
+
+    private static FileTreeNode? FindNode(ObservableCollection<FileTreeNode> nodes, string fullPath)
+    {
+        foreach (var node in nodes)
+        {
+            if (!node.IsFolder && string.Equals(node.FullPath, fullPath, StringComparison.OrdinalIgnoreCase))
+            {
+                return node;
+            }
+
+            if (node.IsFolder && FindNode(node.Children, fullPath) is { } found)
+            {
+                return found;
+            }
+        }
+
+        return null;
+    }
+
+    private static string UniqueFileName(string directory, string baseName, string extension)
+    {
+        var fileName = baseName + extension;
+        var counter = 1;
+        while (File.Exists(Path.Combine(directory, fileName)))
+        {
+            fileName = $"{baseName}-{counter}{extension}";
+            counter++;
+        }
+
+        return fileName;
+    }
+
+    private static string UniqueFolderName(string parentDirectory, string baseName)
+    {
+        var folderName = baseName;
+        var counter = 1;
+        while (Directory.Exists(Path.Combine(parentDirectory, folderName)))
+        {
+            folderName = $"{baseName} {counter}";
+            counter++;
+        }
+
+        return folderName;
+    }
+
+    private bool TryWriteEmptyFile(string fullPath)
+    {
+        try
+        {
+            File.WriteAllText(fullPath, string.Empty);
+            return true;
+        }
+        catch (Exception ex)
+        {
+            AppendTerminalLine($"Failed to create '{fullPath}': {ex.Message}");
+            return false;
+        }
+    }
+
+    private static void InsertNode(ObservableCollection<FileTreeNode> nodes, FileTreeNode newNode)
+    {
+        var index = 0;
+
+        if (newNode.IsFolder)
+        {
+            while (index < nodes.Count && nodes[index].IsFolder &&
+                   string.Compare(nodes[index].Name, newNode.Name, StringComparison.OrdinalIgnoreCase) < 0)
+            {
+                index++;
+            }
+        }
+        else
+        {
+            while (index < nodes.Count && nodes[index].IsFolder)
+            {
+                index++;
+            }
+
+            while (index < nodes.Count && string.Compare(nodes[index].Name, newNode.Name, StringComparison.OrdinalIgnoreCase) < 0)
+            {
+                index++;
+            }
+        }
+
+        nodes.Insert(index, newNode);
     }
 
     [RelayCommand]
@@ -105,8 +556,20 @@ public partial class MainViewModel : ViewModelBase
 
         var tab = new EditorTabViewModel { Title = node.Name, FilePath = node.FullPath };
         tab.LoadContent(text);
+        WireDirtyTracking(tab, node);
         OpenTabs.Add(tab);
         SelectTab(tab);
+    }
+
+    private void WireDirtyTracking(EditorTabViewModel tab, FileTreeNode node)
+    {
+        tab.PropertyChanged += (_, e) =>
+        {
+            if (e.PropertyName == nameof(EditorTabViewModel.IsDirty))
+            {
+                node.IsDirty = tab.IsDirty;
+            }
+        };
     }
 
     [RelayCommand]

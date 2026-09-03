@@ -11,7 +11,7 @@ public static class FileSystemExplorer
 {
     private static readonly string[] ExcludedNames = [".git", "bin", "obj", "node_modules"];
 
-    public static List<FileTreeNode> BuildChildren(string directoryPath)
+    public static List<FileTreeNode> BuildChildren(string directoryPath, FileTreeNode? parent = null, int level = 0)
     {
         var result = new List<FileTreeNode>();
 
@@ -37,18 +37,31 @@ public static class FileSystemExplorer
                 continue;
             }
 
-            result.Add(new FileTreeNode
+            var node = new FileTreeNode
             {
                 Name = name,
                 FullPath = directory,
                 IsFolder = true,
-                Children = new ObservableCollection<FileTreeNode>(BuildChildren(directory)),
-            });
+                Level = level,
+                Parent = parent,
+            };
+            foreach (var child in BuildChildren(directory, node, level + 1))
+            {
+                node.Children.Add(child);
+            }
+
+            result.Add(node);
         }
 
         foreach (var file in files)
         {
-            result.Add(new FileTreeNode { Name = Path.GetFileName(file), FullPath = file });
+            result.Add(new FileTreeNode
+            {
+                Name = Path.GetFileName(file),
+                FullPath = file,
+                Level = level,
+                Parent = parent,
+            });
         }
 
         return result;
