@@ -1,23 +1,31 @@
 using System;
 using System.ComponentModel;
 using System.Linq;
+using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Controls;
-using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Platform.Storage;
+using Avalonia.VisualTree;
+using NetWall.IDE.Controls;
 using NetWall.IDE.Models;
+using NetWall.IDE.Themes;
 using NetWall.IDE.ViewModels;
 
 namespace NetWall.IDE.Views;
 
 public partial class MainWindow : Window
 {
+    private bool _suppressEditorTextChanged;
+
     public MainWindow()
     {
         InitializeComponent();
         DataContextChanged += OnDataContextChanged;
+        CodeEditor.TextChanged += OnEditorTextChanged;
+        CodeEditor.TextArea.Caret.PositionChanged += OnEditorCaretPositionChanged;
+        CodeEditor.TextArea.TextView.BackgroundRenderers.Add(new IndentRainbowRenderer());
     }
 
     private MainViewModel? ViewModel => DataContext as MainViewModel;
@@ -28,6 +36,7 @@ public partial class MainWindow : Window
         {
             vm.RequestOpenFolder += OnRequestOpenFolder;
             vm.RequestSaveAs += OnRequestSaveAs;
+            vm.RequestDeleteConfirmation += OnRequestDeleteConfirmation;
             vm.PropertyChanged += OnViewModelPropertyChanged;
         }
     }
@@ -37,6 +46,38 @@ public partial class MainWindow : Window
         if (e.PropertyName == nameof(MainViewModel.TerminalOutput))
         {
             TerminalScrollViewer.ScrollToEnd();
+        }
+        else if (e.PropertyName == nameof(MainViewModel.SelectedTab))
+        {
+            _suppressEditorTextChanged = true;
+            CodeEditor.Text = ViewModel?.SelectedTab?.Content ?? string.Empty;
+            _suppressEditorTextChanged = false;
+        }
+    }
+
+    private void OnEditorTextChanged(object? sender, EventArgs e)
+    {
+        if (_suppressEditorTextChanged)
+        {
+            return;
+        }
+
+        Pet.NotifyTyping();
+
+        if (ViewModel?.SelectedTab is { } tab)
+        {
+            tab.Content = CodeEditor.Text;
+        }
+    }
+
+    private void OnEditorCaretPositionChanged(object? sender, EventArgs e)
+    {
+        Pet.NotifyActivity();
+
+        if (ViewModel?.SelectedTab is { } tab)
+        {
+            tab.Line = CodeEditor.TextArea.Caret.Line;
+            tab.Column = CodeEditor.TextArea.Caret.Column;
         }
     }
 
@@ -68,16 +109,45 @@ public partial class MainWindow : Window
         }
     }
 
-    private void OnFileTreeSelectionChanged(object? sender, SelectionChangedEventArgs e)
+    private Task<bool> OnRequestDeleteConfirmation(FileTreeNode node)
     {
-        if (e.AddedItems.Count > 0 && e.AddedItems[0] is FileTreeNode node)
+        var message = node.IsFolder
+            ? $"Delete the folder '{node.Name}' and everything inside it? This cannot be undone."
+            : $"Delete '{node.Name}'? This cannot be undone.";
+        return ConfirmDialog.AskAsync(this, message);
+    }
+
+    private void OnRenameTextBoxKeyDown(object? sender, KeyEventArgs e)
+    {
+        if (sender is not TextBox { DataContext: FileTreeNode node })
         {
-            ViewModel?.OpenNode(node);
+            return;
+        }
+
+        if (e.Key == Key.Enter)
+        {
+            ViewModel?.CommitRenameCommand.Execute(node);
+            e.Handled = true;
+        }
+        else if (e.Key == Key.Escape)
+        {
+            ViewModel?.CancelRenameCommand.Execute(node);
+            e.Handled = true;
+        }
+    }
+
+    private void OnRenameTextBoxLostFocus(object? sender, RoutedEventArgs e)
+    {
+        if (sender is TextBox { DataContext: FileTreeNode node })
+        {
+            ViewModel?.CommitRenameCommand.Execute(node);
         }
     }
 
     private void OnTerminalInputKeyDown(object? sender, KeyEventArgs e)
     {
+        Pet.NotifyActivity();
+
         if (e.Key == Key.Enter)
         {
             ViewModel?.RunTerminalLineCommand.Execute(null);
@@ -85,11 +155,46 @@ public partial class MainWindow : Window
         }
     }
 
-    private void OnExitClick(object? sender, RoutedEventArgs e)
+    private void OnThemeMenuItemClick(object? sender, RoutedEventArgs e)
     {
-        if (Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime lifetime)
+        if (sender is MenuItem { Tag: string tagValue } && Enum.TryParse<AppTheme>(tagValue, out var theme))
         {
-            lifetime.Shutdown();
+            ThemeManager.Apply(theme);
         }
+    }
+
+    private void OnPetColorMenuItemClick(object? sender, RoutedEventArgs e)
+    {
+        if (sender is MenuItem { Tag: string tagValue } && Enum.TryParse<PetColor>(tagValue, out var color))
+        {
+            Pet.SetColor(color);
+        }
+    }
+
+    private void OnTitleBarPointerPressed(object? sender, PointerPressedEventArgs e)
+    {
+        if (e.Source is Visual source && source.FindAncestorOfType<Button>(includeSelf: true) is not null)
+        {
+            return;
+        }
+
+        if (e.GetCurrentPoint(this).Properties.IsLeftButtonPressed)
+        {
+            BeginMoveDrag(e);
+        }
+    }
+
+    private void OnTitleBarDoubleTapped(object? sender, TappedEventArgs e)
+    {
+        WindowState = WindowState == WindowState.Maximized ? WindowState.Normal : WindowState.Maximized;
+    }
+
+    private void OnCloseClick(object? sender, RoutedEventArgs e) => Close();
+
+    private void OnMinimizeClick(object? sender, RoutedEventArgs e) => WindowState = WindowState.Minimized;
+
+    private void OnMaximizeClick(object? sender, RoutedEventArgs e)
+    {
+        WindowState = WindowState == WindowState.Maximized ? WindowState.Normal : WindowState.Maximized;
     }
 }
