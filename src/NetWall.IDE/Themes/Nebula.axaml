@@ -1,0 +1,28 @@
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+
+    <Color x:Key="Nebula.Background">#0B0B10</Color>
+    <Color x:Key="Nebula.PanelBackground">#131319</Color>
+    <Color x:Key="Nebula.SurfaceBackground">#0E0E14</Color>
+    <Color x:Key="Nebula.Accent">#7F77DD</Color>
+    <Color x:Key="Nebula.Accent2">#5DCAA5</Color>
+    <Color x:Key="Nebula.TextPrimary">#E0FFFFFF</Color>
+    <Color x:Key="Nebula.TextMuted">#66FFFFFF</Color>
+    <Color x:Key="Nebula.TextDisabled">#38FFFFFF</Color>
+    <Color x:Key="Nebula.Border">#407F77DD</Color>
+    <Color x:Key="Nebula.Hover">#1F7F77DD</Color>
+    <Color x:Key="Nebula.Active">#337F77DD</Color>
+    <Color x:Key="Nebula.RunGreen">#5DCAA5</Color>
+    <Color x:Key="Nebula.StopRed">#E5484D</Color>
+    <Color x:Key="Nebula.TabActiveBackground">#0B0B10</Color>
+    <Color x:Key="Nebula.TabInactiveBackground">#131319</Color>
+    <Color x:Key="Nebula.TerminalBackground">#0B0B10</Color>
+
+    <Color x:Key="Nebula.TopBarStop0">#387F77DD</Color>
+    <Color x:Key="Nebula.TopBarStop1">#1C7F77DD</Color>
+    <Color x:Key="Nebula.TopBarStop2">#007F77DD</Color>
+
+    <Color x:Key="Nebula.EditorBackground">#111121</Color>
+
+</ResourceDictionary>

@@ -1,0 +1,33 @@
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!-- "Aurora" palette. See Nebula.axaml for why keys are prefixed. -->
+
+    <Color x:Key="Aurora.Background">#12101C</Color>
+    <Color x:Key="Aurora.PanelBackground">#17142A</Color>
+    <Color x:Key="Aurora.SurfaceBackground">#1B1830</Color>
+    <Color x:Key="Aurora.Accent">#E4548F</Color>
+    <Color x:Key="Aurora.Accent2">#E8B85C</Color>
+    <Color x:Key="Aurora.TextPrimary">#EBFFFFFF</Color>
+    <Color x:Key="Aurora.TextMuted">#66FFFFFF</Color>
+    <Color x:Key="Aurora.TextDisabled">#38FFFFFF</Color>
+    <Color x:Key="Aurora.Border">#4DE4548F</Color>
+    <Color x:Key="Aurora.Hover">#1FE4548F</Color>
+    <Color x:Key="Aurora.Active">#33E4548F</Color>
+    <Color x:Key="Aurora.RunGreen">#2FBF9E</Color>
+    <Color x:Key="Aurora.StopRed">#EF5A6F</Color>
+    <Color x:Key="Aurora.TabActiveBackground">#12101C</Color>
+    <Color x:Key="Aurora.TabInactiveBackground">#17142A</Color>
+    <Color x:Key="Aurora.TerminalBackground">#12101C</Color>
+
+    <!-- Tertiary teal esmeralda, used in the top bar gradient and success indicators. -->
+    <Color x:Key="Aurora.Tertiary">#2FBF9E</Color>
+
+    <!-- Magenta -> teal -> gold, three stops. -->
+    <Color x:Key="Aurora.TopBarStop0">#33E4548F</Color>
+    <Color x:Key="Aurora.TopBarStop1">#242FBF9E</Color>
+    <Color x:Key="Aurora.TopBarStop2">#24E8B85C</Color>
+
+    <Color x:Key="Aurora.EditorBackground">#1B1830</Color>
+
+</ResourceDictionary>
