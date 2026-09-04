@@ -6,7 +6,7 @@
         Width="360" SizeToContent="Height"
         CanResize="False"
         WindowStartupLocation="CenterOwner"
-        Background="{DynamicResource SidebarBackgroundBrush}">
+        Background="{DynamicResource PanelBackgroundBrush}">
 
     <StackPanel Margin="20,18,20,16" Spacing="16">
         <TextBlock Name="MessageText" TextWrapping="Wrap"
