@@ -9,21 +9,31 @@ namespace NetWall.IDE.Controls;
 
 public sealed class IndentRainbowRenderer : IBackgroundRenderer
 {
-    private static readonly IBrush[] Colors =
+    private const byte BaseAlpha = 15;
+
+    private static readonly Color[] Colors =
     [
-        new SolidColorBrush(Color.FromArgb(15, 255, 255, 64)),  // rgba(255,255,64,0.07)
-        new SolidColorBrush(Color.FromArgb(15, 127, 255, 127)), // rgba(127,255,127,0.07)
-        new SolidColorBrush(Color.FromArgb(15, 255, 127, 255)), // rgba(255,127,255,0.07)
-        new SolidColorBrush(Color.FromArgb(15, 79, 236, 236)),  // rgba(79,236,236,0.07)
+        Color.FromRgb(255, 255, 64),
+        Color.FromRgb(127, 255, 127),
+        Color.FromRgb(255, 127, 255),
+        Color.FromRgb(79, 236, 236),
     ];
+    public double Opacity { get; set; } = 1.0;
 
     public KnownLayer Layer => KnownLayer.Background;
 
     public void Draw(TextView textView, DrawingContext drawingContext)
     {
-        if (!textView.VisualLinesValid)
+        if (!textView.VisualLinesValid || Opacity <= 0)
         {
             return;
+        }
+
+        var brushes = new IBrush[Colors.Length];
+        for (var i = 0; i < Colors.Length; i++)
+        {
+            var c = Colors[i];
+            brushes[i] = new SolidColorBrush(Color.FromArgb((byte)(BaseAlpha * Opacity), c.R, c.G, c.B));
         }
 
         var document = textView.Document;
@@ -65,15 +75,16 @@ public sealed class IndentRainbowRenderer : IBackgroundRenderer
                 continue;
             }
 
-            var top = textView.GetVisualPosition(new TextViewPosition(line.LineNumber, 1), VisualYPosition.LineTop).Y;
-            var bottom = textView.GetVisualPosition(new TextViewPosition(line.LineNumber, 1), VisualYPosition.LineBottom).Y;
+            var scrollOffset = textView.ScrollOffset;
+            var top = textView.GetVisualPosition(new TextViewPosition(line.LineNumber, 1), VisualYPosition.LineTop).Y - scrollOffset.Y;
+            var bottom = textView.GetVisualPosition(new TextViewPosition(line.LineNumber, 1), VisualYPosition.LineBottom).Y - scrollOffset.Y;
 
             for (var i = 0; i < levels; i++)
             {
-                var left = textView.GetVisualPosition(new TextViewPosition(line.LineNumber, boundaries[i]), VisualYPosition.LineTop).X;
-                var right = textView.GetVisualPosition(new TextViewPosition(line.LineNumber, boundaries[i + 1]), VisualYPosition.LineTop).X;
+                var left = textView.GetVisualPosition(new TextViewPosition(line.LineNumber, boundaries[i]), VisualYPosition.LineTop).X - scrollOffset.X;
+                var right = textView.GetVisualPosition(new TextViewPosition(line.LineNumber, boundaries[i + 1]), VisualYPosition.LineTop).X - scrollOffset.X;
 
-                drawingContext.FillRectangle(Colors[i % Colors.Length], new Rect(left, top, right - left, bottom - top));
+                drawingContext.FillRectangle(brushes[i % brushes.Length], new Rect(left, top, right - left, bottom - top));
             }
         }
     }
