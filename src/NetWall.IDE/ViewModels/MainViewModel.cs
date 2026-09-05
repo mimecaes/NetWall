@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Collections.Specialized;
+using System.ComponentModel;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
@@ -14,6 +16,126 @@ namespace NetWall.IDE.ViewModels;
 public partial class MainViewModel : ViewModelBase
 {
     private TerminalSession? _terminal;
+    private readonly RecentProjectsService _recentProjectsService;
+
+    public MainViewModel()
+    {
+        _recentProjectsService = new RecentProjectsService();
+        LoadRecentProjects();
+        OpenTabs.CollectionChanged += OnOpenTabsChanged;
+
+        Extensions.Add(new ExtensionInfo
+        {
+            Id = "indent-rainbow",
+            Name = "Indent Rainbow",
+            Description = "Colorea cada nivel de indentación en el editor",
+            IconPath = "avares://NetWall.IDE/Assets/Icons/identrainbow.png",
+            IsEnabled = true,
+        });
+        Extensions.Add(new ExtensionInfo
+        {
+            Id = "dev-cat",
+            Name = "DevCat",
+            Description = "Una mascota gatito que vive en la terminal",
+            IconPath = "avares://NetWall.IDE/Assets/Icons/devcat.png",
+            IsEnabled = true,
+        });
+
+        foreach (var extension in Extensions)
+        {
+            extension.PropertyChanged += OnExtensionPropertyChanged;
+        }
+    }
+
+    public ObservableCollection<ExtensionInfo> Extensions { get; } = [];
+
+    public ObservableCollection<RecentProject> RecentProjects { get; } = [];
+
+    [ObservableProperty]
+    public partial string ExtensionSearchText { get; set; } = string.Empty;
+
+    private void LoadRecentProjects()
+    {
+        RecentProjects.Clear();
+        foreach (var project in _recentProjectsService.LoadRecent().Take(7))
+        {
+            RecentProjects.Add(project);
+        }
+    }
+
+    private void AddRecentProject(string folderPath)
+    {
+        _recentProjectsService.AddOrUpdateRecent(folderPath);
+        LoadRecentProjects();
+    }
+
+    partial void OnExtensionSearchTextChanged(string value) => OnPropertyChanged(nameof(FilteredExtensions));
+
+    public IEnumerable<ExtensionInfo> FilteredExtensions
+    {
+        get
+        {
+            var search = ExtensionSearchText.ToLowerInvariant();
+            return Extensions.Where(e =>
+                e.Name.Contains(search, StringComparison.OrdinalIgnoreCase) ||
+                e.Description.Contains(search, StringComparison.OrdinalIgnoreCase)
+            );
+        }
+    }
+
+    public int EnabledExtensionsCount => Extensions.Count(e => e.IsEnabled);
+
+    public int TotalExtensionsCount => Extensions.Count;
+
+    public string ExtensionsCountText => $"{EnabledExtensionsCount} de {TotalExtensionsCount} activas";
+
+    public event Action<ExtensionInfo>? ExtensionToggled;
+
+    private void OnExtensionPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName != nameof(ExtensionInfo.IsEnabled) || sender is not ExtensionInfo extension)
+        {
+            return;
+        }
+
+        OnPropertyChanged(nameof(IsIndentRainbowEnabled));
+        OnPropertyChanged(nameof(IsPetEnabled));
+        OnPropertyChanged(nameof(EnabledExtensionsCount));
+        OnPropertyChanged(nameof(ExtensionsCountText));
+        ExtensionToggled?.Invoke(extension);
+    }
+
+    public bool IsIndentRainbowEnabled => Extensions.FirstOrDefault(e => e.Id == "indent-rainbow")?.IsEnabled ?? true;
+
+    public bool IsPetEnabled => Extensions.FirstOrDefault(e => e.Id == "dev-cat")?.IsEnabled ?? true;
+
+    private void OnOpenTabsChanged(object? sender, NotifyCollectionChangedEventArgs e)
+    {
+        if (e.NewItems is not null)
+        {
+            foreach (EditorTabViewModel tab in e.NewItems)
+            {
+                tab.PropertyChanged += OnTabPropertyChanged;
+            }
+        }
+
+        RecomputeDirtyState();
+    }
+
+    private void OnTabPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(EditorTabViewModel.IsDirty))
+        {
+            RecomputeDirtyState();
+        }
+    }
+
+    private void RecomputeDirtyState()
+    {
+        DirtyTabCount = OpenTabs.Count(t => t.IsDirty);
+        SaveCommand.NotifyCanExecuteChanged();
+        SaveAllCommand.NotifyCanExecuteChanged();
+    }
 
     [ObservableProperty]
     public partial string RootPath { get; set; } = Environment.CurrentDirectory;
@@ -69,6 +191,7 @@ public partial class MainViewModel : ViewModelBase
     {
         OnPropertyChanged(nameof(StatusBarPath));
         OnPropertyChanged(nameof(ShowNoTabPrompt));
+        SaveCommand.NotifyCanExecuteChanged();
 
         if (value?.FilePath is not { } path)
         {
@@ -125,6 +248,13 @@ public partial class MainViewModel : ViewModelBase
     public partial bool HasSearchResults { get; set; }
 
     public ObservableCollection<EditorTabViewModel> OpenTabs { get; } = [];
+
+    [ObservableProperty]
+    public partial int DirtyTabCount { get; set; }
+
+    partial void OnDirtyTabCountChanged(int value) => OnPropertyChanged(nameof(ShowSaveAllBadge));
+
+    public bool ShowSaveAllBadge => DirtyTabCount >= 2;
 
     public event Action<EditorTabViewModel>? RequestSaveAs;
 
@@ -512,6 +642,15 @@ public partial class MainViewModel : ViewModelBase
     [RelayCommand]
     private void OpenFolder() => RequestOpenFolder?.Invoke();
 
+    [RelayCommand]
+    private void OpenRecentProject(RecentProject? project)
+    {
+        if (project?.Path is { Length: > 0 })
+        {
+            LoadFolder(project.Path);
+        }
+    }
+
     public void LoadFolder(string path)
     {
         RootPath = path;
@@ -526,6 +665,7 @@ public partial class MainViewModel : ViewModelBase
 
         IsFolderOpen = true;
         _terminal = new TerminalSession(path);
+        AddRecentProject(path);
     }
 
     public void OpenNode(FileTreeNode? node)
@@ -640,7 +780,9 @@ public partial class MainViewModel : ViewModelBase
         }
     }
 
-    [RelayCommand]
+    private bool CanSave() => SelectedTab is { IsDirty: true };
+
+    [RelayCommand(CanExecute = nameof(CanSave))]
     private void Save()
     {
         if (SelectedTab is null)
@@ -668,7 +810,9 @@ public partial class MainViewModel : ViewModelBase
         RequestSaveAs?.Invoke(SelectedTab);
     }
 
-    [RelayCommand]
+    private bool CanSaveAll() => DirtyTabCount > 0;
+
+    [RelayCommand(CanExecute = nameof(CanSaveAll))]
     private void SaveAll()
     {
         foreach (var tab in OpenTabs.Where(t => t.IsDirty))

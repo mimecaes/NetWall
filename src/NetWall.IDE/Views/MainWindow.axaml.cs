@@ -7,6 +7,7 @@ using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Platform.Storage;
+using Avalonia.Threading;
 using Avalonia.VisualTree;
 using NetWall.IDE.Controls;
 using NetWall.IDE.Models;
@@ -18,6 +19,8 @@ namespace NetWall.IDE.Views;
 public partial class MainWindow : Window
 {
     private bool _suppressEditorTextChanged;
+    private readonly IndentRainbowRenderer _indentRainbowRenderer = new();
+    private DispatcherTimer? _indentFadeTimer;
 
     public MainWindow()
     {
@@ -25,7 +28,38 @@ public partial class MainWindow : Window
         DataContextChanged += OnDataContextChanged;
         CodeEditor.TextChanged += OnEditorTextChanged;
         CodeEditor.TextArea.Caret.PositionChanged += OnEditorCaretPositionChanged;
-        CodeEditor.TextArea.TextView.BackgroundRenderers.Add(new IndentRainbowRenderer());
+        CodeEditor.TextArea.TextView.BackgroundRenderers.Add(_indentRainbowRenderer);
+        Loaded += OnWindowLoaded;
+    }
+
+    private void OnWindowLoaded(object? sender, RoutedEventArgs e)
+    {
+        if (this.FindControl<ItemsControl>("TabsItemsControl") is { } tabsControl)
+        {
+            tabsControl.LayoutUpdated += OnTabsLayoutUpdated;
+        }
+    }
+
+    private void OnTabsLayoutUpdated(object? sender, EventArgs e)
+    {
+        // This will be called when tabs are updated, allowing us to handle animations
+    }
+
+    private async void OnTabCloseClick(object? sender, RoutedEventArgs e)
+    {
+        if (sender is not Button button || button.Tag is not EditorTabViewModel tab)
+        {
+            return;
+        }
+
+        var tabBorder = button.FindAncestorOfType<Border>();
+        if (tabBorder is not null)
+        {
+            tabBorder.Classes.Add("closing");
+            await Task.Delay(200);
+        }
+
+        ViewModel?.CloseTabCommand.Execute(tab);
     }
 
     private MainViewModel? ViewModel => DataContext as MainViewModel;
@@ -38,7 +72,41 @@ public partial class MainWindow : Window
             vm.RequestSaveAs += OnRequestSaveAs;
             vm.RequestDeleteConfirmation += OnRequestDeleteConfirmation;
             vm.PropertyChanged += OnViewModelPropertyChanged;
+            vm.ExtensionToggled += OnExtensionToggled;
+            _indentRainbowRenderer.Opacity = vm.IsIndentRainbowEnabled ? 1.0 : 0.0;
         }
+    }
+
+    private void OnExtensionToggled(ExtensionInfo extension)
+    {
+        if (extension.Id == "indent-rainbow")
+        {
+            AnimateIndentRainbowOpacity(extension.IsEnabled);
+        }
+    }
+
+    private void AnimateIndentRainbowOpacity(bool enabled)
+    {
+        _indentFadeTimer?.Stop();
+
+        var start = _indentRainbowRenderer.Opacity;
+        var target = enabled ? 1.0 : 0.0;
+        var startedAt = DateTime.UtcNow;
+        var duration = TimeSpan.FromMilliseconds(300);
+
+        _indentFadeTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(16) };
+        _indentFadeTimer.Tick += (_, _) =>
+        {
+            var progress = Math.Min(1.0, (DateTime.UtcNow - startedAt).TotalMilliseconds / duration.TotalMilliseconds);
+            _indentRainbowRenderer.Opacity = start + (target - start) * progress;
+            CodeEditor.TextArea.TextView.InvalidateVisual();
+
+            if (progress >= 1.0)
+            {
+                _indentFadeTimer?.Stop();
+            }
+        };
+        _indentFadeTimer.Start();
     }
 
     private void OnViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e)
