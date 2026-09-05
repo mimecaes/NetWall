@@ -1,0 +1,31 @@
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <Color x:Key="Dracula.Background">#282A36</Color>
+    <Color x:Key="Dracula.PanelBackground">#2E3040</Color>
+    <Color x:Key="Dracula.SurfaceBackground">#333546</Color>
+    <Color x:Key="Dracula.Accent">#FF79C6</Color>
+    <Color x:Key="Dracula.Accent2">#50FA7B</Color>
+    <Color x:Key="Dracula.TextPrimary">#F8F8F2</Color>
+    <Color x:Key="Dracula.TextMuted">#73F8F8F2</Color>
+    <Color x:Key="Dracula.TextDisabled">#47F8F8F2</Color>
+    <Color x:Key="Dracula.Border">#4DBD93F9</Color>
+    <Color x:Key="Dracula.Hover">#1FFF79C6</Color>
+    <Color x:Key="Dracula.Active">#33FF79C6</Color>
+    <Color x:Key="Dracula.RunGreen">#50FA7B</Color>
+    <Color x:Key="Dracula.StopRed">#FF5555</Color>
+    <Color x:Key="Dracula.TabActiveBackground">#282A36</Color>
+    <Color x:Key="Dracula.TabInactiveBackground">#2E3040</Color>
+    <Color x:Key="Dracula.TerminalBackground">#282A36</Color>
+
+    <Color x:Key="Dracula.Navigation">#BD93F9</Color>
+    <Color x:Key="Dracula.Warning">#FFB86C</Color>
+    <Color x:Key="Dracula.Highlight">#F1FA8C</Color>
+
+    <Color x:Key="Dracula.TopBarStop0">#333546</Color>
+    <Color x:Key="Dracula.TopBarStop1">#333546</Color>
+    <Color x:Key="Dracula.TopBarStop2">#333546</Color>
+
+    <Color x:Key="Dracula.EditorBackground">#333546</Color>
+
+</ResourceDictionary>

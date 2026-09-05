@@ -1,0 +1,20 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="NetWall.IDE.Views.ConfirmDialog"
+        x:Name="Root"
+        Title="Confirm"
+        Width="360" SizeToContent="Height"
+        CanResize="False"
+        WindowStartupLocation="CenterOwner"
+        Background="{DynamicResource PanelBackgroundBrush}">
+
+    <StackPanel Margin="20,18,20,16" Spacing="16">
+        <TextBlock Name="MessageText" TextWrapping="Wrap"
+                   Foreground="{DynamicResource TextPrimaryBrush}" FontSize="13" />
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8">
+            <Button Content="Cancel" Click="OnCancelClick" />
+            <Button Name="ConfirmButton" Content="Delete" Click="OnConfirmClick"
+                    Background="{DynamicResource StopRedBrush}" Foreground="White" />
+        </StackPanel>
+    </StackPanel>
+</Window>

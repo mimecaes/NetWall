@@ -1,22 +1,611 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:vm="using:NetWall.IDE.ViewModels"
+        xmlns:models="using:NetWall.IDE.Models"
+        xmlns:conv="using:NetWall.IDE.Converters"
+        xmlns:controls="using:NetWall.IDE.Controls"
+        xmlns:ae="https://github.com/avaloniaui/avaloniaedit"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+        mc:Ignorable="d" d:DesignWidth="1280" d:DesignHeight="800"
         x:Class="NetWall.IDE.Views.MainWindow"
+        x:Name="Root"
         x:DataType="vm:MainViewModel"
         Icon="/Assets/avalonia-logo.ico"
-        Title="NetWall.IDE">
+        Title="NetWall.IDE"
+        Width="1280" Height="800"
+        MinWidth="960" MinHeight="600"
+        WindowStartupLocation="CenterScreen"
+        Background="{DynamicResource BackgroundBrush}"
+        ExtendClientAreaToDecorationsHint="True"
+        ExtendClientAreaChromeHints="NoChrome"
+        ExtendClientAreaTitleBarHeightHint="-1">
 
-    <Design.DataContext>
-        <!-- This only sets the DataContext for the previewer in an IDE,
-             to set the actual DataContext for runtime, set the DataContext property in code (look at App.axaml.cs) -->
-        <vm:MainViewModel />
-    </Design.DataContext>
+    <Window.Resources>
+        <DataTemplate x:Key="ExtensionCardTemplate" DataType="models:ExtensionInfo">
+            <Border Classes="extension-card-item">
+                <Grid ColumnDefinitions="Auto,*,Auto" Margin="10" RowDefinitions="Auto,Auto">
+         
+                    <Border Grid.Row="0" Grid.RowSpan="2" Grid.Column="0"
+                            Classes="extension-icon-tile"
+                            Width="48" Height="48" Margin="0,0,12,0"
+                            VerticalAlignment="Center">
+                        <Image Width="48" Height="48" VerticalAlignment="Center"
+                               Source="{Binding IconPath, Converter={x:Static conv:PathToBitmapConverter.Instance}}" />
+                    </Border>
 
-    <TextBox Text="{Binding Greeting}"
-             HorizontalAlignment="Center"
-             VerticalAlignment="Center" />
+                    <TextBlock Grid.Row="0" Grid.Column="1"
+                               Text="{Binding Name}" FontWeight="SemiBold" FontSize="13"
+                               Foreground="{DynamicResource TextPrimaryBrush}"
+                               VerticalAlignment="Center" />
+
+                    <TextBlock Grid.Row="1" Grid.Column="1"
+                               Text="{Binding Description}" FontSize="11"
+                               Foreground="{DynamicResource TextMutedBrush}"
+                               TextWrapping="Wrap" />
+
+                    <ToggleSwitch Grid.Row="0" Grid.RowSpan="2" Grid.Column="2"
+                                  Classes="extension-toggle"
+                                  IsChecked="{Binding IsEnabled, Mode=TwoWay}"
+                                  OnContent="{x:Null}" OffContent="{x:Null}"
+                                  VerticalAlignment="Center" Margin="12,0,0,0" />
+                </Grid>
+            </Border>
+        </DataTemplate>
+    </Window.Resources>
+
+    <Window.KeyBindings>
+        <KeyBinding Gesture="Ctrl+N" Command="{Binding NewFileCommand}" />
+        <KeyBinding Gesture="Ctrl+O" Command="{Binding OpenFolderCommand}" />
+        <KeyBinding Gesture="Ctrl+S" Command="{Binding SaveCommand}" />
+        <KeyBinding Gesture="Ctrl+Shift+S" Command="{Binding SaveAllCommand}" />
+        <KeyBinding Gesture="Ctrl+B" Command="{Binding ToggleSidebarCommand}" />
+        <KeyBinding Gesture="Ctrl+W" Command="{Binding CloseTabCommand}" CommandParameter="{Binding SelectedTab}" />
+        <KeyBinding Gesture="F5" Command="{Binding RunActiveFileCommand}" />
+    </Window.KeyBindings>
+
+    <DockPanel>
+
+        <Border DockPanel.Dock="Top"
+                Height="36"
+                Background="{DynamicResource TopBarBackgroundBrush}"
+                BorderBrush="{DynamicResource BorderBrush}"
+                BorderThickness="0,0,0,1"
+                PointerPressed="OnTitleBarPointerPressed"
+                DoubleTapped="OnTitleBarDoubleTapped">
+            <Grid ColumnDefinitions="Auto,*,Auto">
+
+                <StackPanel Grid.Column="0" Classes="traffic-lights" Orientation="Horizontal" Spacing="8"
+                            Margin="12,0,0,0" VerticalAlignment="Center">
+                    <Button Classes="traffic-light traffic-close" Click="OnCloseClick" ToolTip.Tip="Close">
+                        <Path Classes="traffic-glyph" Data="M2.5,2.5 L7.5,7.5 M7.5,2.5 L2.5,7.5" />
+                    </Button>
+                    <Button Classes="traffic-light traffic-minimize" Click="OnMinimizeClick" ToolTip.Tip="Minimize">
+                        <Path Classes="traffic-glyph" Data="M2.5,5 L7.5,5" />
+                    </Button>
+                    <Button Classes="traffic-light traffic-maximize" Click="OnMaximizeClick" ToolTip.Tip="Maximize">
+                        <Path Classes="traffic-glyph" Data="M2.5,6.2 L2.5,7.5 L3.8,7.5 M7.5,3.8 L7.5,2.5 L6.2,2.5" />
+                    </Button>
+                </StackPanel>
+
+                <TextBlock Grid.Column="1" Text="NetWall.IDE"
+                           HorizontalAlignment="Center" VerticalAlignment="Center"
+                           FontSize="12.5" Foreground="{DynamicResource TextMutedBrush}"
+                           IsHitTestVisible="False" />
+
+            </Grid>
+        </Border>
+
+        <Border DockPanel.Dock="Top"
+                Background="{DynamicResource SurfaceBackgroundBrush}"
+                BorderBrush="{DynamicResource BorderBrush}"
+                BorderThickness="0,0,0,1"
+                Padding="6,4">
+            <StackPanel Orientation="Horizontal" Spacing="6">
+
+                <Border Classes="toolbar-pill">
+                    <StackPanel Orientation="Horizontal" Spacing="2">
+                        <Button Classes="icon toolbar-icon" Command="{Binding NewFileCommand}">
+                            <ToolTip.Tip>
+                                <TextBlock Text="{Binding IsFolderOpen, Converter={x:Static conv:NewFileTooltipConverter.Instance}, ConverterParameter='New File (Ctrl+N)'}" />
+                            </ToolTip.Tip>
+                            <controls:AnimatedIcon Classes="icon" Kind="FilePlus" />
+                        </Button>
+                        <Button Classes="icon toolbar-icon" Command="{Binding OpenFolderCommand}">
+                            <ToolTip.Tip>
+                                <TextBlock Text="Open Folder (Ctrl+O)" />
+                            </ToolTip.Tip>
+                            <controls:AnimatedIcon Classes="icon" Kind="FolderOpen" />
+                        </Button>
+                        <Button Classes="icon toolbar-icon" Command="{Binding SaveCommand}">
+                            <ToolTip.Tip>
+                                <TextBlock Text="Save (Ctrl+S)" />
+                            </ToolTip.Tip>
+                            <controls:AnimatedIcon Classes="icon" Kind="Save" />
+                        </Button>
+                        <Button Classes="icon toolbar-icon" Command="{Binding SaveAllCommand}"
+                                IsEnabled="{Binding ShowSaveAllBadge}">
+                            <ToolTip.Tip>
+                                <TextBlock Text="Save All (Ctrl+Shift+S)" />
+                            </ToolTip.Tip>
+                            <Panel>
+                                <controls:AnimatedIcon Classes="icon" Kind="SaveAll" />
+                                <Border Classes="save-all-badge" IsVisible="{Binding ShowSaveAllBadge}">
+                                    <TextBlock Classes="save-all-badge-text" Text="{Binding DirtyTabCount}" />
+                                </Border>
+                            </Panel>
+                        </Button>
+                    </StackPanel>
+                </Border>
+
+                <Border Classes="toolbar-pill">
+                    <Button Classes="icon toolbar-icon toolbar-run" Command="{Binding RunActiveFileCommand}">
+                        <ToolTip.Tip>
+                            <TextBlock Text="Run Active File (F5)" />
+                        </ToolTip.Tip>
+                        <controls:AnimatedIcon Classes="icon" Kind="Play" Stroke="#2FBF9E" />
+                    </Button>
+                </Border>
+
+                <Border Classes="toolbar-pill">
+                    <StackPanel Orientation="Horizontal" Spacing="2">
+                        <Button Classes="icon toolbar-icon" Command="{Binding ToggleSidebarCommand}">
+                            <ToolTip.Tip>
+                                <TextBlock Text="Toggle Sidebar (Ctrl+B)" />
+                            </ToolTip.Tip>
+                            <controls:AnimatedIcon Classes="icon" Kind="PanelLeft" />
+                        </Button>
+                        <Button Classes="icon toolbar-icon" Command="{Binding ToggleTerminalCommand}">
+                            <ToolTip.Tip>
+                                <TextBlock Text="Toggle Terminal" />
+                            </ToolTip.Tip>
+                            <controls:AnimatedIcon Classes="icon" Kind="Terminal" />
+                        </Button>
+                    </StackPanel>
+                </Border>
+
+                <Border Classes="toolbar-pill">
+                    <StackPanel Orientation="Horizontal" Spacing="2">
+                        <Button Classes="icon toolbar-icon">
+                            <ToolTip.Tip>
+                                <TextBlock Text="Theme" />
+                            </ToolTip.Tip>
+                    <controls:AnimatedIcon Classes="icon" Kind="Palette" />
+                    <Button.Flyout>
+                        <MenuFlyout Placement="BottomEdgeAlignedLeft">
+                            <MenuItem Header="Nebula" Tag="Nebula" Click="OnThemeMenuItemClick">
+                                <MenuItem.Icon>
+                                    <Ellipse Width="12" Height="12" Fill="#7F77DD" />
+                                </MenuItem.Icon>
+                            </MenuItem>
+                            <MenuItem Header="Dracula" Tag="Dracula" Click="OnThemeMenuItemClick">
+                                <MenuItem.Icon>
+                                    <Ellipse Width="12" Height="12" Fill="#FF79C6" />
+                                </MenuItem.Icon>
+                            </MenuItem>
+                            <MenuItem Header="Aurora" Tag="Aurora" Click="OnThemeMenuItemClick">
+                                <MenuItem.Icon>
+                                    <Ellipse Width="12" Height="12" Fill="#E4548F" />
+                                </MenuItem.Icon>
+                            </MenuItem>
+                        </MenuFlyout>
+                    </Button.Flyout>
+                </Button>
+
+                        <Button Classes="icon toolbar-icon">
+                            <ToolTip.Tip>
+                                <TextBlock Text="Extensions" />
+                            </ToolTip.Tip>
+                            <controls:AnimatedIcon Classes="icon" Kind="Puzzle" />
+                            <Button.Flyout>
+                                <Flyout Placement="BottomEdgeAlignedLeft">
+                                    <Border Classes="extensions-panel">
+                                        <StackPanel Spacing="0" Width="340">
+                                            <Grid ColumnDefinitions="*,Auto" Height="40" Margin="12,0" VerticalAlignment="Center">
+                                                <TextBlock Grid.Column="0" Text="EXTENSIONS" Classes="sidebar-header" VerticalAlignment="Center" />
+                                                <TextBlock Grid.Column="1" Classes="sidebar-header"
+                                                           Text="{Binding ExtensionsCountText}"
+                                                           VerticalAlignment="Center" />
+                                            </Grid>
+
+                                            <Border Classes="extension-search-border" Margin="8" Padding="8,6">
+                                                <Grid ColumnDefinitions="Auto,*">
+                                                    <controls:AnimatedIcon Grid.Column="0" Classes="icon-sm" Kind="Search"
+                                                                           Margin="0,0,8,0" VerticalAlignment="Center" />
+                                                    <TextBox Grid.Column="1" Classes="extension-search-input"
+                                                             Watermark="Buscar extensión..."
+                                                             Text="{Binding ExtensionSearchText, Mode=TwoWay}"
+                                                             BorderThickness="0" Background="Transparent"
+                                                             Foreground="{DynamicResource TextPrimaryBrush}"
+                                                             FontSize="12" />
+                                                </Grid>
+                                            </Border>
+
+                                            <ScrollViewer MaxHeight="320" Margin="8,0,8,8">
+                                                <ItemsControl ItemsSource="{Binding FilteredExtensions}"
+                                                              ItemTemplate="{StaticResource ExtensionCardTemplate}" />
+                                            </ScrollViewer>
+                                        </StackPanel>
+                                    </Border>
+                                </Flyout>
+                            </Button.Flyout>
+                        </Button>
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+        </Border>
+
+        <Border DockPanel.Dock="Bottom" Background="{DynamicResource PanelBackgroundBrush}" Height="24">
+            <Grid ColumnDefinitions="*,Auto">
+                <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="14" Margin="10,0" VerticalAlignment="Center">
+                    <TextBlock Classes="status-text" Text="{Binding StatusBarPath}" />
+                </StackPanel>
+                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="14" Margin="10,0" VerticalAlignment="Center">
+                    <TextBlock Classes="status-text" Text="{Binding SelectedTab.Language, FallbackValue=''}" />
+                    <TextBlock Classes="status-text" Text="{Binding SelectedTab.Line, StringFormat='Ln {0}', FallbackValue=''}" />
+                    <TextBlock Classes="status-text" Text="{Binding SelectedTab.Column, StringFormat='Col {0}', FallbackValue=''}" />
+                    <TextBlock Classes="status-text" Text="UTF-8" />
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <Grid ColumnDefinitions="Auto,Auto,*">
+
+            <Border Grid.Column="0" Width="260"
+                    Background="{DynamicResource PanelBackgroundBrush}"
+                    BorderBrush="{DynamicResource BorderBrush}"
+                    BorderThickness="0,0,1,0"
+                    IsVisible="{Binding IsSidebarVisible}">
+                <DockPanel>
+                    <Grid DockPanel.Dock="Top" ColumnDefinitions="*,Auto,Auto,Auto" Margin="12,10,8,6">
+                        <TextBlock Grid.Column="0" Classes="sidebar-header" Text="EXPLORER" VerticalAlignment="Center" />
+                        <Button Grid.Column="1" Classes="icon" Width="22" Height="22" Command="{Binding NewFileCommand}"
+                                ToolTip.Tip="{Binding IsFolderOpen, Converter={x:Static conv:NewFileTooltipConverter.Instance}, ConverterParameter='New File'}">
+                            <controls:AnimatedIcon Classes="icon-sm" Kind="FilePlus" />
+                        </Button>
+                        <Button Grid.Column="2" Classes="icon" Width="22" Height="22" Command="{Binding OpenFolderCommand}" ToolTip.Tip="Open Folder">
+                            <controls:AnimatedIcon Classes="icon-sm" Kind="FolderOpen" />
+                        </Button>
+                        <Button Grid.Column="3" Classes="icon" Width="22" Height="22" Command="{Binding CollapseAllCommand}"
+                                ToolTip.Tip="Collapse All" IsVisible="{Binding IsFolderOpen}">
+                            <controls:AnimatedIcon Classes="icon-sm" Kind="ChevronsDownUp" />
+                        </Button>
+                    </Grid>
+
+                    <Border DockPanel.Dock="Top" Padding="12,4,12,8" IsVisible="{Binding IsFolderOpen}">
+                        <StackPanel Orientation="Horizontal" Spacing="6">
+                            <controls:AnimatedIcon Classes="icon-sm" Kind="Folder" />
+                            <TextBlock Text="{Binding RootName}" FontWeight="Bold" Foreground="{DynamicResource TextPrimaryBrush}" FontSize="12" />
+                        </StackPanel>
+                    </Border>
+
+                    <Border DockPanel.Dock="Top" Padding="12,0,12,8" IsVisible="{Binding IsFolderOpen}">
+                        <TextBox Text="{Binding FileFilter, Mode=TwoWay}" Watermark="Filter files..." FontSize="12" Padding="6,4" />
+                    </Border>
+
+                    <Grid>
+                        <TreeView Background="Transparent"
+                                  ItemsSource="{Binding RootNodes}"
+                                  SelectedItem="{Binding SelectedTreeNode, Mode=TwoWay}"
+                                  IsVisible="{Binding ShowTree}">
+                            <TreeView.Styles>
+                                <Style Selector="TreeViewItem">
+                                    <Setter Property="IsExpanded" Value="{Binding IsExpanded, Mode=TwoWay}" />
+                                </Style>
+                            </TreeView.Styles>
+                            <TreeView.DataTemplates>
+                                <TreeDataTemplate DataType="models:FileTreeNode" ItemsSource="{Binding Children}">
+                                    <StackPanel Orientation="Horizontal" Spacing="6">
+                                        <ItemsControl ItemsSource="{Binding Level, Converter={x:Static conv:LevelToRangeConverter.Instance}}" Focusable="False">
+                                            <ItemsControl.ItemsPanel>
+                                                <ItemsPanelTemplate>
+                                                    <StackPanel Orientation="Horizontal" />
+                                                </ItemsPanelTemplate>
+                                            </ItemsControl.ItemsPanel>
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate>
+                                                    <Rectangle Width="1" Height="18" Margin="7,0" Fill="{DynamicResource BorderBrush}" />
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+
+                                        <controls:AnimatedIcon Classes="icon-sm tree-icon">
+                                            <controls:AnimatedIcon.Kind>
+                                                <MultiBinding Converter="{x:Static conv:NodeIconConverter.Instance}">
+                                                    <Binding Path="IsFolder" />
+                                                    <Binding Path="IsExpanded" />
+                                                    <Binding Path="Name" />
+                                                </MultiBinding>
+                                            </controls:AnimatedIcon.Kind>
+                                        </controls:AnimatedIcon>
+
+                                        <Grid ColumnDefinitions="Auto,Auto" VerticalAlignment="Center">
+                                            <TextBlock Grid.Column="0" Text="{Binding Name}" IsVisible="{Binding !IsEditing}"
+                                                       Classes="tree-name"
+                                                       Foreground="{DynamicResource TextPrimaryBrush}" FontSize="13" VerticalAlignment="Center" />
+                                            <TextBox Grid.Column="0" Text="{Binding EditingName, Mode=TwoWay}" IsVisible="{Binding IsEditing}"
+                                                     FontSize="13" Padding="4,1" MinWidth="90"
+                                                     KeyDown="OnRenameTextBoxKeyDown" LostFocus="OnRenameTextBoxLostFocus" />
+                                            <Ellipse Grid.Column="1" Width="6" Height="6" Margin="6,0,0,0"
+                                                     Fill="{DynamicResource TextPrimaryBrush}" VerticalAlignment="Center"
+                                                     IsVisible="{Binding IsDirty}" />
+                                        </Grid>
+
+                                        <StackPanel.ContextMenu>
+                                            <ContextMenu>
+                                                <MenuItem Header="New File" IsVisible="{Binding IsFolder}"
+                                                          Command="{Binding #Root.DataContext.NewFileInFolderCommand}"
+                                                          CommandParameter="{Binding}" />
+                                                <MenuItem Header="New Folder" IsVisible="{Binding IsFolder}"
+                                                          Command="{Binding #Root.DataContext.NewFolderInFolderCommand}"
+                                                          CommandParameter="{Binding}" />
+                                                <Separator IsVisible="{Binding IsFolder}" />
+                                                <MenuItem Header="Rename"
+                                                          Command="{Binding #Root.DataContext.BeginRenameCommand}"
+                                                          CommandParameter="{Binding}" />
+                                                <MenuItem Header="Delete"
+                                                          Command="{Binding #Root.DataContext.DeleteNodeCommand}"
+                                                          CommandParameter="{Binding}" />
+                                            </ContextMenu>
+                                        </StackPanel.ContextMenu>
+                                    </StackPanel>
+                                </TreeDataTemplate>
+                            </TreeView.DataTemplates>
+                        </TreeView>
+
+                        <ScrollViewer IsVisible="{Binding ShowSearchResults}">
+                            <StackPanel>
+                                <ItemsControl ItemsSource="{Binding FilteredNodes}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate DataType="models:FileSearchResult">
+                                            <Button Classes="search-result-item"
+                                                    Command="{Binding #Root.DataContext.OpenSearchResultCommand}"
+                                                    CommandParameter="{Binding Node}">
+                                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                                    <controls:AnimatedIcon Classes="icon-sm">
+                                                        <controls:AnimatedIcon.Kind>
+                                                            <MultiBinding Converter="{x:Static conv:NodeIconConverter.Instance}">
+                                                                <Binding Path="Node.IsFolder" />
+                                                                <Binding Path="Node.IsExpanded" />
+                                                                <Binding Path="Node.Name" />
+                                                            </MultiBinding>
+                                                        </controls:AnimatedIcon.Kind>
+                                                    </controls:AnimatedIcon>
+                                                    <StackPanel Orientation="Vertical" Spacing="1" VerticalAlignment="Center">
+                                                        <TextBlock Text="{Binding Node.Name}"
+                                                                   Foreground="{DynamicResource TextPrimaryBrush}" FontSize="13" />
+                                                        <TextBlock Text="{Binding RelativeFolder}" Classes="search-result-path" />
+                                                    </StackPanel>
+                                                </StackPanel>
+                                            </Button>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+
+                                <TextBlock Text="No matching files" Foreground="{DynamicResource TextMutedBrush}"
+                                           HorizontalAlignment="Center" Margin="0,20,0,0"
+                                           IsVisible="{Binding !HasSearchResults}" />
+                            </StackPanel>
+                        </ScrollViewer>
+
+                        <StackPanel IsVisible="{Binding !IsFolderOpen}" HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="10" Margin="16">
+                            <controls:AnimatedIcon Classes="icon-md" Kind="FolderPlus" HorizontalAlignment="Center" />
+                            <TextBlock Text="Sin carpeta abierta" Foreground="{DynamicResource TextMutedBrush}"
+                                       FontSize="12" HorizontalAlignment="Center" TextWrapping="Wrap" TextAlignment="Center" />
+                        </StackPanel>
+                    </Grid>
+                </DockPanel>
+            </Border>
+
+            <GridSplitter Grid.Column="1" Width="4" Background="Transparent"
+                          IsVisible="{Binding IsSidebarVisible}" ResizeDirection="Columns" />
+
+            <Grid Grid.Column="2" RowDefinitions="*,Auto,Auto">
+
+                <Grid Grid.Row="0" RowDefinitions="Auto,*">
+
+                    <ScrollViewer Grid.Row="0" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled"
+                                  Background="{DynamicResource TabInactiveBackgroundBrush}">
+                        <ItemsControl ItemsSource="{Binding OpenTabs}">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <StackPanel Orientation="Horizontal" />
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate DataType="vm:EditorTabViewModel">
+                                    <Border Classes="tab-item" Classes.active="{Binding IsSelected}" x:Name="TabBorder">
+                                        <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                                            <controls:AnimatedIcon Classes="icon-sm" Kind="File" />
+                                            <Button Classes="tab-select"
+                                                    Command="{Binding #Root.DataContext.SelectTabCommand}"
+                                                    CommandParameter="{Binding}">
+                                                <StackPanel Orientation="Horizontal" Spacing="6">
+                                                    <TextBlock Text="{Binding Title}" FontSize="13" VerticalAlignment="Center" />
+                                                    <Panel Width="7" Height="7" VerticalAlignment="Center">
+                                                        <Ellipse Width="7" Height="7" Fill="{DynamicResource TextPrimaryBrush}"
+                                                                 Classes="dirty-indicator"
+                                                                 Opacity="{Binding IsDirty, Converter={x:Static conv:BoolToOpacityConverter.Instance}}"
+                                                                 VerticalAlignment="Center" HorizontalAlignment="Center" />
+                                                        <TextBlock Text="✓" FontSize="9"
+                                                                   Classes="saved-indicator"
+                                                                   Foreground="{DynamicResource RunGreenBrush}"
+                                                                   Opacity="{Binding IsDirty, Converter={x:Static conv:BoolToInverseOpacityConverter.Instance}}"
+                                                                   VerticalAlignment="Center" HorizontalAlignment="Center" />
+                                                    </Panel>
+                                                </StackPanel>
+                                            </Button>
+                                            <Button Classes="tab-close" Click="OnTabCloseClick"
+                                                    ToolTip.Tip="Close"
+                                                    Tag="{Binding}">
+                                                <controls:AnimatedIcon Classes="icon-sm" Kind="X" Width="10" Height="10" />
+                                            </Button>
+                                        </StackPanel>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </ScrollViewer>
+
+                    <Grid Grid.Row="1">
+                        <ae:TextEditor Name="CodeEditor"
+                                       ShowLineNumbers="True"
+                                       WordWrap="False"
+                                       Background="{DynamicResource EditorBackgroundBrush}"
+                                       Foreground="{DynamicResource TextPrimaryBrush}"
+                                       LineNumbersForeground="{DynamicResource TextDisabledBrush}"
+                                       FontFamily="Cascadia Code,Consolas,DejaVu Sans Mono,monospace"
+                                       FontSize="14"
+                                       Padding="8,8"
+                                       IsVisible="{Binding SelectedTab, Converter={x:Static conv:NullToBoolConverter.IsNotNull}}" />
+
+                        <ScrollViewer IsVisible="{Binding !IsFolderOpen}" VerticalScrollBarVisibility="Auto">
+                            <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" MaxWidth="440" Spacing="0" Margin="20">
+                                <Panel Width="140" Height="140" HorizontalAlignment="Center" Margin="0,0,0,24" Classes="welcome-logo">
+                                    <Ellipse Width="140" Height="140" Fill="{DynamicResource AccentBrush}"
+                                             Opacity="0.16" Effect="blur(28)" />
+                                    <Border HorizontalAlignment="Center" VerticalAlignment="Center">
+                                        <Image Width="120" Height="120"
+                                               Source="avares://NetWall.IDE/Assets/Icons/applogo.png" />
+                                    </Border>
+                                </Panel>
+
+                                <TextBlock Text="NetWall.IDE" FontSize="26" FontWeight="Bold"
+                                           Foreground="{DynamicResource TextPrimaryBrush}"
+                                           HorizontalAlignment="Center" Margin="0,0,0,8" Classes="welcome-title" />
+
+                                <TextBlock Text="Abre una carpeta para empezar a programar"
+                                           Foreground="{DynamicResource TextMutedBrush}" FontSize="13"
+                                           HorizontalAlignment="Center" Margin="0,0,0,24" Classes="welcome-subtitle" />
+
+                                <Button Classes="welcome-cta welcome-button" Command="{Binding OpenFolderCommand}" HorizontalAlignment="Center">
+                                    <StackPanel Orientation="Horizontal" Spacing="8">
+                                        <controls:AnimatedIcon Kind="FolderOpen" Width="16" Height="16" Stretch="Uniform"
+                                                                Stroke="White" StrokeThickness="2"
+                                                                StrokeLineCap="Round" StrokeJoin="Round" />
+                                        <TextBlock Text="Abrir Carpeta" FontWeight="SemiBold" Foreground="White" />
+                                    </StackPanel>
+                                </Button>
+                                <TextBlock Text="o presiona Ctrl+O" Foreground="{DynamicResource TextDisabledBrush}"
+                                           FontSize="11" HorizontalAlignment="Center" Margin="0,10,0,32" Classes="welcome-hint" />
+
+                                <StackPanel Spacing="8" IsVisible="{Binding RecentProjects.Count}" Classes="welcome-recents">
+                                    <TextBlock Text="RECIENTES" Classes="sidebar-header" Margin="0,0,0,4" />
+                                    <ItemsControl ItemsSource="{Binding RecentProjects}" MaxHeight="180">
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate DataType="models:RecentProject">
+                                                <Button Classes="recent-project-button"
+                                                        Command="{Binding #Root.DataContext.OpenRecentProjectCommand}"
+                                                        CommandParameter="{Binding}">
+                                                    <Border Padding="12,10" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1"
+                                                            CornerRadius="6" Margin="0,4"
+                                                            Background="Transparent" Classes="recent-project-item">
+                                                        <Border.RenderTransform>
+                                                            <TranslateTransform Y="0" />
+                                                        </Border.RenderTransform>
+                                                        <Grid ColumnDefinitions="Auto,*,Auto">
+                                                            <controls:AnimatedIcon Grid.Column="0" Classes="icon-sm" Kind="Folder" Margin="0,0,10,0" VerticalAlignment="Center" />
+                                                            <StackPanel Grid.Column="1" Spacing="2" VerticalAlignment="Center">
+                                                                <TextBlock Text="{Binding Name}" FontWeight="SemiBold" FontSize="12"
+                                                                           Foreground="{DynamicResource TextPrimaryBrush}" />
+                                                                <TextBlock Text="{Binding FormattedDate}" FontSize="10"
+                                                                           Foreground="{DynamicResource TextMutedBrush}" />
+                                                            </StackPanel>
+                                                            <TextBlock Grid.Column="2" Text="→" Foreground="{DynamicResource TextDisabledBrush}"
+                                                                       VerticalAlignment="Center" Margin="10,0,0,0" />
+                                                        </Grid>
+                                                    </Border>
+                                                </Button>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                </StackPanel>
+                            </StackPanel>
+                        </ScrollViewer>
+
+                        <StackPanel IsVisible="{Binding ShowNoTabPrompt}"
+                                    HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="16">
+                            <TextBlock Text="NetWall.IDE" FontSize="28" FontWeight="Bold"
+                                       Foreground="{DynamicResource TextMutedBrush}" HorizontalAlignment="Center" />
+                            <TextBlock Text="Selecciona un archivo del explorador o crea uno nuevo"
+                                       Foreground="{DynamicResource TextMutedBrush}" HorizontalAlignment="Center" />
+                            <Button Content="New File" Command="{Binding NewFileCommand}" HorizontalAlignment="Center" />
+                        </StackPanel>
+                    </Grid>
+                </Grid>
+
+                <GridSplitter Grid.Row="1" Height="4" Background="Transparent"
+                              IsVisible="{Binding IsTerminalVisible}" ResizeDirection="Rows" />
+
+                <Border Grid.Row="2" Height="220"
+                        Background="{DynamicResource TerminalBackgroundBrush}"
+                        BorderBrush="{DynamicResource BorderBrush}"
+                        BorderThickness="0,1,0,0"
+                        IsVisible="{Binding IsTerminalVisible}">
+                    <Panel>
+                    <DockPanel>
+                        <Grid DockPanel.Dock="Top" ColumnDefinitions="*,Auto,Auto,Auto"
+                              Background="{DynamicResource SurfaceBackgroundBrush}" Height="30">
+                            <TextBlock Grid.Column="0" Classes="sidebar-header" Text="TERMINAL"
+                                       VerticalAlignment="Center" Margin="12,0" />
+                            <Button Grid.Column="1" Classes="icon" Width="24" Height="24" ToolTip.Tip="Cat color">
+                                <controls:AnimatedIcon Classes="icon-sm" Kind="Cat" />
+                                <Button.Flyout>
+                                    <MenuFlyout Placement="BottomEdgeAlignedRight">
+                                        <MenuItem Header="Gray" Tag="Gray" Click="OnPetColorMenuItemClick">
+                                            <MenuItem.Icon>
+                                                <Ellipse Width="12" Height="12" Fill="#8B8D98" />
+                                            </MenuItem.Icon>
+                                        </MenuItem>
+                                        <MenuItem Header="Orange" Tag="Orange" Click="OnPetColorMenuItemClick">
+                                            <MenuItem.Icon>
+                                                <Ellipse Width="12" Height="12" Fill="#C4642E" />
+                                            </MenuItem.Icon>
+                                        </MenuItem>
+                                        <MenuItem Header="White" Tag="White" Click="OnPetColorMenuItemClick">
+                                            <MenuItem.Icon>
+                                                <Ellipse Width="12" Height="12" Fill="#F0F0F0" />
+                                            </MenuItem.Icon>
+                                        </MenuItem>
+                                    </MenuFlyout>
+                                </Button.Flyout>
+                            </Button>
+                            <Button Grid.Column="2" Classes="icon" Width="24" Height="24"
+                                    Command="{Binding ClearTerminalCommand}" ToolTip.Tip="Clear Terminal">
+                                <controls:AnimatedIcon Classes="icon-sm" Kind="Eraser" />
+                            </Button>
+                            <Button Grid.Column="3" Classes="icon" Width="24" Height="24" Margin="0,0,6,0"
+                                    Command="{Binding ToggleTerminalCommand}" ToolTip.Tip="Close Panel">
+                                <controls:AnimatedIcon Classes="icon-sm" Kind="X" />
+                            </Button>
+                        </Grid>
+
+                        <controls:PetWidget Name="Pet" DockPanel.Dock="Top"
+                                            IsVisible="{Binding IsPetEnabled}"
+                                            Classes.pet-pop="{Binding IsPetEnabled}" />
+
+                        <Border DockPanel.Dock="Bottom"
+                                BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,1,0,0"
+                                Padding="12,8">
+                            <Grid ColumnDefinitions="Auto,*">
+                                <TextBlock Grid.Column="0" Text="$" Foreground="{DynamicResource RunGreenBrush}"
+                                           FontFamily="Cascadia Code,Consolas,monospace" FontWeight="Bold"
+                                           VerticalAlignment="Center" Margin="0,0,8,0" />
+                                <TextBox Grid.Column="1" Classes="terminal-input" Name="TerminalInputBox"
+                                         Text="{Binding TerminalInput, Mode=TwoWay}"
+                                         Watermark="Type a command and press Enter..."
+                                         KeyDown="OnTerminalInputKeyDown" />
+                            </Grid>
+                        </Border>
+
+                        <ScrollViewer Name="TerminalScrollViewer">
+                            <TextBlock Classes="terminal-output" Text="{Binding TerminalOutput}" Margin="12,8" />
+                        </ScrollViewer>
+                    </DockPanel>
+                    </Panel>
+                </Border>
+            </Grid>
+        </Grid>
+    </DockPanel>
 
 </Window>

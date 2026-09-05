@@ -1,6 +1,8 @@
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
+using NetWall.IDE.Models;
+using NetWall.IDE.Themes;
 using NetWall.IDE.ViewModels;
 using NetWall.IDE.Views;
 
@@ -21,6 +23,7 @@ public partial class App : Application
             {
                 DataContext = new MainViewModel(),
             };
+            ThemeManager.Apply(AppTheme.Nebula);
         }
 
         base.OnFrameworkInitializationCompleted();
