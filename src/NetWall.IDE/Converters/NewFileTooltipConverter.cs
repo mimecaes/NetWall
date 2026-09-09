@@ -1,18 +1,28 @@
 using System;
+using System.Collections.Generic;
 using System.Globalization;
 using Avalonia.Data.Converters;
+using NetWall.IDE.Localization;
 
 namespace NetWall.IDE.Converters;
 
-public sealed class NewFileTooltipConverter : IValueConverter
+public sealed class NewFileTooltipConverter : IMultiValueConverter
 {
-    public static readonly NewFileTooltipConverter Instance = new();
+    public static readonly NewFileTooltipConverter Full = new(withShortcut: true);
+    public static readonly NewFileTooltipConverter Short = new(withShortcut: false);
 
-    private const string DisabledMessage = "Open a folder first to create a file";
+    private readonly bool _withShortcut;
 
-    public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
-        => value is true ? parameter as string ?? string.Empty : DisabledMessage;
+    private NewFileTooltipConverter(bool withShortcut) => _withShortcut = withShortcut;
 
-    public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
-        => throw new NotSupportedException();
+    public object? Convert(IList<object?> values, Type targetType, object? parameter, CultureInfo culture)
+    {
+        var isFolderOpen = values.Count > 0 && values[0] is true;
+        if (!isFolderOpen)
+        {
+            return LocalizationService.T("Tooltip.OpenFolderFirst");
+        }
+
+        return LocalizationService.T(_withShortcut ? "Tooltip.NewFileShortcut" : "Tooltip.NewFile");
+    }
 }

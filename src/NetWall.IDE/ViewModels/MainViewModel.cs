@@ -8,6 +8,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using NetWall.IDE.Localization;
 using NetWall.IDE.Models;
 using NetWall.IDE.Services;
 
@@ -29,7 +30,7 @@ public partial class MainViewModel : ViewModelBase
         {
             Id = "indent-rainbow",
             Name = "Indent Rainbow",
-            Description = "Colorea cada nivel de indentación en el editor",
+            DescriptionKey = "Extension.IndentRainbow.Description",
             IconPath = "avares://NetWall.IDE/Assets/Icons/identrainbow.png",
             IsEnabled = true,
         });
@@ -37,7 +38,7 @@ public partial class MainViewModel : ViewModelBase
         {
             Id = "dev-cat",
             Name = "DevCat",
-            Description = "Una mascota gatito que vive en la terminal",
+            DescriptionKey = "Extension.DevCat.Description",
             IconPath = "avares://NetWall.IDE/Assets/Icons/devcat.png",
             IsEnabled = true,
         });
@@ -46,7 +47,32 @@ public partial class MainViewModel : ViewModelBase
         {
             extension.PropertyChanged += OnExtensionPropertyChanged;
         }
+
+        LocalizationService.Instance.PropertyChanged += (_, _) =>
+        {
+            OnPropertyChanged(nameof(ExtensionsCountText));
+            OnPropertyChanged(nameof(StatusBarPath));
+        };
     }
+
+    [ObservableProperty]
+    public partial SettingsTab SelectedSettingsTab { get; set; } = SettingsTab.None;
+
+    partial void OnSelectedSettingsTabChanged(SettingsTab value)
+    {
+        OnPropertyChanged(nameof(IsSettingsMenuRoot));
+        OnPropertyChanged(nameof(IsThemeTabSelected));
+        OnPropertyChanged(nameof(IsExtensionsTabSelected));
+        OnPropertyChanged(nameof(IsLanguageTabSelected));
+    }
+
+    public bool IsSettingsMenuRoot => SelectedSettingsTab == SettingsTab.None;
+
+    public bool IsThemeTabSelected => SelectedSettingsTab == SettingsTab.Theme;
+
+    public bool IsExtensionsTabSelected => SelectedSettingsTab == SettingsTab.Extensions;
+
+    public bool IsLanguageTabSelected => SelectedSettingsTab == SettingsTab.Language;
 
     public ObservableCollection<ExtensionInfo> Extensions { get; } = [];
 
@@ -88,7 +114,8 @@ public partial class MainViewModel : ViewModelBase
 
     public int TotalExtensionsCount => Extensions.Count;
 
-    public string ExtensionsCountText => $"{EnabledExtensionsCount} de {TotalExtensionsCount} activas";
+    public string ExtensionsCountText =>
+        string.Format(LocalizationService.T("Extensions.CountFormat"), EnabledExtensionsCount, TotalExtensionsCount);
 
     public event Action<ExtensionInfo>? ExtensionToggled;
 
@@ -142,7 +169,7 @@ public partial class MainViewModel : ViewModelBase
     public partial string RootPath { get; set; } = Environment.CurrentDirectory;
 
     [ObservableProperty]
-    public partial string RootName { get; set; } = "NO FOLDER OPENED";
+    public partial string RootName { get; set; } = string.Empty;
 
     partial void OnRootNameChanged(string value) => OnPropertyChanged(nameof(StatusBarPath));
 
@@ -150,6 +177,11 @@ public partial class MainViewModel : ViewModelBase
     {
         get
         {
+            if (!IsFolderOpen)
+            {
+                return LocalizationService.T("StatusBar.NoFolderOpen");
+            }
+
             if (SelectedTab?.FilePath is { Length: > 0 } path)
             {
                 var relative = Path.GetRelativePath(RootPath, path).Replace('\\', '/');
@@ -170,6 +202,7 @@ public partial class MainViewModel : ViewModelBase
         OnPropertyChanged(nameof(ShowSearchResults));
         OnPropertyChanged(nameof(ShowGlobalSearchResults));
         OnPropertyChanged(nameof(ShowNoTabPrompt));
+        OnPropertyChanged(nameof(StatusBarPath));
     }
 
     public bool ShowNoTabPrompt => IsFolderOpen && SelectedTab is null;
@@ -178,7 +211,7 @@ public partial class MainViewModel : ViewModelBase
     public partial bool IsSidebarVisible { get; set; } = true;
 
     [ObservableProperty]
-    public partial bool IsTerminalVisible { get; set; } = true;
+    public partial bool IsTerminalVisible { get; set; }
 
     [ObservableProperty]
     public partial string TerminalOutput { get; set; } = "NetWall.IDE terminal ready.";
@@ -379,7 +412,7 @@ public partial class MainViewModel : ViewModelBase
             return;
         }
 
-        var folderName = UniqueFolderName(parentFolder.FullPath, "New Folder");
+        var folderName = UniqueFolderName(parentFolder.FullPath, LocalizationService.T("Explorer.NewFolderDefaultName"));
         var fullPath = Path.Combine(parentFolder.FullPath, folderName);
 
         try
@@ -774,6 +807,7 @@ public partial class MainViewModel : ViewModelBase
         }
 
         IsFolderOpen = true;
+        IsTerminalVisible = true;
         _terminal = new TerminalSession(path);
         AddRecentProject(path);
     }

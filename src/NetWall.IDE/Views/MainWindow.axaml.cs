@@ -11,6 +11,7 @@ using Avalonia.Threading;
 using Avalonia.VisualTree;
 using AvaloniaEdit;
 using NetWall.IDE.Controls;
+using NetWall.IDE.Localization;
 using NetWall.IDE.Models;
 using NetWall.IDE.Themes;
 using NetWall.IDE.ViewModels;
@@ -234,7 +235,7 @@ public partial class MainWindow : Window
     {
         var folders = await StorageProvider.OpenFolderPickerAsync(new FolderPickerOpenOptions
         {
-            Title = "Open Folder",
+            Title = LocalizationService.T("Dialog.OpenFolderTitle"),
             AllowMultiple = false,
         });
 
@@ -248,7 +249,7 @@ public partial class MainWindow : Window
     {
         var file = await StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
         {
-            Title = "Save File",
+            Title = LocalizationService.T("Dialog.SaveFileTitle"),
             SuggestedFileName = tab.Title,
         });
 
@@ -260,9 +261,9 @@ public partial class MainWindow : Window
 
     private Task<bool> OnRequestDeleteConfirmation(FileTreeNode node)
     {
-        var message = node.IsFolder
-            ? $"Delete the folder '{node.Name}' and everything inside it? This cannot be undone."
-            : $"Delete '{node.Name}'? This cannot be undone.";
+        var message = string.Format(
+            LocalizationService.T(node.IsFolder ? "Dialog.DeleteFolderMessage" : "Dialog.DeleteFileMessage"),
+            node.Name);
         return ConfirmDialog.AskAsync(this, message);
     }
 
@@ -306,9 +307,41 @@ public partial class MainWindow : Window
 
     private void OnThemeMenuItemClick(object? sender, RoutedEventArgs e)
     {
-        if (sender is MenuItem { Tag: string tagValue } && Enum.TryParse<AppTheme>(tagValue, out var theme))
+        if (sender is Button { Tag: string tagValue } && Enum.TryParse<AppTheme>(tagValue, out var theme))
         {
             ThemeManager.Apply(theme);
+        }
+    }
+
+    private void OnLanguageButtonClick(object? sender, RoutedEventArgs e)
+    {
+        if (sender is Button { Tag: string tagValue } && Enum.TryParse<AppLanguage>(tagValue, out var language))
+        {
+            LocalizationService.Instance.Language = language;
+        }
+    }
+
+    private void OnSettingsTabButtonClick(object? sender, RoutedEventArgs e)
+    {
+        if (sender is Button { Tag: string tagValue } && Enum.TryParse<SettingsTab>(tagValue, out var tab) && ViewModel is { } vm)
+        {
+            vm.SelectedSettingsTab = tab;
+        }
+    }
+
+    private void OnSettingsBackClick(object? sender, RoutedEventArgs e)
+    {
+        if (ViewModel is { } vm)
+        {
+            vm.SelectedSettingsTab = SettingsTab.None;
+        }
+    }
+
+    private void OnSettingsFlyoutOpened(object? sender, EventArgs e)
+    {
+        if (ViewModel is { } vm)
+        {
+            vm.SelectedSettingsTab = SettingsTab.None;
         }
     }
 

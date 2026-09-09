@@ -1,6 +1,7 @@
 using System.Threading.Tasks;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
+using NetWall.IDE.Localization;
 
 namespace NetWall.IDE.Views;
 
@@ -11,11 +12,15 @@ public partial class ConfirmDialog : Window
         InitializeComponent();
     }
 
-    public static Task<bool> AskAsync(Window owner, string message, string confirmText = "Delete")
+    public static Task<bool> AskAsync(Window owner, string message, string? confirmText = null)
     {
-        var dialog = new ConfirmDialog();
+        var dialog = new ConfirmDialog
+        {
+            Title = LocalizationService.T("Dialog.ConfirmTitle"),
+        };
         dialog.MessageText.Text = message;
-        dialog.ConfirmButton.Content = confirmText;
+        dialog.CancelButton.Content = LocalizationService.T("Dialog.Cancel");
+        dialog.ConfirmButton.Content = confirmText ?? LocalizationService.T("Dialog.Delete");
         return dialog.ShowDialog<bool>(owner);
     }
 
