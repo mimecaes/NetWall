@@ -1,0 +1,28 @@
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+
+    <Color x:Key="Wisteria.Background">#211D2E</Color>
+    <Color x:Key="Wisteria.PanelBackground">#2A2438</Color>
+    <Color x:Key="Wisteria.SurfaceBackground">#2E2740</Color>
+    <Color x:Key="Wisteria.Accent">#9C8EDB</Color>
+    <Color x:Key="Wisteria.Accent2">#8FDDBB</Color>
+    <Color x:Key="Wisteria.TextPrimary">#E0FFFFFF</Color>
+    <Color x:Key="Wisteria.TextMuted">#66FFFFFF</Color>
+    <Color x:Key="Wisteria.TextDisabled">#38FFFFFF</Color>
+    <Color x:Key="Wisteria.Border">#409C8EDB</Color>
+    <Color x:Key="Wisteria.Hover">#1F9C8EDB</Color>
+    <Color x:Key="Wisteria.Active">#339C8EDB</Color>
+    <Color x:Key="Wisteria.RunGreen">#8FDDBB</Color>
+    <Color x:Key="Wisteria.StopRed">#EE9CA8</Color>
+    <Color x:Key="Wisteria.TabActiveBackground">#211D2E</Color>
+    <Color x:Key="Wisteria.TabInactiveBackground">#2A2438</Color>
+    <Color x:Key="Wisteria.TerminalBackground">#211D2E</Color>
+
+    <Color x:Key="Wisteria.TopBarStop0">#389C8EDB</Color>
+    <Color x:Key="Wisteria.TopBarStop1">#1C9C8EDB</Color>
+    <Color x:Key="Wisteria.TopBarStop2">#009C8EDB</Color>
+
+    <Color x:Key="Wisteria.EditorBackground">#251F33</Color>
+
+</ResourceDictionary>

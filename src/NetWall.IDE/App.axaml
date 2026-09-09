@@ -17,6 +17,8 @@
                 <ResourceInclude Source="avares://NetWall.IDE/Themes/Nebula.axaml" />
                 <ResourceInclude Source="avares://NetWall.IDE/Themes/Dracula.axaml" />
                 <ResourceInclude Source="avares://NetWall.IDE/Themes/Aurora.axaml" />
+                <ResourceInclude Source="avares://NetWall.IDE/Themes/Blossom.axaml" />
+                <ResourceInclude Source="avares://NetWall.IDE/Themes/Wisteria.axaml" />
             </ResourceDictionary.MergedDictionaries>
         </ResourceDictionary>
     </Application.Resources>

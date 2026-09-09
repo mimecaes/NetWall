@@ -1,0 +1,28 @@
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+
+    <Color x:Key="Blossom.Background">#F7F3FB</Color>
+    <Color x:Key="Blossom.PanelBackground">#EFE8F7</Color>
+    <Color x:Key="Blossom.SurfaceBackground">#F2ECFA</Color>
+    <Color x:Key="Blossom.Accent">#8D7FC7</Color>
+    <Color x:Key="Blossom.Accent2">#6FB99A</Color>
+    <Color x:Key="Blossom.TextPrimary">#4A4358</Color>
+    <Color x:Key="Blossom.TextMuted">#8B84A0</Color>
+    <Color x:Key="Blossom.TextDisabled">#C3BCD4</Color>
+    <Color x:Key="Blossom.Border">#408D7FC7</Color>
+    <Color x:Key="Blossom.Hover">#1F8D7FC7</Color>
+    <Color x:Key="Blossom.Active">#338D7FC7</Color>
+    <Color x:Key="Blossom.RunGreen">#6FB99A</Color>
+    <Color x:Key="Blossom.StopRed">#D97A87</Color>
+    <Color x:Key="Blossom.TabActiveBackground">#FBF8FD</Color>
+    <Color x:Key="Blossom.TabInactiveBackground">#EFE8F7</Color>
+    <Color x:Key="Blossom.TerminalBackground">#F7F3FB</Color>
+
+    <Color x:Key="Blossom.TopBarStop0">#388D7FC7</Color>
+    <Color x:Key="Blossom.TopBarStop1">#1C8D7FC7</Color>
+    <Color x:Key="Blossom.TopBarStop2">#008D7FC7</Color>
+
+    <Color x:Key="Blossom.EditorBackground">#FBF8FD</Color>
+
+</ResourceDictionary>

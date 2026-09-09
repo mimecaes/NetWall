@@ -5,4 +5,6 @@ public enum AppTheme
     Nebula,
     Dracula,
     Aurora,
+    Blossom,
+    Wisteria,
 }
