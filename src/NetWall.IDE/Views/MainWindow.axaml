@@ -319,6 +319,12 @@
                                                         <TextBlock Text="Wisteria" Foreground="{DynamicResource TextPrimaryBrush}" />
                                                     </StackPanel>
                                                 </Button>
+                                                <Button Classes="settings-option-row" Tag="Macaron" Click="OnThemeMenuItemClick">
+                                                    <StackPanel Orientation="Horizontal" Spacing="10">
+                                                        <Ellipse Width="12" Height="12" Fill="#C4A7E7" />
+                                                        <TextBlock Text="Macaron" Foreground="{DynamicResource TextPrimaryBrush}" />
+                                                    </StackPanel>
+                                                </Button>
                                             </StackPanel>
 
                                             <DockPanel IsVisible="{Binding IsExtensionsTabSelected}">

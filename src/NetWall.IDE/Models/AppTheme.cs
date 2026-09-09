@@ -7,4 +7,5 @@ public enum AppTheme
     Aurora,
     Blossom,
     Wisteria,
+    Macaron,
 }

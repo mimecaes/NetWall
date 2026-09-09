@@ -1,0 +1,30 @@
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!-- Soft dark-pastel palette (Catppuccin/Rosé Pine-inspired): muted plum base with
+         candy-colored pastel accents instead of the usual saturated dark-theme neons. -->
+
+    <Color x:Key="Macaron.Background">#232136</Color>
+    <Color x:Key="Macaron.PanelBackground">#2A2740</Color>
+    <Color x:Key="Macaron.SurfaceBackground">#2F2B47</Color>
+    <Color x:Key="Macaron.Accent">#C4A7E7</Color>
+    <Color x:Key="Macaron.Accent2">#9CCFD8</Color>
+    <Color x:Key="Macaron.TextPrimary">#E4DFF5</Color>
+    <Color x:Key="Macaron.TextMuted">#73E4DFF5</Color>
+    <Color x:Key="Macaron.TextDisabled">#47E4DFF5</Color>
+    <Color x:Key="Macaron.Border">#4DC4A7E7</Color>
+    <Color x:Key="Macaron.Hover">#1FC4A7E7</Color>
+    <Color x:Key="Macaron.Active">#33C4A7E7</Color>
+    <Color x:Key="Macaron.RunGreen">#95D9A5</Color>
+    <Color x:Key="Macaron.StopRed">#F58FA6</Color>
+    <Color x:Key="Macaron.TabActiveBackground">#2D2A46</Color>
+    <Color x:Key="Macaron.TabInactiveBackground">#252238</Color>
+    <Color x:Key="Macaron.TerminalBackground">#232136</Color>
+
+    <Color x:Key="Macaron.TopBarStop0">#38C4A7E7</Color>
+    <Color x:Key="Macaron.TopBarStop1">#1CC4A7E7</Color>
+    <Color x:Key="Macaron.TopBarStop2">#00C4A7E7</Color>
+
+    <Color x:Key="Macaron.EditorBackground">#27243C</Color>
+
+</ResourceDictionary>
