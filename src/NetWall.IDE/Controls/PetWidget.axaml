@@ -14,6 +14,13 @@
         </Border.Resources>
         <Canvas Name="PetCanvas" Background="{StaticResource GrassBrush}"
                 RenderOptions.BitmapInterpolationMode="None">
+            <Image Name="PcIcon" Width="34" Height="34" Canvas.Left="2" Canvas.Top="4"
+                   Stretch="Uniform"
+                   Source="avares://NetWall.IDE/Assets/Icons/pc.png"
+                   RenderOptions.BitmapInterpolationMode="HighQuality" />
+            <Image Name="FogoIcon" Width="34" Height="34" Canvas.Top="4"
+                   Stretch="Uniform"
+                   RenderOptions.BitmapInterpolationMode="HighQuality" />
             <Image Name="Sprite" Width="40" Height="40"
                    Stretch="Fill"
                    RenderOptions.BitmapInterpolationMode="None" />

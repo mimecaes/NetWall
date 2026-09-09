@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Media;
 using Avalonia.Media.Imaging;
 using Avalonia.Platform;
 using Avalonia.Threading;
@@ -38,7 +39,21 @@ public partial class PetWidget : UserControl
     private const int EatRow = 22;
     private const int GroomRow = 39;
 
+    private const int StationIconSize = 34;
+    private const int StationIconMargin = 2;
+    private const int StationGap = 4;
+    private const int FogoFrameCount = 4;
+    private const int FogoTicksPerFrame = 8;
+    private const int FogoCropX = 579;
+    private const int FogoCropY = 579;
+    private const int FogoCropWidth = 149;
+    private const int FogoCropHeight = 170;
+
     private static readonly Dictionary<PetColor, Bitmap> SheetCache = new();
+    private static IImage[]? _fogoFrames;
+
+    private int _fogoFrame;
+    private int _fogoFrameTick;
 
     private readonly DispatcherTimer _timer;
     private readonly Queue<DateTime> _recentEdits = new();
@@ -50,7 +65,7 @@ public partial class PetWidget : UserControl
     private IdleBehavior _idleBehavior = IdleBehavior.Walking;
     private DateTime _idleBehaviorChangeAt = DateTime.UtcNow;
 
-    private double _x;
+    private double _x = StationIconMargin + StationIconSize + StationGap;
     private int _direction = 1;
     private int _frame;
     private int _frameTick;
@@ -61,6 +76,7 @@ public partial class PetWidget : UserControl
         InitializeComponent();
         _sheetBitmap = LoadSheet(PetColor.Gray);
         PickNewIdleBehavior();
+        FogoIcon.Source = LoadFogoFrames()[0];
 
         _timer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(60) };
         _timer.Tick += OnTick;
@@ -102,6 +118,26 @@ public partial class PetWidget : UserControl
         return bitmap;
     }
 
+    private static IImage[] LoadFogoFrames()
+    {
+        if (_fogoFrames is not null)
+        {
+            return _fogoFrames;
+        }
+
+        var frames = new IImage[FogoFrameCount];
+        for (var i = 0; i < FogoFrameCount; i++)
+        {
+            var uri = new Uri($"avares://NetWall.IDE/Assets/Icons/fuego_{i + 1}.png");
+            using var stream = AssetLoader.Open(uri);
+            var bitmap = new Bitmap(stream);
+            frames[i] = new CroppedBitmap(bitmap, new PixelRect(FogoCropX, FogoCropY, FogoCropWidth, FogoCropHeight));
+        }
+
+        _fogoFrames = frames;
+        return frames;
+    }
+
     private CroppedBitmap Frame(int row, int col) =>
         new(_sheetBitmap, new PixelRect(col * Cell, row * Cell, Cell, Cell));
 
@@ -117,6 +153,7 @@ public partial class PetWidget : UserControl
         }
 
         UpdateState(now);
+        AnimateFogo();
 
         switch (_state)
         {
@@ -192,15 +229,39 @@ public partial class PetWidget : UserControl
         }
     }
 
-    private void RenderWalking(double speed, int ticksPerFrame)
+    private double CanvasWidth()
     {
         var width = PetCanvas.Bounds.Width;
-        if (width < 40)
+        return width < 40 ? 300 : width;
+    }
+
+    private void AnimateFogo()
+    {
+        var width = CanvasWidth();
+        Canvas.SetLeft(FogoIcon, width - StationIconSize - StationIconMargin);
+
+        _fogoFrameTick++;
+        if (_fogoFrameTick < FogoTicksPerFrame)
         {
-            width = 300;
+            return;
         }
 
-        var maxX = width - DisplaySize;
+        _fogoFrameTick = 0;
+        _fogoFrame = (_fogoFrame + 1) % FogoFrameCount;
+        FogoIcon.Source = LoadFogoFrames()[_fogoFrame];
+    }
+
+    private void RenderWalking(double speed, int ticksPerFrame)
+    {
+        var width = CanvasWidth();
+
+        var minX = StationIconMargin + StationIconSize + StationGap;
+        var maxX = width - DisplaySize - StationIconMargin - StationIconSize - StationGap;
+        if (maxX < minX)
+        {
+            maxX = minX;
+        }
+
         _x += _direction * speed;
 
         if (_x >= maxX)
@@ -208,9 +269,9 @@ public partial class PetWidget : UserControl
             _x = maxX;
             _direction = -1;
         }
-        else if (_x <= 0)
+        else if (_x <= minX)
         {
-            _x = 0;
+            _x = minX;
             _direction = 1;
         }
 
