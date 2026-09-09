@@ -6,11 +6,14 @@ using Avalonia.Media;
 using Avalonia.Styling;
 using Avalonia.Threading;
 using NetWall.IDE.Models;
+using NetWall.IDE.Services;
 
 namespace NetWall.IDE.Themes;
 
 public static class ThemeManager
 {
+    public static AppTheme CurrentTheme { get; private set; } = AppTheme.Nebula;
+
     private static readonly string[] ColorKeys =
     [
         "Background", "PanelBackground", "SurfaceBackground", "Accent", "Accent2",
@@ -61,6 +64,11 @@ public static class ThemeManager
 
 
         app.RequestedThemeVariant = ThemeVariant.Dark;
+
+        CurrentTheme = theme;
+        var settings = AppSettingsService.Load();
+        settings.Theme = theme;
+        AppSettingsService.Save(settings);
     }
 
     private static void AnimateGradientStops(LinearGradientBrush brush, Color[] targets)
