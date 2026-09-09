@@ -64,7 +64,7 @@
         <KeyBinding Gesture="F5" Command="{Binding RunActiveFileCommand}" />
     </Window.KeyBindings>
 
-    <DockPanel>
+    <DockPanel Name="RootDockPanel">
 
         <Border DockPanel.Dock="Top"
                 Height="36"

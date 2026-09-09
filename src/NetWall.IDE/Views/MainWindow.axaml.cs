@@ -51,6 +51,17 @@ public partial class MainWindow : Window
         Loaded += OnWindowLoaded;
     }
 
+    protected override void OnPropertyChanged(AvaloniaPropertyChangedEventArgs change)
+    {
+        base.OnPropertyChanged(change);
+
+        if (change.Property == WindowStateProperty)
+        {
+            
+            RootDockPanel.Margin = WindowState == WindowState.Maximized ? new Thickness(8) : default;
+        }
+    }
+
     private void OnWindowLoaded(object? sender, RoutedEventArgs e)
     {
         if (this.FindControl<ItemsControl>("TabsItemsControl") is { } tabsControl)
