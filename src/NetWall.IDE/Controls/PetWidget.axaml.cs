@@ -77,6 +77,8 @@ public partial class PetWidget : UserControl
         _sheetBitmap = LoadSheet(PetColor.Gray);
         PickNewIdleBehavior();
         FogoIcon.Source = LoadFogoFrames()[0];
+        Canvas.SetLeft(Sprite, _x);
+        Canvas.SetTop(Sprite, 0);
 
         _timer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(60) };
         _timer.Tick += OnTick;
@@ -174,7 +176,7 @@ public partial class PetWidget : UserControl
     {
         if ((now - _lastActivity).TotalSeconds > SleepAfterSeconds)
         {
-            _state = PetState.Sleeping;
+            SetState(PetState.Sleeping);
             return;
         }
 
@@ -185,7 +187,7 @@ public partial class PetWidget : UserControl
 
         if (now < _exerciseUntil)
         {
-            _state = PetState.Exercising;
+            SetState(PetState.Exercising);
             return;
         }
 
@@ -194,12 +196,25 @@ public partial class PetWidget : UserControl
             PickNewIdleBehavior();
         }
 
-        _state = PetState.Idle;
+        SetState(PetState.Idle);
 
         if (now >= _idleBehaviorChangeAt)
         {
             PickNewIdleBehavior();
         }
+    }
+
+    /// <summary>Changes the pet's state, resetting the frame counter so a leftover frame index from
+    /// the previous animation (which may be out of range for the new row's frame count) never gets drawn.</summary>
+    private void SetState(PetState newState)
+    {
+        if (_state != newState)
+        {
+            _frame = 0;
+            _frameTick = 0;
+        }
+
+        _state = newState;
     }
 
     private void PickNewIdleBehavior()
@@ -284,6 +299,7 @@ public partial class PetWidget : UserControl
 
     private void RenderStationary(int row, int frameCount, int ticksPerFrame)
     {
+        Canvas.SetLeft(Sprite, _x);
         Canvas.SetTop(Sprite, 0);
         AdvanceFrame(frameCount, ticksPerFrame);
         SetFrame(row, _frame);
