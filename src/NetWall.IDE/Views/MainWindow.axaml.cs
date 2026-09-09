@@ -9,6 +9,7 @@ using Avalonia.Interactivity;
 using Avalonia.Platform.Storage;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
+using AvaloniaEdit;
 using NetWall.IDE.Controls;
 using NetWall.IDE.Models;
 using NetWall.IDE.Themes;
@@ -18,17 +19,35 @@ namespace NetWall.IDE.Views;
 
 public partial class MainWindow : Window
 {
-    private bool _suppressEditorTextChanged;
+    private sealed class EditorPane
+    {
+        public required TextEditor Editor { get; init; }
+        public required Func<MainViewModel, EditorTabViewModel?> GetTab { get; init; }
+        public bool SuppressTextChanged { get; set; }
+    }
+
     private readonly IndentRainbowRenderer _indentRainbowRenderer = new();
     private DispatcherTimer? _indentFadeTimer;
+    private EditorPane _primaryPane = null!;
+    private EditorPane _secondaryPane = null!;
 
     public MainWindow()
     {
         InitializeComponent();
         DataContextChanged += OnDataContextChanged;
-        CodeEditor.TextChanged += OnEditorTextChanged;
-        CodeEditor.TextArea.Caret.PositionChanged += OnEditorCaretPositionChanged;
-        CodeEditor.TextArea.TextView.BackgroundRenderers.Add(_indentRainbowRenderer);
+
+        _primaryPane = new EditorPane { Editor = CodeEditor, GetTab = vm => vm.SelectedTab };
+        _secondaryPane = new EditorPane { Editor = SecondaryCodeEditor, GetTab = vm => vm.SelectedSecondaryTab };
+
+        foreach (var pane in new[] { _primaryPane, _secondaryPane })
+        {
+            pane.Editor.TextChanged += (_, _) => OnEditorTextChanged(pane);
+            pane.Editor.TextArea.Caret.PositionChanged += (_, _) => OnEditorCaretPositionChanged(pane);
+            pane.Editor.TextArea.TextView.BackgroundRenderers.Add(_indentRainbowRenderer);
+        }
+
+        SecondaryCodeEditor.KeyDown += OnSecondaryEditorKeyDown;
+
         Loaded += OnWindowLoaded;
     }
 
@@ -60,6 +79,47 @@ public partial class MainWindow : Window
         }
 
         ViewModel?.CloseTabCommand.Execute(tab);
+    }
+
+    private async void OnSecondaryTabCloseClick(object? sender, RoutedEventArgs e)
+    {
+        if (sender is not Button button || button.Tag is not EditorTabViewModel tab)
+        {
+            return;
+        }
+
+        var tabBorder = button.FindAncestorOfType<Border>();
+        if (tabBorder is not null)
+        {
+            tabBorder.Classes.Add("closing");
+            await Task.Delay(200);
+        }
+
+        ViewModel?.CloseSecondaryTabCommand.Execute(tab);
+    }
+
+    private void OnSecondaryEditorKeyDown(object? sender, KeyEventArgs e)
+    {
+        if (e.Key != Key.S || !e.KeyModifiers.HasFlag(KeyModifiers.Control))
+        {
+            return;
+        }
+
+        if (ViewModel?.SelectedSecondaryTab is not { } tab)
+        {
+            return;
+        }
+
+        if (string.IsNullOrEmpty(tab.FilePath))
+        {
+            ViewModel.RequestSaveAsFor(tab);
+        }
+        else
+        {
+            ViewModel.SaveTab(tab);
+        }
+
+        e.Handled = true;
     }
 
     private MainViewModel? ViewModel => DataContext as MainViewModel;
@@ -100,6 +160,7 @@ public partial class MainWindow : Window
             var progress = Math.Min(1.0, (DateTime.UtcNow - startedAt).TotalMilliseconds / duration.TotalMilliseconds);
             _indentRainbowRenderer.Opacity = start + (target - start) * progress;
             CodeEditor.TextArea.TextView.InvalidateVisual();
+            SecondaryCodeEditor.TextArea.TextView.InvalidateVisual();
 
             if (progress >= 1.0)
             {
@@ -117,35 +178,44 @@ public partial class MainWindow : Window
         }
         else if (e.PropertyName == nameof(MainViewModel.SelectedTab))
         {
-            _suppressEditorTextChanged = true;
-            CodeEditor.Text = ViewModel?.SelectedTab?.Content ?? string.Empty;
-            _suppressEditorTextChanged = false;
+            PushTabContent(_primaryPane);
+        }
+        else if (e.PropertyName == nameof(MainViewModel.SelectedSecondaryTab))
+        {
+            PushTabContent(_secondaryPane);
         }
     }
 
-    private void OnEditorTextChanged(object? sender, EventArgs e)
+    private void PushTabContent(EditorPane pane)
     {
-        if (_suppressEditorTextChanged)
+        pane.SuppressTextChanged = true;
+        pane.Editor.Text = ViewModel is { } vm ? pane.GetTab(vm)?.Content ?? string.Empty : string.Empty;
+        pane.SuppressTextChanged = false;
+    }
+
+    private void OnEditorTextChanged(EditorPane pane)
+    {
+        if (pane.SuppressTextChanged)
         {
             return;
         }
 
         Pet.NotifyTyping();
 
-        if (ViewModel?.SelectedTab is { } tab)
+        if (ViewModel is { } vm && pane.GetTab(vm) is { } tab)
         {
-            tab.Content = CodeEditor.Text;
+            tab.Content = pane.Editor.Text;
         }
     }
 
-    private void OnEditorCaretPositionChanged(object? sender, EventArgs e)
+    private void OnEditorCaretPositionChanged(EditorPane pane)
     {
         Pet.NotifyActivity();
 
-        if (ViewModel?.SelectedTab is { } tab)
+        if (ViewModel is { } vm && pane.GetTab(vm) is { } tab)
         {
-            tab.Line = CodeEditor.TextArea.Caret.Line;
-            tab.Column = CodeEditor.TextArea.Caret.Column;
+            tab.Line = pane.Editor.TextArea.Caret.Line;
+            tab.Column = pane.Editor.TextArea.Caret.Column;
         }
     }
 
@@ -241,7 +311,9 @@ public partial class MainWindow : Window
 
     private void OnTitleBarPointerPressed(object? sender, PointerPressedEventArgs e)
     {
-        if (e.Source is Visual source && source.FindAncestorOfType<Button>(includeSelf: true) is not null)
+        if (e.Source is Visual source &&
+            (source.FindAncestorOfType<Button>(includeSelf: true) is not null ||
+             source.FindAncestorOfType<TextBox>(includeSelf: true) is not null))
         {
             return;
         }
@@ -249,6 +321,42 @@ public partial class MainWindow : Window
         if (e.GetCurrentPoint(this).Properties.IsLeftButtonPressed)
         {
             BeginMoveDrag(e);
+        }
+    }
+
+    private void OnGlobalSearchKeyDown(object? sender, KeyEventArgs e)
+    {
+        if (ViewModel is not { } vm)
+        {
+            return;
+        }
+
+        switch (e.Key)
+        {
+            case Key.Enter:
+                var index = vm.GlobalSearchSelectedIndex >= 0 ? vm.GlobalSearchSelectedIndex : 0;
+                if (index < vm.GlobalSearchResults.Count)
+                {
+                    vm.OpenGlobalSearchResultCommand.Execute(vm.GlobalSearchResults[index].Node);
+                }
+
+                e.Handled = true;
+                break;
+
+            case Key.Down:
+                vm.MoveGlobalSearchSelection(1);
+                e.Handled = true;
+                break;
+
+            case Key.Up:
+                vm.MoveGlobalSearchSelection(-1);
+                e.Handled = true;
+                break;
+
+            case Key.Escape:
+                vm.GlobalSearchQuery = string.Empty;
+                e.Handled = true;
+                break;
         }
     }
 

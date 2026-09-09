@@ -23,6 +23,7 @@ public partial class MainViewModel : ViewModelBase
         _recentProjectsService = new RecentProjectsService();
         LoadRecentProjects();
         OpenTabs.CollectionChanged += OnOpenTabsChanged;
+        SecondaryOpenTabs.CollectionChanged += OnSecondaryOpenTabsChanged;
 
         Extensions.Add(new ExtensionInfo
         {
@@ -167,6 +168,7 @@ public partial class MainViewModel : ViewModelBase
         NewFileCommand.NotifyCanExecuteChanged();
         OnPropertyChanged(nameof(ShowTree));
         OnPropertyChanged(nameof(ShowSearchResults));
+        OnPropertyChanged(nameof(ShowGlobalSearchResults));
         OnPropertyChanged(nameof(ShowNoTabPrompt));
     }
 
@@ -247,6 +249,58 @@ public partial class MainViewModel : ViewModelBase
     [ObservableProperty]
     public partial bool HasSearchResults { get; set; }
 
+    [ObservableProperty]
+    public partial string GlobalSearchQuery { get; set; } = string.Empty;
+
+    partial void OnGlobalSearchQueryChanged(string value)
+    {
+        RebuildGlobalSearchResults();
+        OnPropertyChanged(nameof(ShowGlobalSearchResults));
+        OnPropertyChanged(nameof(HasGlobalSearchQuery));
+    }
+
+    public bool ShowGlobalSearchResults => IsFolderOpen && !string.IsNullOrWhiteSpace(GlobalSearchQuery);
+
+    public bool HasGlobalSearchQuery => !string.IsNullOrWhiteSpace(GlobalSearchQuery);
+
+    public ObservableCollection<GlobalSearchResult> GlobalSearchResults { get; } = [];
+
+    [ObservableProperty]
+    public partial bool HasGlobalSearchResults { get; set; }
+
+    [ObservableProperty]
+    public partial int GlobalSearchSelectedIndex { get; set; } = -1;
+
+    partial void OnGlobalSearchSelectedIndexChanged(int value) => SyncGlobalSearchSelection();
+
+    private void SyncGlobalSearchSelection()
+    {
+        for (var i = 0; i < GlobalSearchResults.Count; i++)
+        {
+            GlobalSearchResults[i].IsSelected = i == GlobalSearchSelectedIndex;
+        }
+    }
+
+    public void MoveGlobalSearchSelection(int delta)
+    {
+        if (GlobalSearchResults.Count == 0)
+        {
+            GlobalSearchSelectedIndex = -1;
+            return;
+        }
+
+        var next = (GlobalSearchSelectedIndex + delta) % GlobalSearchResults.Count;
+        if (next < 0)
+        {
+            next += GlobalSearchResults.Count;
+        }
+
+        GlobalSearchSelectedIndex = next;
+    }
+
+    [RelayCommand]
+    private void ClearGlobalSearch() => GlobalSearchQuery = string.Empty;
+
     public ObservableCollection<EditorTabViewModel> OpenTabs { get; } = [];
 
     [ObservableProperty]
@@ -256,7 +310,19 @@ public partial class MainViewModel : ViewModelBase
 
     public bool ShowSaveAllBadge => DirtyTabCount >= 2;
 
+    public ObservableCollection<EditorTabViewModel> SecondaryOpenTabs { get; } = [];
+
+    [ObservableProperty]
+    public partial EditorTabViewModel? SelectedSecondaryTab { get; set; }
+
+    public bool IsSplitEditorOpen => SecondaryOpenTabs.Count > 0;
+
+    private void OnSecondaryOpenTabsChanged(object? sender, NotifyCollectionChangedEventArgs e) =>
+        OnPropertyChanged(nameof(IsSplitEditorOpen));
+
     public event Action<EditorTabViewModel>? RequestSaveAs;
+
+    public void RequestSaveAsFor(EditorTabViewModel tab) => RequestSaveAs?.Invoke(tab);
 
     public event Action? RequestOpenFolder;
 
@@ -511,6 +577,50 @@ public partial class MainViewModel : ViewModelBase
         FileFilter = string.Empty;
     }
 
+    [RelayCommand]
+    private void OpenGlobalSearchResult(FileTreeNode? node)
+    {
+        if (node is null)
+        {
+            return;
+        }
+
+        for (var ancestor = node.Parent; ancestor is not null; ancestor = ancestor.Parent)
+        {
+            ancestor.IsExpanded = true;
+        }
+
+        SelectedTreeNode = node;
+        GlobalSearchQuery = string.Empty;
+    }
+
+    [RelayCommand]
+    private void OpenGlobalSearchResultInSplit(FileTreeNode? node)
+    {
+        OpenNodeInSplit(node);
+        GlobalSearchQuery = string.Empty;
+    }
+
+    private void RebuildGlobalSearchResults()
+    {
+        GlobalSearchResults.Clear();
+        if (string.IsNullOrWhiteSpace(GlobalSearchQuery))
+        {
+            HasGlobalSearchResults = false;
+            GlobalSearchSelectedIndex = -1;
+            return;
+        }
+
+        foreach (var node in CollectMatchingFiles(RootNodes, GlobalSearchQuery).Take(30))
+        {
+            GlobalSearchResults.Add(new GlobalSearchResult { Node = node, RelativeFolder = RelativeFolderOf(node) });
+        }
+
+        HasGlobalSearchResults = GlobalSearchResults.Count > 0;
+        GlobalSearchSelectedIndex = HasGlobalSearchResults ? 0 : -1;
+        SyncGlobalSearchSelection();
+    }
+
     private void RebuildFilteredNodes()
     {
         FilteredNodes.Clear();
@@ -701,6 +811,50 @@ public partial class MainViewModel : ViewModelBase
         SelectTab(tab);
     }
 
+    private void OpenNodeInSplit(FileTreeNode? node)
+    {
+        if (node is null || node.IsFolder)
+        {
+            return;
+        }
+
+        var existing = SecondaryOpenTabs.FirstOrDefault(t =>
+            string.Equals(t.FilePath, node.FullPath, StringComparison.OrdinalIgnoreCase));
+        if (existing is not null)
+        {
+            SelectSecondaryTab(existing);
+            return;
+        }
+
+        string text;
+        try
+        {
+            text = File.ReadAllText(node.FullPath);
+        }
+        catch (Exception ex)
+        {
+            AppendTerminalLine($"Failed to open '{node.FullPath}': {ex.Message}");
+            return;
+        }
+
+        var tab = new EditorTabViewModel { Title = node.Name, FilePath = node.FullPath };
+        tab.LoadContent(text);
+        WireDirtyTracking(tab, node);
+        SecondaryOpenTabs.Add(tab);
+        SelectSecondaryTab(tab);
+    }
+
+    [RelayCommand]
+    private void OpenTabInSplit(EditorTabViewModel? tab)
+    {
+        if (tab?.FilePath is not { } path)
+        {
+            return;
+        }
+
+        OpenNodeInSplit(FindNode(RootNodes, path));
+    }
+
     private void WireDirtyTracking(EditorTabViewModel tab, FileTreeNode node)
     {
         tab.PropertyChanged += (_, e) =>
@@ -755,6 +909,52 @@ public partial class MainViewModel : ViewModelBase
         if (OpenTabs.Count > 0)
         {
             SelectTab(OpenTabs[Math.Min(index, OpenTabs.Count - 1)]);
+        }
+    }
+
+    [RelayCommand]
+    private void SelectSecondaryTab(EditorTabViewModel? tab)
+    {
+        if (tab is null)
+        {
+            return;
+        }
+
+        foreach (var t in SecondaryOpenTabs)
+        {
+            t.IsSelected = false;
+        }
+
+        tab.IsSelected = true;
+        SelectedSecondaryTab = tab;
+    }
+
+    [RelayCommand]
+    private void CloseSecondaryTab(EditorTabViewModel? tab)
+    {
+        if (tab is null)
+        {
+            return;
+        }
+
+        var index = SecondaryOpenTabs.IndexOf(tab);
+        if (index < 0)
+        {
+            return;
+        }
+
+        var wasSelected = SelectedSecondaryTab == tab;
+        SecondaryOpenTabs.RemoveAt(index);
+
+        if (!wasSelected)
+        {
+            return;
+        }
+
+        SelectedSecondaryTab = null;
+        if (SecondaryOpenTabs.Count > 0)
+        {
+            SelectSecondaryTab(SecondaryOpenTabs[Math.Min(index, SecondaryOpenTabs.Count - 1)]);
         }
     }
 

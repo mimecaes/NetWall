@@ -68,15 +68,17 @@
 
         <Border DockPanel.Dock="Top"
                 Height="36"
+                ClipToBounds="True"
                 Background="{DynamicResource TopBarBackgroundBrush}"
                 BorderBrush="{DynamicResource BorderBrush}"
                 BorderThickness="0,0,0,1"
                 PointerPressed="OnTitleBarPointerPressed"
                 DoubleTapped="OnTitleBarDoubleTapped">
-            <Grid ColumnDefinitions="Auto,*,Auto">
+            <Grid>
 
-                <StackPanel Grid.Column="0" Classes="traffic-lights" Orientation="Horizontal" Spacing="8"
-                            Margin="12,0,0,0" VerticalAlignment="Center">
+                <StackPanel Classes="traffic-lights" Orientation="Horizontal" Spacing="8"
+                            HorizontalAlignment="Left" VerticalAlignment="Center"
+                            Margin="12,0,0,0">
                     <Button Classes="traffic-light traffic-close" Click="OnCloseClick" ToolTip.Tip="Close">
                         <Path Classes="traffic-glyph" Data="M2.5,2.5 L7.5,7.5 M7.5,2.5 L2.5,7.5" />
                     </Button>
@@ -88,10 +90,77 @@
                     </Button>
                 </StackPanel>
 
-                <TextBlock Grid.Column="1" Text="NetWall.IDE"
-                           HorizontalAlignment="Center" VerticalAlignment="Center"
-                           FontSize="12.5" Foreground="{DynamicResource TextMutedBrush}"
-                           IsHitTestVisible="False" />
+                <Border Name="GlobalSearchField" Classes="global-search-field" Width="480"
+                        HorizontalAlignment="Center" VerticalAlignment="Center">
+                    <Grid ColumnDefinitions="Auto,*,Auto">
+                        <controls:AnimatedIcon Grid.Column="0" Classes="icon-sm global-search-icon" Kind="Search" Margin="0,0,8,0" />
+                        <TextBox Grid.Column="1" Name="GlobalSearchBox" Classes="global-search-input"
+                                 Watermark="Buscar archivos en el proyecto..."
+                                 Text="{Binding GlobalSearchQuery, Mode=TwoWay}"
+                                 IsEnabled="{Binding IsFolderOpen}"
+                                 KeyDown="OnGlobalSearchKeyDown" />
+                        <Button Grid.Column="2" Classes="global-search-clear"
+                                IsVisible="{Binding HasGlobalSearchQuery}"
+                                Command="{Binding ClearGlobalSearchCommand}"
+                                ToolTip.Tip="Limpiar búsqueda">
+                            <controls:AnimatedIcon Classes="icon-sm" Kind="X" />
+                        </Button>
+                    </Grid>
+                </Border>
+
+                <Popup PlacementTarget="{Binding #GlobalSearchField}" Placement="BottomEdgeAlignedLeft"
+                       HorizontalOffset="0" VerticalOffset="8"
+                       IsLightDismissEnabled="True"
+                       IsOpen="{Binding ShowGlobalSearchResults}">
+                    <Border Classes="global-search-popup" Width="480">
+                        <ScrollViewer MaxHeight="360">
+                            <StackPanel Margin="6">
+                                <ItemsControl ItemsSource="{Binding GlobalSearchResults}"
+                                              HorizontalAlignment="Stretch">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate DataType="models:GlobalSearchResult">
+                                            <Border Classes="global-search-result-item"
+                                                    Classes.selected="{Binding IsSelected}">
+                                                <Grid ColumnDefinitions="Auto,*,Auto">
+                                                    <Border Grid.Column="0" Classes="global-search-result-rail" />
+                                                    <Button Grid.Column="1" Classes="global-search-result-open"
+                                                            Command="{Binding #Root.DataContext.OpenGlobalSearchResultCommand}"
+                                                            CommandParameter="{Binding Node}">
+                                                        <StackPanel Orientation="Horizontal" Spacing="10" Margin="8,0,0,0">
+                                                            <controls:AnimatedIcon Classes="icon-sm">
+                                                                <controls:AnimatedIcon.Kind>
+                                                                    <MultiBinding Converter="{x:Static conv:NodeIconConverter.Instance}">
+                                                                        <Binding Path="Node.IsFolder" />
+                                                                        <Binding Path="Node.IsExpanded" />
+                                                                        <Binding Path="Node.Name" />
+                                                                    </MultiBinding>
+                                                                </controls:AnimatedIcon.Kind>
+                                                            </controls:AnimatedIcon>
+                                                            <StackPanel Orientation="Vertical" Spacing="1" VerticalAlignment="Center">
+                                                                <TextBlock Text="{Binding Node.Name}" Classes="global-search-result-name" />
+                                                                <TextBlock Text="{Binding RelativeFolder}" Classes="search-result-path" />
+                                                            </StackPanel>
+                                                        </StackPanel>
+                                                    </Button>
+                                                    <Button Grid.Column="2" Classes="global-search-result-split"
+                                                            Command="{Binding #Root.DataContext.OpenGlobalSearchResultInSplitCommand}"
+                                                            CommandParameter="{Binding Node}"
+                                                            ToolTip.Tip="Abrir en split">
+                                                        <controls:AnimatedIcon Classes="icon-sm" Kind="PanelRight" />
+                                                    </Button>
+                                                </Grid>
+                                            </Border>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+
+                                <TextBlock Text="No matching files" Foreground="{DynamicResource TextMutedBrush}"
+                                           HorizontalAlignment="Center" Margin="0,20,0,6"
+                                           IsVisible="{Binding !HasGlobalSearchResults}" />
+                            </StackPanel>
+                        </ScrollViewer>
+                    </Border>
+                </Popup>
 
             </Grid>
         </Border>
@@ -412,7 +481,9 @@
 
             <Grid Grid.Column="2" RowDefinitions="*,Auto,Auto">
 
-                <Grid Grid.Row="0" RowDefinitions="Auto,*">
+                <Grid Grid.Row="0" ColumnDefinitions="*,Auto,Auto">
+
+                <Grid Grid.Column="0" RowDefinitions="Auto,*">
 
                     <ScrollViewer Grid.Row="0" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled"
                                   Background="{DynamicResource TabInactiveBackgroundBrush}">
@@ -444,6 +515,12 @@
                                                                    VerticalAlignment="Center" HorizontalAlignment="Center" />
                                                     </Panel>
                                                 </StackPanel>
+                                            </Button>
+                                            <Button Classes="tab-split"
+                                                    Command="{Binding #Root.DataContext.OpenTabInSplitCommand}"
+                                                    CommandParameter="{Binding}"
+                                                    ToolTip.Tip="Split Right">
+                                                <controls:AnimatedIcon Classes="icon-sm" Kind="PanelRight" Width="10" Height="10" />
                                             </Button>
                                             <Button Classes="tab-close" Click="OnTabCloseClick"
                                                     ToolTip.Tip="Close"
@@ -542,6 +619,71 @@
                             <Button Content="New File" Command="{Binding NewFileCommand}" HorizontalAlignment="Center" />
                         </StackPanel>
                     </Grid>
+                </Grid>
+
+                <GridSplitter Grid.Column="1" Width="4" Background="Transparent"
+                              IsVisible="{Binding IsSplitEditorOpen}" ResizeDirection="Columns" />
+
+                <Border Grid.Column="2" Width="440" IsVisible="{Binding IsSplitEditorOpen}"
+                        BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1,0,0,0">
+                    <Grid RowDefinitions="Auto,*">
+
+                        <ScrollViewer Grid.Row="0" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled"
+                                      Background="{DynamicResource TabInactiveBackgroundBrush}">
+                            <ItemsControl ItemsSource="{Binding SecondaryOpenTabs}">
+                                <ItemsControl.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <StackPanel Orientation="Horizontal" />
+                                    </ItemsPanelTemplate>
+                                </ItemsControl.ItemsPanel>
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate DataType="vm:EditorTabViewModel">
+                                        <Border Classes="tab-item" Classes.active="{Binding IsSelected}">
+                                            <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                                                <controls:AnimatedIcon Classes="icon-sm" Kind="File" />
+                                                <Button Classes="tab-select"
+                                                        Command="{Binding #Root.DataContext.SelectSecondaryTabCommand}"
+                                                        CommandParameter="{Binding}">
+                                                    <StackPanel Orientation="Horizontal" Spacing="6">
+                                                        <TextBlock Text="{Binding Title}" FontSize="13" VerticalAlignment="Center" />
+                                                        <Panel Width="7" Height="7" VerticalAlignment="Center">
+                                                            <Ellipse Width="7" Height="7" Fill="{DynamicResource TextPrimaryBrush}"
+                                                                     Classes="dirty-indicator"
+                                                                     Opacity="{Binding IsDirty, Converter={x:Static conv:BoolToOpacityConverter.Instance}}"
+                                                                     VerticalAlignment="Center" HorizontalAlignment="Center" />
+                                                            <TextBlock Text="✓" FontSize="9"
+                                                                       Classes="saved-indicator"
+                                                                       Foreground="{DynamicResource RunGreenBrush}"
+                                                                       Opacity="{Binding IsDirty, Converter={x:Static conv:BoolToInverseOpacityConverter.Instance}}"
+                                                                       VerticalAlignment="Center" HorizontalAlignment="Center" />
+                                                        </Panel>
+                                                    </StackPanel>
+                                                </Button>
+                                                <Button Classes="tab-close" Click="OnSecondaryTabCloseClick"
+                                                        ToolTip.Tip="Close"
+                                                        Tag="{Binding}">
+                                                    <controls:AnimatedIcon Classes="icon-sm" Kind="X" Width="10" Height="10" />
+                                                </Button>
+                                            </StackPanel>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </ScrollViewer>
+
+                        <ae:TextEditor Grid.Row="1" Name="SecondaryCodeEditor"
+                                       ShowLineNumbers="True"
+                                       WordWrap="False"
+                                       Background="{DynamicResource EditorBackgroundBrush}"
+                                       Foreground="{DynamicResource TextPrimaryBrush}"
+                                       LineNumbersForeground="{DynamicResource TextDisabledBrush}"
+                                       FontFamily="Cascadia Code,Consolas,DejaVu Sans Mono,monospace"
+                                       FontSize="14"
+                                       Padding="8,8"
+                                       IsVisible="{Binding SelectedSecondaryTab, Converter={x:Static conv:NullToBoolConverter.IsNotNull}}" />
+                    </Grid>
+                </Border>
+
                 </Grid>
 
                 <GridSplitter Grid.Row="1" Height="4" Background="Transparent"
