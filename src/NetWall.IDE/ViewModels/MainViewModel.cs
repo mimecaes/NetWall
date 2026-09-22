@@ -30,7 +30,7 @@ public partial class MainViewModel : ViewModelBase
             Name = "Indent Rainbow",
             Description = "Colorea cada nivel de indentación en el editor",
             IconPath = "avares://NetWall.IDE/Assets/Icons/identrainbow.png",
-            IsEnabled = true,
+            IsEnabled = false,
         });
         Extensions.Add(new ExtensionInfo
         {
@@ -38,7 +38,7 @@ public partial class MainViewModel : ViewModelBase
             Name = "DevCat",
             Description = "Una mascota gatito que vive en la terminal",
             IconPath = "avares://NetWall.IDE/Assets/Icons/devcat.png",
-            IsEnabled = true,
+            IsEnabled = false,
         });
 
         foreach (var extension in Extensions)
