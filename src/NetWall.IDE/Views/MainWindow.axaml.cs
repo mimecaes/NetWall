@@ -19,6 +19,7 @@ namespace NetWall.IDE.Views;
 public partial class MainWindow : Window
 {
     private bool _suppressEditorTextChanged;
+    private readonly IndentGuideRenderer _indentGuideRenderer = new();
     private readonly IndentRainbowRenderer _indentRainbowRenderer = new();
     private DispatcherTimer? _indentFadeTimer;
 
@@ -28,6 +29,7 @@ public partial class MainWindow : Window
         DataContextChanged += OnDataContextChanged;
         CodeEditor.TextChanged += OnEditorTextChanged;
         CodeEditor.TextArea.Caret.PositionChanged += OnEditorCaretPositionChanged;
+        CodeEditor.TextArea.TextView.BackgroundRenderers.Add(_indentGuideRenderer);
         CodeEditor.TextArea.TextView.BackgroundRenderers.Add(_indentRainbowRenderer);
         Loaded += OnWindowLoaded;
     }
