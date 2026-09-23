@@ -28,6 +28,14 @@ class Token:
     line: int
 
 
+def identStart(c: str) -> bool: #starts correctly 
+    return c.isalpha()
+
+
+def identContinue(c: str) -> bool:
+    return c.isalnum() or c == "_"
+
+
 def tokenize(text: str, file: str = "<entrada>") -> Tuple[List[Token], List[Diagnostic]]:
     tokens: List[Token] = []
     diagnostics: List[Diagnostic] = []
@@ -91,6 +99,27 @@ def tokenize(text: str, file: str = "<entrada>") -> Tuple[List[Token], List[Diag
                 tokens.append(Token("INT", text[start:i], line))
             continue
 
+        if identStart(c):
+            start = i
+            while i < end and identContinue(text[i]):
+                i += 1
+            word = text[start:i]
+            if word in RESERVED_WORDS:
+                tokens.append(Token("KEYWORD", word, line))
+            else:
+                tokens.append(Token("IDENT", word, line))
+            continue
+
+        if c in SYMBOLS:
+            tokens.append(Token(SYMBOLS[c], c, line))
+            i += 1
+            continue
+
+        #unknown character
+        diagnostics.append(Diagnostic( 
+            file=file, line=line, type="error_sintactico",
+            message=f"carácter no reconocido: '{c}'",
+        ))
         i += 1
 
     return tokens, diagnostics
