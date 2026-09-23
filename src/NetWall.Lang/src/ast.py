@@ -5,7 +5,7 @@ from typing import List, Optional, Union
 @dataclass
 class Network:
     cidr: str
-    base_int: int
+    baseInt: int
     mask: int
 
 
@@ -13,8 +13,8 @@ class Network:
 class Port:
     type: str  # if between value or range
     value: Optional[int] = None
-    from_: Optional[int] = None
-    to: Optional[int] = None
+    fromValue: Optional[int] = None
+    toValue: Optional[int] = None
 
 
 @dataclass
@@ -32,7 +32,7 @@ class Rule:
 @dataclass
 class Declaration:
     name: str
-    data_type: str
+    dataType: str
     value: object
     line: int
 
@@ -59,5 +59,5 @@ class Program:
     rules: List[Rule] = field(default_factory=list)
     functions: List[FunctionDef] = field(default_factory=list)
     imports: List[str] = field(default_factory=list)
-    default_policy: Optional[str] = None
+    defaultPolicy: Optional[str] = None
     simulations: List[Packet] = field(default_factory=list)
