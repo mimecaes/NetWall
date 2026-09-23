@@ -3,61 +3,61 @@ from typing import List, Optional, Union
 
 
 @dataclass
-class Red:
+class Network:
     cidr: str
-    base_int: int 
-    mascara: int 
+    base_int: int
+    mask: int
 
 
 @dataclass
-class Puerto:
-    tipo: str  #como un if de valor o rango         
-    valor: Optional[int] = None   
-    desde: Optional[int] = None   
-    hasta: Optional[int] = None
+class Port:
+    type: str  # if between value or range
+    value: Optional[int] = None
+    from_: Optional[int] = None
+    to: Optional[int] = None
 
 
 @dataclass
-class Regla:
-    nombre: str
-    accion: Optional[str] 
-    protocolo: str   
-    puerto: Puerto
-    origen: Union[Red, str]   
-    destino: Optional[Union[Red, str]]
-    comentario: Optional[str]  
-    linea: int
+class Rule:
+    name: str
+    action: Optional[str]
+    protocol: str
+    port: Port
+    source: Union[Network, str]
+    destination: Optional[Union[Network, str]]
+    comment: Optional[str]
+    line: int
 
 
 @dataclass
-class Declaracion:
-    nombre: str
-    tipo_dato: str
-    valor: object
-    linea: int
+class Declaration:
+    name: str
+    data_type: str
+    value: object
+    line: int
 
 
 @dataclass
-class FuncionDef:
-    nombre: str
-    parametros: List[str]
-    cuerpo: list
-    linea: int
+class FunctionDef:
+    name: str
+    parameters: List[str]
+    body: list
+    line: int
 
 
 @dataclass
-class Paquete: #para la simulación
-    protocolo: str
-    puerto: int
-    origen: str
-    linea: int
+class Packet:
+    protocol: str
+    port: int
+    source: str
+    line: int
 
 
 @dataclass
-class Programa:
-    declaraciones: List[Declaracion] = field(default_factory=list)
-    reglas: List[Regla] = field(default_factory=list)  
-    funciones: List[FuncionDef] = field(default_factory=list)
-    importaciones: List[str] = field(default_factory=list)
-    politica_defecto: Optional[str] = None  
-    simulaciones: List[Paquete] = field(default_factory=list)
+class Program:
+    declarations: List[Declaration] = field(default_factory=list)
+    rules: List[Rule] = field(default_factory=list)
+    functions: List[FunctionDef] = field(default_factory=list)
+    imports: List[str] = field(default_factory=list)
+    default_policy: Optional[str] = None
+    simulations: List[Packet] = field(default_factory=list)
