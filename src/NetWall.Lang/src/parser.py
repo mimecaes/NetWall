@@ -1,8 +1,23 @@
 from typing import List, Optional, Tuple
 
 from errors import Diagnostic
-from lexer import Token
+from lexer import SYMBOLS, Token
 from nodes import Declaration, Program
+
+TOKEN_DESCRIPTIONS = {name: f"'{symbol}'" for symbol, name in SYMBOLS.items()}
+TOKEN_DESCRIPTIONS.update({
+    "IDENT": "un nombre",
+    "STRING": "una cadena de texto",
+    "INT": "un número entero",
+    "FLOAT": "un número decimal",
+    "KEYWORD": "una palabra reservada",
+})
+
+
+def describeExpected(tokenType: str, value: Optional[str] = None) -> str:
+    if value is not None:
+        return f"'{value}'"
+    return TOKEN_DESCRIPTIONS.get(tokenType, tokenType)
 
 
 class _ParseError(Exception): #signals a parse error it returns diagnostics
@@ -37,8 +52,7 @@ class Parser:
     def _expect(self, tokenType: str, value: Optional[str] = None) -> Token:
         t = self._current()
         if t is None or t.type != tokenType or (value is not None and t.value != value):
-            expected = tokenType if value is None else f"{tokenType} {value!r}"
-            self._error(f"se esperaba {expected}")
+            self._error(f"se esperaba {describeExpected(tokenType, value)}")
         return self._advance()
 
     def _parseDeclaration(self) -> Declaration: 
