@@ -49,8 +49,15 @@ public sealed class TerminalSession
             UseShellExecute = false,
             CreateNoWindow = true,
         };
-        startInfo.ArgumentList.Add(isWindows ? "/c" : "-lc");
-        startInfo.ArgumentList.Add(commandLine);
+        if (isWindows)
+        {
+            startInfo.Arguments = $"/c \"{commandLine}\"";
+        }
+        else
+        {
+            startInfo.ArgumentList.Add("-lc");
+            startInfo.ArgumentList.Add(commandLine);
+        }
 
         using var process = new Process { StartInfo = startInfo };
         var output = new StringBuilder();

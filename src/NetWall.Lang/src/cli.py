@@ -20,7 +20,7 @@ def main():
         print(d)
 
     for declaration in program.declarations:
-        print(f"declarar {declaration.name}: {declaration.dataType} = {declaration.value!r}")
+        print(declaration.value)
 
 
 if __name__ == "__main__":
