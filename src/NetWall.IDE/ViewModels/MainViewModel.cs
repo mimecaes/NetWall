@@ -857,12 +857,46 @@ public partial class MainViewModel : ViewModelBase
         IsTerminalVisible = true;
         _terminal ??= new TerminalSession(Path.GetDirectoryName(SelectedTab.FilePath) ?? RootPath);
 
-        AppendTerminalLine($"$ {SelectedTab.FilePath}");
-        var output = await _terminal.RunAsync($"\"{SelectedTab.FilePath}\"");
+        string command;
+        if (string.Equals(Path.GetExtension(SelectedTab.FilePath), ".nw", StringComparison.OrdinalIgnoreCase))
+        {
+            var cliPath = FindNetWallCliPath();
+            if (cliPath is null)
+            {
+                AppendTerminalLine("No se encontró cli.py de NetWall.Lang.");
+                return;
+            }
+
+            command = $"python \"{cliPath}\" \"{SelectedTab.FilePath}\"";
+        }
+        else
+        {
+            command = $"\"{SelectedTab.FilePath}\"";
+        }
+
+        AppendTerminalLine($"$ {command}");
+        var output = await _terminal.RunAsync(command);
         if (!string.IsNullOrEmpty(output))
         {
             AppendTerminalLine(output);
         }
+    }
+
+    private static string? FindNetWallCliPath()
+    {
+        var dir = AppContext.BaseDirectory;
+        while (!string.IsNullOrEmpty(dir))
+        {
+            var candidate = Path.Combine(dir, "NetWall.Lang", "src", "cli.py");
+            if (File.Exists(candidate))
+            {
+                return candidate;
+            }
+
+            dir = Path.GetDirectoryName(dir);
+        }
+
+        return null;
     }
 
     [RelayCommand]
