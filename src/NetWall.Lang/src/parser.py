@@ -63,3 +63,6 @@ def parse(tokens: List[Token], file: str = "<entrada>") -> Tuple[Program, List[D
     parser = Parser(tokens, file)
     try:
         program = parser.parseProgram()
+    except _ParseError:
+        program = Program()
+    return program, parser.diagnostics
