@@ -305,6 +305,31 @@
         <Setter Property="TextWrapping" Value="Wrap" />
     </Style>
 
+    <!-- A run of the active file: a thin bar on the left that turns green or red with the result. -->
+    <Style Selector="Border.run-block">
+        <Setter Property="BorderThickness" Value="2,0,0,0" />
+        <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+        <Setter Property="Padding" Value="10,0,0,0" />
+        <Setter Property="Margin" Value="0,6" />
+    </Style>
+    <Style Selector="Border.run-block.succeeded">
+        <Setter Property="BorderBrush" Value="{DynamicResource RunGreenBrush}" />
+    </Style>
+    <Style Selector="Border.run-block.failed">
+        <Setter Property="BorderBrush" Value="{DynamicResource StopRedBrush}" />
+    </Style>
+
+    <Style Selector="TextBlock.run-block-header">
+        <Setter Property="FontFamily" Value="Cascadia Code,Consolas,DejaVu Sans Mono,monospace" />
+        <Setter Property="FontSize" Value="11" />
+        <Setter Property="Foreground" Value="{DynamicResource TextDisabledBrush}" />
+        <Setter Property="Margin" Value="0,0,0,4" />
+    </Style>
+
+    <Style Selector="TextBlock.terminal-link:pointerover">
+        <Setter Property="TextDecorations" Value="Underline" />
+    </Style>
+
     <Style Selector="Button.welcome-cta">
         <Setter Property="Background" Value="{DynamicResource AccentBrush}" />
         <Setter Property="BorderThickness" Value="0" />

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
@@ -178,8 +179,14 @@ public partial class MainViewModel : ViewModelBase
     [ObservableProperty]
     public partial bool IsTerminalVisible { get; set; } = true;
 
-    [ObservableProperty]
-    public partial string TerminalOutput { get; set; } = "NetWall.IDE terminal ready.";
+    public ObservableCollection<TerminalEntry> TerminalEntries { get; } =
+        [new TerminalLine(TerminalLineKind.Info, "NetWall.IDE terminal ready.")];
+
+    /// <summary>Raised whenever terminal content is added, so the view can scroll to the end.</summary>
+    public event Action? TerminalUpdated;
+
+    /// <summary>Raised after a file was opened from a terminal link, with the 1-based line to reveal.</summary>
+    public event Action<int>? RequestRevealLine;
 
     [ObservableProperty]
     public partial string TerminalInput { get; set; } = string.Empty;
@@ -322,7 +329,7 @@ public partial class MainViewModel : ViewModelBase
         }
         catch (Exception ex)
         {
-            AppendTerminalLine($"Failed to create folder '{fullPath}': {ex.Message}");
+            AppendTerminalLine($"Failed to create folder '{fullPath}': {ex.Message}", TerminalLineKind.Error);
             return;
         }
 
@@ -383,7 +390,7 @@ public partial class MainViewModel : ViewModelBase
         }
         catch (Exception ex)
         {
-            AppendTerminalLine($"Failed to rename '{node.FullPath}': {ex.Message}");
+            AppendTerminalLine($"Failed to rename '{node.FullPath}': {ex.Message}", TerminalLineKind.Error);
             return;
         }
 
@@ -452,7 +459,7 @@ public partial class MainViewModel : ViewModelBase
         }
         catch (Exception ex)
         {
-            AppendTerminalLine($"Failed to delete '{node.FullPath}': {ex.Message}");
+            AppendTerminalLine($"Failed to delete '{node.FullPath}': {ex.Message}", TerminalLineKind.Error);
             return;
         }
 
@@ -606,7 +613,7 @@ public partial class MainViewModel : ViewModelBase
         }
         catch (Exception ex)
         {
-            AppendTerminalLine($"Failed to create '{fullPath}': {ex.Message}");
+            AppendTerminalLine($"Failed to create '{fullPath}': {ex.Message}", TerminalLineKind.Error);
             return false;
         }
     }
@@ -690,7 +697,7 @@ public partial class MainViewModel : ViewModelBase
         }
         catch (Exception ex)
         {
-            AppendTerminalLine($"Failed to open '{node.FullPath}': {ex.Message}");
+            AppendTerminalLine($"Failed to open '{node.FullPath}': {ex.Message}", TerminalLineKind.Error);
             return;
         }
 
@@ -776,7 +783,7 @@ public partial class MainViewModel : ViewModelBase
         }
         catch (Exception ex)
         {
-            AppendTerminalLine($"Failed to save '{path}': {ex.Message}");
+            AppendTerminalLine($"Failed to save '{path}': {ex.Message}", TerminalLineKind.Error);
         }
     }
 
@@ -863,7 +870,7 @@ public partial class MainViewModel : ViewModelBase
             var cliPath = FindNetWallCliPath();
             if (cliPath is null)
             {
-                AppendTerminalLine("No se encontró cli.py de NetWall.Lang.");
+                AppendTerminalLine("No se encontró cli.py de NetWall.Lang.", TerminalLineKind.Error);
                 return;
             }
 
@@ -874,12 +881,20 @@ public partial class MainViewModel : ViewModelBase
             command = $"\"{SelectedTab.FilePath}\"";
         }
 
-        AppendTerminalLine($"$ {command}");
-        var output = await _terminal.RunAsync(command);
-        if (!string.IsNullOrEmpty(output))
+        var block = new TerminalRunBlock(SelectedTab.Title, command);
+        TerminalEntries.Add(block);
+        TerminalUpdated?.Invoke();
+
+        var stopwatch = Stopwatch.StartNew();
+        var result = await _terminal.RunAsync(command);
+        if (!string.IsNullOrEmpty(result.Output))
         {
-            AppendTerminalLine(output);
+            block.Lines.Add(new TerminalLine(TerminalLineKind.Output, result.Output));
         }
+
+        block.Duration = stopwatch.Elapsed;
+        block.Status = result.ExitCode == 0 ? RunStatus.Succeeded : RunStatus.Failed;
+        TerminalUpdated?.Invoke();
     }
 
     private static string? FindNetWallCliPath()
@@ -910,19 +925,55 @@ public partial class MainViewModel : ViewModelBase
         }
 
         _terminal ??= new TerminalSession(RootPath);
-        AppendTerminalLine($"$ {command}");
-        var output = await _terminal.RunAsync(command);
-        if (!string.IsNullOrEmpty(output))
+        AppendTerminalLine(command, TerminalLineKind.Command);
+        var result = await _terminal.RunAsync(command);
+        if (!string.IsNullOrEmpty(result.Output))
         {
-            AppendTerminalLine(output);
+            AppendTerminalLine(result.Output, TerminalLineKind.Output);
         }
     }
 
     [RelayCommand]
-    private void ClearTerminal() => TerminalOutput = string.Empty;
+    private void ClearTerminal() => TerminalEntries.Clear();
 
-    private void AppendTerminalLine(string line)
+    private void AppendTerminalLine(string text, TerminalLineKind kind = TerminalLineKind.Info)
     {
-        TerminalOutput = TerminalOutput.Length > 0 ? $"{TerminalOutput}\n{line}" : line;
+        TerminalEntries.Add(new TerminalLine(kind, text));
+        TerminalUpdated?.Invoke();
+    }
+
+    /// <summary>Opens a file (e.g. from a diagnostic link in the terminal) and reveals a line.</summary>
+    public void OpenFileAtLine(string path, int line)
+    {
+        if (!File.Exists(path))
+        {
+            AppendTerminalLine($"Failed to open '{path}': file not found", TerminalLineKind.Error);
+            return;
+        }
+
+        var node = FindNode(RootNodes, path) ?? new FileTreeNode { FullPath = path, Name = Path.GetFileName(path) };
+        OpenNode(node);
+        if (SelectedTab is { } tab && string.Equals(tab.FilePath, path, StringComparison.OrdinalIgnoreCase))
+        {
+            RequestRevealLine?.Invoke(line);
+        }
+    }
+
+    private static FileTreeNode? FindNode(IEnumerable<FileTreeNode> nodes, string path)
+    {
+        foreach (var node in nodes)
+        {
+            if (string.Equals(node.FullPath, path, StringComparison.OrdinalIgnoreCase))
+            {
+                return node;
+            }
+
+            if (node.IsFolder && FindNode(node.Children, path) is { } found)
+            {
+                return found;
+            }
+        }
+
+        return null;
     }
 }
