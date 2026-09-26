@@ -116,3 +116,7 @@ secrets.json
 *.a
 *.ltp
 *.bak.pas
+
+# Python
+__pycache__/
+*.py[cod]
