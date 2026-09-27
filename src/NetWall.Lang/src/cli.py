@@ -4,6 +4,7 @@ from pathlib import Path
 
 from lexer import tokenize
 from parser import parse
+from semantic import check
 
 
 ERROR_TYPES = {"error_sintactico", "error_semantico"}
@@ -100,8 +101,9 @@ def main() -> int:
 
     tokens, lexerDiagnostics = tokenize(text, file=str(path))
     program, parserDiagnostics = parse(tokens, file=str(path))
+    semanticDiagnostics = check(program, file=str(path))
 
-    diagnostics = sorted(lexerDiagnostics + parserDiagnostics, key=lambda d: d.line)
+    diagnostics = sorted(lexerDiagnostics + parserDiagnostics + semanticDiagnostics, key=lambda d: d.line)
     sourceLines = text.splitlines()
     for d in diagnostics:
         print(formatDiagnostic(d, sourceLines, path, paint))
