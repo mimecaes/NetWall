@@ -4,6 +4,8 @@ from errors import Diagnostic
 from lexer import SYMBOLS, Token
 from nodes import Declaration, Program
 
+TYPES = {"String", "Int", "Float"}
+
 TOKEN_DESCRIPTIONS = {name: f"'{symbol}'" for symbol, name in SYMBOLS.items()}
 TOKEN_DESCRIPTIONS.update({
     "IDENT": "un nombre",
@@ -55,14 +57,30 @@ class Parser:
             self._error(f"se esperaba {describeExpected(tokenType, value)}")
         return self._advance()
 
+    def _parseType(self) -> str:
+        t = self._current()
+        if t is None or t.type != "KEYWORD" or t.value not in TYPES:
+            self._error("se esperaba un tipo")
+        return self._advance().value
+
+    def _parseValue(self):
+        t = self._current()
+        if t is not None and t.type == "STRING":
+            return self._advance().value
+        if t is not None and t.type == "INT":
+            return int(self._advance().value)
+        if t is not None and t.type == "FLOAT":
+            return float(self._advance().value)
+        self._error("se esperaba un valor")
+
     def _parseDeclaration(self) -> Declaration: 
         line = self._current().line if self._current() is not None else 0
         self._expect("KEYWORD", "declarar")
         name = self._expect("IDENT").value
         self._expect("COLON")
-        dataType = self._expect("KEYWORD", "String").value
+        dataType = self._parseType()
         self._expect("EQUALS")
-        value = self._expect("STRING").value
+        value = self._parseValue()
         self._expect("SEMICOLON")
         return Declaration(name=name, dataType=dataType, value=value, line=line)
 
