@@ -4,7 +4,7 @@ from errors import Diagnostic
 from lexer import SYMBOLS, Token
 from nodes import Declaration, Program
 
-TYPES = {"String", "Int", "Float"}
+TYPES = {"String", "Int", "Float", "Red"}
 
 TOKEN_DESCRIPTIONS = {name: f"'{symbol}'" for symbol, name in SYMBOLS.items()}
 TOKEN_DESCRIPTIONS.update({

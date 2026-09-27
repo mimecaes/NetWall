@@ -8,6 +8,9 @@ class Network:
     baseInt: int
     mask: int
 
+    def __str__(self) -> str:
+        return self.cidr
+
 
 @dataclass
 class Port:
