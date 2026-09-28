@@ -30,6 +30,7 @@ class Parser:
     def __init__(self, tokens: List[Token], file: str):
         self.tokens = tokens
         self.pos = 0
+        self.statementStart = 0
         self.file = file
         self.diagnostics: List[Diagnostic] = []
 
@@ -45,7 +46,11 @@ class Parser:
 
     def _error(self, message: str):
         t = self._current()
-        line = t.line if t is not None else (self.tokens[-1].line if self.tokens else 0)
+        previous = self.tokens[self.pos - 1] if self.pos > self.statementStart else None
+        if previous is not None and (t is None or t.line > previous.line):
+            line = previous.line
+        else:
+            line = t.line if t is not None else 0
         self.diagnostics.append(Diagnostic(
             file=self.file, line=line, type="error_sintactico", message=message,
         ))
@@ -86,17 +91,28 @@ class Parser:
         self._expect("SEMICOLON")
         return Declaration(name=name, dataType=dataType, value=value, line=line)
 
+    def _synchronize(self):
+        while self._current() is not None:
+            t = self._current()
+            if t.type == "SEMICOLON":
+                self._advance()
+                return
+            if t.type == "KEYWORD" and t.value == "declarar":
+                return
+            self._advance()
+
     def parseProgram(self) -> Program:
         program = Program()
         while self._current() is not None:
-            program.declarations.append(self._parseDeclaration())
+            self.statementStart = self.pos
+            try:
+                program.declarations.append(self._parseDeclaration())
+            except _ParseError:
+                self._synchronize()
         return program
 
 
 def parse(tokens: List[Token], file: str = "<entrada>") -> Tuple[Program, List[Diagnostic]]:
     parser = Parser(tokens, file)
-    try:
-        program = parser.parseProgram()
-    except _ParseError:
-        program = Program()
+    program = parser.parseProgram()
     return program, parser.diagnostics
