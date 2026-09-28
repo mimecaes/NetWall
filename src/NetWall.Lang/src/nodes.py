@@ -18,6 +18,10 @@ class Port:
     value: Optional[int] = None
     fromValue: Optional[int] = None
     toValue: Optional[int] = None
+    line: int = 0
+
+    def __str__(self) -> str:
+        return str(self.value)
 
 
 @dataclass
@@ -30,6 +34,9 @@ class Rule:
     destination: Optional[Union[Network, str]]
     comment: Optional[str]
     line: int
+
+    def __str__(self) -> str:
+        return f"{self.name}: {self.action} {self.protocol} {self.port}"
 
 
 @dataclass

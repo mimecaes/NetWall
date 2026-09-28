@@ -112,9 +112,12 @@ def main() -> int:
     for declaration in program.declarations:
         print(declaration.value)
 
+    for rule in program.rules:
+        print(rule)
+
     errors = sum(1 for d in diagnostics if d.type in ERROR_TYPES)
     warnings = len(diagnostics) - errors
-    if program.declarations:
+    if program.declarations or program.rules:
         print()
     print(formatSummary(errors, warnings, paint))
     return 1 if errors else 0
