@@ -60,4 +60,12 @@ def check(program: Program, file: str = "<entrada>") -> List[Diagnostic]:
                 file=file, line=declaration.line, type="error_semantico", message=message,
             ))
 
+    for rule in program.rules:
+        port = rule.port
+        if port is not None and not 0 <= port.value <= 65535:
+            diagnostics.append(Diagnostic(
+                file=file, line=port.line, type="error_semantico",
+                message=f"el puerto {port.value} está fuera del rango 0-65535",
+            ))
+
     return diagnostics
