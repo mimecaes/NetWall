@@ -2,7 +2,7 @@ from typing import List, Optional, Tuple
 
 from errors import Diagnostic
 from lexer import SYMBOLS, Token
-from nodes import Declaration, Program
+from nodes import Declaration, Identifier, Program
 
 TYPES = {"String", "Int", "Float", "Red"}
 
@@ -71,6 +71,8 @@ class Parser:
             return int(self._advance().value)
         if t is not None and t.type == "FLOAT":
             return float(self._advance().value)
+        if t is not None and t.type == "IDENT":
+            return Identifier(self._advance().value)
         self._error("se esperaba un valor")
 
     def _parseDeclaration(self) -> Declaration: 

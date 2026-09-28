@@ -33,6 +33,14 @@ class Rule:
 
 
 @dataclass
+class Identifier:
+    name: str
+
+    def __str__(self) -> str:
+        return self.name
+
+
+@dataclass
 class Declaration:
     name: str
     dataType: str
