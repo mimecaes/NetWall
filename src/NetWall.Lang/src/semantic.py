@@ -2,7 +2,7 @@ import ipaddress
 from typing import Dict, List, Optional, Tuple
 
 from errors import Diagnostic
-from nodes import Declaration, Identifier, Network, Program
+from nodes import Declaration, Identifier, Network, Port, Program
 
 
 VALUE_TYPES = {str: "String", int: "Int", float: "Float"}
@@ -43,6 +43,16 @@ def checkDeclaration(declaration: Declaration, symbols: Dict[str, Declaration]) 
     return None
 
 
+def checkPort(port: Port) -> Optional[str]:
+    values = [port.value] if port.type == "value" else [port.fromValue, port.toValue]
+    for value in values:
+        if not 0 <= value <= 65535:
+            return f"el puerto {value} está fuera del rango 0-65535"
+    if port.type == "range" and port.fromValue > port.toValue:
+        return f"el rango {port.fromValue}-{port.toValue} es inválido: el inicio es mayor que el final"
+    return None
+
+
 def checkAddress(value, symbols: Dict[str, Declaration], line: int) -> Tuple[object, Optional[str]]:
     if isinstance(value, Identifier):
         referenced = symbols.get(value.name)
@@ -77,12 +87,10 @@ def check(program: Program, file: str = "<entrada>") -> List[Diagnostic]:
             ))
 
     for rule in program.rules:
-        port = rule.port
-        if port is not None and not 0 <= port.value <= 65535:
-            diagnostics.append(Diagnostic(
-                file=file, line=port.line, type="error_semantico",
-                message=f"el puerto {port.value} está fuera del rango 0-65535",
-            ))
+        if rule.port is not None:
+            message = checkPort(rule.port)
+            if message is not None:
+                diagnostics.append(Diagnostic(file=file, line=rule.port.line, type="error_semantico", message=message))
 
         line = rule.fieldLines.get("origen", rule.line)
         rule.source, message = checkAddress(rule.source, symbols, line)

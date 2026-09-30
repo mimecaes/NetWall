@@ -21,6 +21,8 @@ class Port:
     line: int = 0
 
     def __str__(self) -> str:
+        if self.type == "range":
+            return f"{self.fromValue}-{self.toValue}"
         return str(self.value)
 
 

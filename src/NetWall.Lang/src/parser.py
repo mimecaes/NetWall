@@ -113,6 +113,20 @@ class Parser:
             return Network(cidr="cualquiera", baseInt=0, mask=0)
         self._error("se esperaba una red, un nombre o 'cualquiera'")
 
+    def _parsePort(self) -> Port:
+        if self._check("INT"):
+            t = self._advance()
+            return Port(type="value", value=int(t.value), line=t.line)
+        if self._check("KEYWORD", "rango"):
+            line = self._advance().line
+            self._expect("LPAREN")
+            fromValue = int(self._expect("INT").value)
+            self._expect("COMMA")
+            toValue = int(self._expect("INT").value)
+            self._expect("RPAREN")
+            return Port(type="range", fromValue=fromValue, toValue=toValue, line=line)
+        self._error("se esperaba un número entero o 'rango'")
+
     def _parseField(self, fields: dict, lines: dict):
         t = self._current()
         if self._check("KEYWORD", "accion"):
@@ -126,8 +140,7 @@ class Parser:
         elif self._check("KEYWORD", "puerto"):
             self._advance()
             self._expect("EQUALS")
-            port = self._expect("INT")
-            fields["puerto"] = Port(type="value", value=int(port.value), line=port.line)
+            fields["puerto"] = self._parsePort()
         elif self._check("KEYWORD", "origen"):
             self._advance()
             self._expect("EQUALS")
