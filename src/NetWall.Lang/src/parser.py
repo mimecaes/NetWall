@@ -2,7 +2,7 @@ from typing import List, Optional, Tuple
 
 from errors import Diagnostic
 from lexer import SYMBOLS, Token
-from nodes import Declaration, Identifier, Network, Port, Program, Rule
+from nodes import Declaration, Identifier, Network, Packet, Port, Program, Rule
 
 TYPES = {"String", "Int", "Float", "Red"}
 STATEMENT_KEYWORDS = {"declarar", "regla", "principal"}
@@ -32,6 +32,7 @@ class Parser:
         self.tokens = tokens
         self.pos = 0
         self.statementStart = 0
+        self.depth = 0
         self.mainLine: Optional[int] = None
         self.file = file
         self.diagnostics: List[Diagnostic] = []
@@ -44,6 +45,10 @@ class Parser:
     def _advance(self) -> Token:
         t = self.tokens[self.pos]
         self.pos += 1
+        if t.type == "LBRACE":
+            self.depth += 1
+        elif t.type == "RBRACE":
+            self.depth -= 1
         return t
 
     def _error(self, message: str):
@@ -165,10 +170,7 @@ class Parser:
             fields[t.value] = value
             lines[t.value] = t.line
 
-    def _parseRule(self) -> Rule:
-        line = self._current().line
-        self._expect("KEYWORD", "regla")
-        name = self._expect("IDENT").value
+    def _parseFields(self) -> Tuple[dict, dict]:
         self._expect("LBRACE")
         fields = {}
         lines = {}
@@ -181,6 +183,13 @@ class Parser:
         if not self._check("RBRACE"):
             self._error("se esperaba ',' o '}'")
         self._advance()
+        return fields, lines
+
+    def _parseRule(self) -> Rule:
+        line = self._current().line
+        self._expect("KEYWORD", "regla")
+        name = self._expect("IDENT").value
+        fields, lines = self._parseFields()
         self._expect("SEMICOLON")
         return Rule(
             name=name, action=fields.get("accion"), protocol=fields.get("protocolo"),
@@ -199,9 +208,22 @@ class Parser:
         program.defaultPolicy = policy
         return line
 
+    def _parseSimulate(self, program: Program):
+        line = self._advance().line
+        self._expect("IDENT")
+        if not self._check("LBRACE"):
+            self._error("simular una variable todavía no está soportado")
+        fields, lines = self._parseFields()
+        self._expect("SEMICOLON")
+        program.simulations.append(Packet(
+            protocol=fields.get("protocolo"), port=fields.get("puerto"), source=fields.get("origen"),
+            destination=fields.get("destino"), line=line, fieldLines=lines,
+        ))
+
     def _parseMain(self, program: Program):
         self.mainLine = self._advance().line
         self._expect("LBRACE")
+        blockDepth = self.depth
         policyLine = None
         while not self._check("RBRACE"):
             if self._current() is None:
@@ -210,10 +232,12 @@ class Parser:
             try:
                 if self._check("KEYWORD", "politica_defecto"):
                     policyLine = self._parsePolicy(program, policyLine)
+                elif self._check("KEYWORD", "simular"):
+                    self._parseSimulate(program)
                 else:
-                    self._error("se esperaba 'politica_defecto'")
+                    self._error("se esperaba 'politica_defecto' o 'simular'")
             except _ParseError:
-                self._synchronizeInBlock()
+                self._synchronizeInBlock(blockDepth)
         self._advance()
 
     def _parseStatement(self, program: Program):
@@ -236,16 +260,11 @@ class Parser:
                 return
             self._advance()
 
-    def _synchronizeInBlock(self):
-        depth = 0
+    def _synchronizeInBlock(self, blockDepth: int):
         while self._current() is not None:
-            if self._check("LBRACE"):
-                depth += 1
-            elif self._check("RBRACE"):
-                if depth == 0:
-                    return
-                depth -= 1
-            elif self._check("SEMICOLON") and depth == 0:
+            if self._check("RBRACE") and self.depth == blockDepth:
+                return
+            if self._check("SEMICOLON") and self.depth == blockDepth:
                 self._advance()
                 return
             self._advance()

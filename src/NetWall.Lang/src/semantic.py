@@ -6,6 +6,7 @@ from nodes import Declaration, Identifier, Network, Port, Program, Rule
 
 
 VALUE_TYPES = {str: "String", int: "Int", float: "Float"}
+PACKET_FIELDS = ("protocolo", "puerto", "origen", "destino")
 
 
 def isCompatible(dataType: str, valueType: str) -> bool: #float can be assigned to int but not vice versa
@@ -69,6 +70,13 @@ def checkAddress(value, symbols: Dict[str, Declaration], line: int) -> Tuple[obj
     return value, None
 
 
+def checkHost(value, symbols: Dict[str, Declaration], line: int, fieldName: str) -> Tuple[object, Optional[str]]:
+    value, message = checkAddress(value, symbols, line)
+    if message is None and isinstance(value, Network) and value.mask != 32:
+        message = f"el {fieldName} de un paquete debe ser una dirección, no una red"
+    return value, message
+
+
 def check(program: Program, file: str = "<entrada>") -> List[Diagnostic]:
     diagnostics: List[Diagnostic] = []
     symbols: Dict[str, Declaration] = {}
@@ -116,6 +124,38 @@ def check(program: Program, file: str = "<entrada>") -> List[Diagnostic]:
 
         line = rule.fieldLines.get("destino", rule.line)
         rule.destination, message = checkAddress(rule.destination, symbols, line)
+        if message is not None:
+            diagnostics.append(Diagnostic(file=file, line=line, type="error_semantico", message=message))
+
+    for packet in program.simulations:
+        for name in PACKET_FIELDS:
+            if name not in packet.fieldLines:
+                diagnostics.append(Diagnostic(
+                    file=file, line=packet.line, type="error_semantico",
+                    message=f"al paquete le falta el campo '{name}'",
+                ))
+
+        if "accion" in packet.fieldLines:
+            diagnostics.append(Diagnostic(
+                file=file, line=packet.fieldLines["accion"], type="error_semantico",
+                message="un paquete no puede tener 'accion'",
+            ))
+
+        if packet.port is not None:
+            if packet.port.type == "range":
+                message = "el puerto de un paquete debe ser un número, no un rango"
+            else:
+                message = checkPort(packet.port)
+            if message is not None:
+                diagnostics.append(Diagnostic(file=file, line=packet.port.line, type="error_semantico", message=message))
+
+        line = packet.fieldLines.get("origen", packet.line)
+        packet.source, message = checkHost(packet.source, symbols, line, "origen")
+        if message is not None:
+            diagnostics.append(Diagnostic(file=file, line=line, type="error_semantico", message=message))
+
+        line = packet.fieldLines.get("destino", packet.line)
+        packet.destination, message = checkHost(packet.destination, symbols, line, "destino")
         if message is not None:
             diagnostics.append(Diagnostic(file=file, line=line, type="error_semantico", message=message))
 

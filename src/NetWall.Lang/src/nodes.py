@@ -71,10 +71,12 @@ class FunctionDef:
 
 @dataclass
 class Packet:
-    protocol: str
-    port: int
-    source: str
+    protocol: Optional[str]
+    port: Optional[Port]
+    source: Optional[Union[Network, str]]
+    destination: Optional[Union[Network, str]]
     line: int
+    fieldLines: Dict[str, int] = field(default_factory=dict)
 
 
 @dataclass
