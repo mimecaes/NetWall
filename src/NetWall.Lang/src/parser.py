@@ -237,8 +237,15 @@ class Parser:
             self._advance()
 
     def _synchronizeInBlock(self):
-        while self._current() is not None and not self._check("RBRACE"):
-            if self._check("SEMICOLON"):
+        depth = 0
+        while self._current() is not None:
+            if self._check("LBRACE"):
+                depth += 1
+            elif self._check("RBRACE"):
+                if depth == 0:
+                    return
+                depth -= 1
+            elif self._check("SEMICOLON") and depth == 0:
                 self._advance()
                 return
             self._advance()
