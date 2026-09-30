@@ -1,5 +1,5 @@
 import ipaddress
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Tuple
 
 from errors import Diagnostic
 from nodes import Declaration, Identifier, Network, Program
@@ -43,6 +43,22 @@ def checkDeclaration(declaration: Declaration, symbols: Dict[str, Declaration]) 
     return None
 
 
+def checkAddress(value, symbols: Dict[str, Declaration], line: int) -> Tuple[object, Optional[str]]:
+    if isinstance(value, Identifier):
+        referenced = symbols.get(value.name)
+        if referenced is None or referenced.line > line:
+            return value, f"'{value.name}' no está declarada"
+        if referenced.dataType != "Red":
+            return value, f"'{value.name}' es de tipo {referenced.dataType}, se esperaba Red"
+        return referenced.value, None
+    if isinstance(value, str):
+        network = parseNetwork(value)
+        if network is None:
+            return value, f"'{value}' no es una red válida"
+        return network, None
+    return value, None
+
+
 def check(program: Program, file: str = "<entrada>") -> List[Diagnostic]:
     diagnostics: List[Diagnostic] = []
     symbols: Dict[str, Declaration] = {}
@@ -67,5 +83,15 @@ def check(program: Program, file: str = "<entrada>") -> List[Diagnostic]:
                 file=file, line=port.line, type="error_semantico",
                 message=f"el puerto {port.value} está fuera del rango 0-65535",
             ))
+
+        line = rule.fieldLines.get("origen", rule.line)
+        rule.source, message = checkAddress(rule.source, symbols, line)
+        if message is not None:
+            diagnostics.append(Diagnostic(file=file, line=line, type="error_semantico", message=message))
+
+        line = rule.fieldLines.get("destino", rule.line)
+        rule.destination, message = checkAddress(rule.destination, symbols, line)
+        if message is not None:
+            diagnostics.append(Diagnostic(file=file, line=line, type="error_semantico", message=message))
 
     return diagnostics
