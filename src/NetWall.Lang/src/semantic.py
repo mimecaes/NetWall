@@ -2,7 +2,7 @@ import ipaddress
 from typing import Dict, List, Optional, Tuple
 
 from errors import Diagnostic
-from nodes import Declaration, Identifier, Network, Port, Program
+from nodes import Declaration, Identifier, Network, Port, Program, Rule
 
 
 VALUE_TYPES = {str: "String", int: "Int", float: "Float"}
@@ -86,7 +86,18 @@ def check(program: Program, file: str = "<entrada>") -> List[Diagnostic]:
                 file=file, line=declaration.line, type="error_semantico", message=message,
             ))
 
+    seenRules: Dict[str, Rule] = {}
+
     for rule in program.rules:
+        previous = seenRules.get(rule.name)
+        if previous is not None:
+            diagnostics.append(Diagnostic(
+                file=file, line=rule.line, type="error_semantico",
+                message=f"la regla '{rule.name}' ya fue definida en la línea {previous.line}",
+            ))
+        else:
+            seenRules[rule.name] = rule
+
         if rule.port is not None:
             message = checkPort(rule.port)
             if message is not None:

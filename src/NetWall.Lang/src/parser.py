@@ -132,30 +132,37 @@ class Parser:
         if self._check("KEYWORD", "accion"):
             self._advance()
             self._expect("EQUALS")
-            fields["accion"] = self._expectOneOf("permitir", "bloquear").value
+            value = self._expectOneOf("permitir", "bloquear").value
         elif self._check("KEYWORD", "protocolo"):
             self._advance()
             self._expect("EQUALS")
-            fields["protocolo"] = self._expectOneOf("tcp", "udp").value
+            value = self._expectOneOf("tcp", "udp").value
         elif self._check("KEYWORD", "puerto"):
             self._advance()
             self._expect("EQUALS")
-            fields["puerto"] = self._parsePort()
+            value = self._parsePort()
         elif self._check("KEYWORD", "origen"):
             self._advance()
             self._expect("EQUALS")
-            fields["origen"] = self._parseAddress()
+            value = self._parseAddress()
         elif self._check("KEYWORD", "destino"):
             self._advance()
             self._expect("EQUALS")
-            fields["destino"] = self._parseAddress()
+            value = self._parseAddress()
         elif self._check("KEYWORD", "comentario"):
             self._advance()
             self._expect("EQUALS")
-            fields["comentario"] = self._expect("STRING").value
+            value = self._expect("STRING").value
         else:
             self._error("se esperaba un campo de la regla")
-        lines[t.value] = t.line
+        if t.value in fields:
+            self.diagnostics.append(Diagnostic(
+                file=self.file, line=t.line, type="error_semantico",
+                message=f"el campo '{t.value}' está repetido (ya aparece en la línea {lines[t.value]})",
+            ))
+        else:
+            fields[t.value] = value
+            lines[t.value] = t.line
 
     def _parseRule(self) -> Rule:
         line = self._current().line
