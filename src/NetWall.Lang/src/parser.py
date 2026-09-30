@@ -2,7 +2,7 @@ from typing import List, Optional, Tuple
 
 from errors import Diagnostic
 from lexer import SYMBOLS, Token
-from nodes import Declaration, Identifier, Port, Program, Rule
+from nodes import Declaration, Identifier, Network, Port, Program, Rule
 
 TYPES = {"String", "Int", "Float", "Red"}
 STATEMENT_KEYWORDS = {"declarar", "regla"}
@@ -103,7 +103,18 @@ class Parser:
         self._expect("SEMICOLON")
         return Declaration(name=name, dataType=dataType, value=value, line=line)
 
-    def _parseField(self, fields: dict):
+    def _parseAddress(self):
+        if self._check("STRING"):
+            return self._advance().value
+        if self._check("IDENT"):
+            return Identifier(self._advance().value)
+        if self._check("KEYWORD", "cualquiera"):
+            self._advance()
+            return Network(cidr="cualquiera", baseInt=0, mask=0)
+        self._error("se esperaba una red, un nombre o 'cualquiera'")
+
+    def _parseField(self, fields: dict, lines: dict):
+        t = self._current()
         if self._check("KEYWORD", "accion"):
             self._advance()
             self._expect("EQUALS")
@@ -117,8 +128,21 @@ class Parser:
             self._expect("EQUALS")
             port = self._expect("INT")
             fields["puerto"] = Port(type="value", value=int(port.value), line=port.line)
+        elif self._check("KEYWORD", "origen"):
+            self._advance()
+            self._expect("EQUALS")
+            fields["origen"] = self._parseAddress()
+        elif self._check("KEYWORD", "destino"):
+            self._advance()
+            self._expect("EQUALS")
+            fields["destino"] = self._parseAddress()
+        elif self._check("KEYWORD", "comentario"):
+            self._advance()
+            self._expect("EQUALS")
+            fields["comentario"] = self._expect("STRING").value
         else:
             self._error("se esperaba un campo de la regla")
+        lines[t.value] = t.line
 
     def _parseRule(self) -> Rule:
         line = self._current().line
@@ -126,19 +150,21 @@ class Parser:
         name = self._expect("IDENT").value
         self._expect("LBRACE")
         fields = {}
-        self._parseField(fields)
+        lines = {}
+        self._parseField(fields, lines)
         while self._check("COMMA"):
             self._advance()
             if self._check("RBRACE"):
                 break
-            self._parseField(fields)
+            self._parseField(fields, lines)
         if not self._check("RBRACE"):
             self._error("se esperaba ',' o '}'")
         self._advance()
         self._expect("SEMICOLON")
         return Rule(
             name=name, action=fields.get("accion"), protocol=fields.get("protocolo"),
-            port=fields.get("puerto"), source=None, destination=None, comment=None, line=line,
+            port=fields.get("puerto"), source=fields.get("origen"), destination=fields.get("destino"),
+            comment=fields.get("comentario"), line=line, fieldLines=lines,
         )
 
     def _parseStatement(self, program: Program):

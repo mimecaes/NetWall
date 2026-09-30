@@ -1,5 +1,5 @@
 from dataclasses import dataclass, field
-from typing import List, Optional, Union
+from typing import Dict, List, Optional, Union
 
 
 @dataclass
@@ -34,9 +34,13 @@ class Rule:
     destination: Optional[Union[Network, str]]
     comment: Optional[str]
     line: int
+    fieldLines: Dict[str, int] = field(default_factory=dict)
 
     def __str__(self) -> str:
-        return f"{self.name}: {self.action} {self.protocol} {self.port}"
+        text = f"{self.name}: {self.action} {self.protocol} {self.port} de {self.source} a {self.destination}"
+        if self.comment is not None:
+            text += f' "{self.comment}"'
+        return text
 
 
 @dataclass
