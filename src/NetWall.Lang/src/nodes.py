@@ -78,6 +78,9 @@ class Packet:
     line: int
     fieldLines: Dict[str, int] = field(default_factory=dict)
 
+    def __str__(self) -> str:
+        return f"{self.protocol} {self.source} → {self.destination} puerto {self.port}"
+
 
 @dataclass
 class Program:

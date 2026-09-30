@@ -5,6 +5,7 @@ from pathlib import Path
 from lexer import tokenize
 from parser import parse
 from semantic import check
+from simulator import simulate
 
 
 ERROR_TYPES = {"error_sintactico", "error_semantico"}
@@ -120,6 +121,11 @@ def main() -> int:
 
     errors = sum(1 for d in diagnostics if d.type in ERROR_TYPES)
     warnings = len(diagnostics) - errors
+
+    if not errors and program.simulations:
+        print()
+        for result in simulate(program):
+            print(result)
     if program.declarations or program.rules or program.defaultPolicy is not None:
         print()
     print(formatSummary(errors, warnings, paint))
