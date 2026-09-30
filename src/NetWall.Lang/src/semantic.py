@@ -98,6 +98,12 @@ def check(program: Program, file: str = "<entrada>") -> List[Diagnostic]:
         else:
             seenRules[rule.name] = rule
 
+        if rule.action is None:
+            diagnostics.append(Diagnostic(
+                file=file, line=rule.line, type="error_semantico",
+                message=f"a la regla '{rule.name}' le falta el campo 'accion'",
+            ))
+
         if rule.port is not None:
             message = checkPort(rule.port)
             if message is not None:
