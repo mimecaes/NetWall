@@ -5,7 +5,7 @@ from lexer import SYMBOLS, Token
 from nodes import Declaration, Identifier, Network, Port, Program, Rule
 
 TYPES = {"String", "Int", "Float", "Red"}
-STATEMENT_KEYWORDS = {"declarar", "regla"}
+STATEMENT_KEYWORDS = {"declarar", "regla", "principal"}
 
 TOKEN_DESCRIPTIONS = {name: f"'{symbol}'" for symbol, name in SYMBOLS.items()}
 TOKEN_DESCRIPTIONS.update({
@@ -32,6 +32,7 @@ class Parser:
         self.tokens = tokens
         self.pos = 0
         self.statementStart = 0
+        self.mainLine: Optional[int] = None
         self.file = file
         self.diagnostics: List[Diagnostic] = []
 
@@ -56,6 +57,9 @@ class Parser:
             file=self.file, line=line, type="error_sintactico", message=message,
         ))
         raise _ParseError(message)
+
+    def _report(self, line: int, type: str, message: str):
+        self.diagnostics.append(Diagnostic(file=self.file, line=line, type=type, message=message))
 
     def _expect(self, tokenType: str, value: Optional[str] = None) -> Token:
         t = self._current()
@@ -156,10 +160,7 @@ class Parser:
         else:
             self._error("se esperaba un campo de la regla")
         if t.value in fields:
-            self.diagnostics.append(Diagnostic(
-                file=self.file, line=t.line, type="error_semantico",
-                message=f"el campo '{t.value}' está repetido (ya aparece en la línea {lines[t.value]})",
-            ))
+            self._report(t.line, "error_semantico", f"el campo '{t.value}' está repetido (ya aparece en la línea {lines[t.value]})")
         else:
             fields[t.value] = value
             lines[t.value] = t.line
@@ -187,13 +188,43 @@ class Parser:
             comment=fields.get("comentario"), line=line, fieldLines=lines,
         )
 
+    def _parsePolicy(self, program: Program, policyLine: Optional[int]) -> int:
+        line = self._advance().line
+        self._expect("EQUALS")
+        policy = self._expectOneOf("permitir", "bloquear").value
+        self._expect("SEMICOLON")
+        if policyLine is not None:
+            self._report(line, "error_semantico", f"la política por defecto ya fue definida en la línea {policyLine}")
+            return policyLine
+        program.defaultPolicy = policy
+        return line
+
+    def _parseMain(self, program: Program):
+        self.mainLine = self._advance().line
+        self._expect("LBRACE")
+        policyLine = None
+        while not self._check("RBRACE"):
+            if self._current() is None:
+                self._error("se esperaba '}'")
+            self.statementStart = self.pos
+            try:
+                if self._check("KEYWORD", "politica_defecto"):
+                    policyLine = self._parsePolicy(program, policyLine)
+                else:
+                    self._error("se esperaba 'politica_defecto'")
+            except _ParseError:
+                self._synchronizeInBlock()
+        self._advance()
+
     def _parseStatement(self, program: Program):
         if self._check("KEYWORD", "declarar"):
             program.declarations.append(self._parseDeclaration())
         elif self._check("KEYWORD", "regla"):
             program.rules.append(self._parseRule())
+        elif self._check("KEYWORD", "principal"):
+            self._parseMain(program)
         else:
-            self._error("se esperaba 'declarar' o 'regla'")
+            self._error("se esperaba 'declarar', 'regla' o 'principal'")
 
     def _synchronize(self):
         while self._current() is not None:
@@ -205,14 +236,28 @@ class Parser:
                 return
             self._advance()
 
+    def _synchronizeInBlock(self):
+        while self._current() is not None and not self._check("RBRACE"):
+            if self._check("SEMICOLON"):
+                self._advance()
+                return
+            self._advance()
+
     def parseProgram(self) -> Program:
         program = Program()
+        misplacedReported = False
         while self._current() is not None:
             self.statementStart = self.pos
+            if self.mainLine is not None and not misplacedReported:
+                self._report(self._current().line, "error_sintactico", "el bloque 'principal' debe ser lo último del programa")
+                misplacedReported = True
             try:
                 self._parseStatement(program)
             except _ParseError:
                 self._synchronize()
+        if self.mainLine is None:
+            line = self.tokens[-1].line if self.tokens else 1
+            self._report(line, "error_sintactico", "falta el bloque 'principal'")
         return program
 
 

@@ -115,9 +115,12 @@ def main() -> int:
     for rule in program.rules:
         print(rule)
 
+    if program.defaultPolicy is not None:
+        print(f"política por defecto: {program.defaultPolicy}")
+
     errors = sum(1 for d in diagnostics if d.type in ERROR_TYPES)
     warnings = len(diagnostics) - errors
-    if program.declarations or program.rules:
+    if program.declarations or program.rules or program.defaultPolicy is not None:
         print()
     print(formatSummary(errors, warnings, paint))
     return 1 if errors else 0
