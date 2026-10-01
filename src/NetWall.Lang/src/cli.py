@@ -5,6 +5,7 @@ from pathlib import Path
 from lexer import tokenize
 from parser import parse
 from semantic import check
+from analyzer import analyze
 from simulator import simulate
 
 
@@ -104,7 +105,13 @@ def main() -> int:
     program, parserDiagnostics = parse(tokens, file=str(path))
     semanticDiagnostics = check(program, file=str(path))
 
-    diagnostics = sorted(lexerDiagnostics + parserDiagnostics + semanticDiagnostics, key=lambda d: d.line)
+    diagnostics = lexerDiagnostics + parserDiagnostics + semanticDiagnostics
+    errors = sum(1 for d in diagnostics if d.type in ERROR_TYPES)
+    if not errors:
+        diagnostics += analyze(program, file=str(path))
+    warnings = len(diagnostics) - errors
+
+    diagnostics.sort(key=lambda d: d.line)
     sourceLines = text.splitlines()
     for d in diagnostics:
         print(formatDiagnostic(d, sourceLines, path, paint))
@@ -118,9 +125,6 @@ def main() -> int:
 
     if program.defaultPolicy is not None:
         print(f"política por defecto: {program.defaultPolicy}")
-
-    errors = sum(1 for d in diagnostics if d.type in ERROR_TYPES)
-    warnings = len(diagnostics) - errors
 
     if not errors and program.simulations:
         print()
