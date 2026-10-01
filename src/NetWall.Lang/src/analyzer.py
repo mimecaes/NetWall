@@ -6,6 +6,7 @@ from simulator import networkContains
 
 
 ANY = Network(cidr="cualquiera", baseInt=0, mask=0)
+VERBS = {"permitir": "permite", "bloquear": "bloquea"}
 
 
 def portBounds(port: Optional[Port]) -> Tuple[int, int]:
@@ -37,11 +38,15 @@ def analyze(program: Program, file: str = "<entrada>") -> List[Diagnostic]:
 
     for index, rule in enumerate(program.rules):
         for earlier in program.rules[:index]:
-            if earlier.action != rule.action and covers(earlier, rule):
-                diagnostics.append(Diagnostic(
-                    file=file, line=rule.line, type="advertencia_alcanzabilidad",
-                    message=f"la regla '{rule.name}' nunca se aplica: '{earlier.name}' (línea {earlier.line}) la cubre por completo",
-                ))
-                break
+            if not covers(earlier, rule):
+                continue
+            if earlier.action != rule.action:
+                type = "advertencia_alcanzabilidad"
+                message = f"la regla '{rule.name}' nunca se aplica: '{earlier.name}' (línea {earlier.line}) la cubre por completo"
+            else:
+                type = "redundancia"
+                message = f"la regla '{rule.name}' es redundante: '{earlier.name}' (línea {earlier.line}) ya {VERBS[rule.action]} todo lo que ella cubre"
+            diagnostics.append(Diagnostic(file=file, line=rule.line, type=type, message=message))
+            break
 
     return diagnostics
