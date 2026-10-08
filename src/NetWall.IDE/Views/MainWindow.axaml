@@ -599,7 +599,30 @@
                         </Border>
 
                         <ScrollViewer Name="TerminalScrollViewer">
-                            <TextBlock Classes="terminal-output" Text="{Binding TerminalOutput}" Margin="12,8" />
+                            <ItemsControl ItemsSource="{Binding TerminalEntries}" Margin="12,8">
+                                <ItemsControl.DataTemplates>
+                                    <DataTemplate DataType="models:TerminalLine">
+                                        <controls:AnsiTextBlock Classes="terminal-output" Line="{Binding}" />
+                                    </DataTemplate>
+                                    <DataTemplate DataType="models:TerminalRunBlock">
+                                        <Border Classes="run-block"
+                                                Classes.succeeded="{Binding IsSucceeded}"
+                                                Classes.failed="{Binding IsFailed}">
+                                            <StackPanel>
+                                                <TextBlock Classes="run-block-header" Text="{Binding Header}"
+                                                           ToolTip.Tip="{Binding Command}" />
+                                                <ItemsControl ItemsSource="{Binding Lines}">
+                                                    <ItemsControl.ItemTemplate>
+                                                        <DataTemplate DataType="models:TerminalLine">
+                                                            <controls:AnsiTextBlock Classes="terminal-output" Line="{Binding}" />
+                                                        </DataTemplate>
+                                                    </ItemsControl.ItemTemplate>
+                                                </ItemsControl>
+                                            </StackPanel>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.DataTemplates>
+                            </ItemsControl>
                         </ScrollViewer>
                     </DockPanel>
                     </Panel>

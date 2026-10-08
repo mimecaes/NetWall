@@ -21,6 +21,7 @@ public partial class MainWindow : Window
     private bool _suppressEditorTextChanged;
     private readonly IndentGuideRenderer _indentGuideRenderer = new();
     private readonly IndentRainbowRenderer _indentRainbowRenderer = new();
+    private readonly NetWallSyntaxColorizer _syntaxColorizer = new();
     private DispatcherTimer? _indentFadeTimer;
 
     public MainWindow()
@@ -31,6 +32,10 @@ public partial class MainWindow : Window
         CodeEditor.TextArea.Caret.PositionChanged += OnEditorCaretPositionChanged;
         CodeEditor.TextArea.TextView.BackgroundRenderers.Add(_indentGuideRenderer);
         CodeEditor.TextArea.TextView.BackgroundRenderers.Add(_indentRainbowRenderer);
+        CodeEditor.TextArea.TextView.LineTransformers.Add(_syntaxColorizer);
+        TerminalScrollViewer.AddHandler(AnsiTextBlock.LinkClickedEvent, OnTerminalLinkClicked);
+        ThemeManager.ThemeApplied += OnThemeApplied;
+        Closed += (_, _) => ThemeManager.ThemeApplied -= OnThemeApplied;
         Loaded += OnWindowLoaded;
     }
 
@@ -74,6 +79,8 @@ public partial class MainWindow : Window
             vm.RequestSaveAs += OnRequestSaveAs;
             vm.RequestDeleteConfirmation += OnRequestDeleteConfirmation;
             vm.PropertyChanged += OnViewModelPropertyChanged;
+            vm.TerminalUpdated += OnTerminalUpdated;
+            vm.RequestRevealLine += OnRequestRevealLine;
             vm.ExtensionToggled += OnExtensionToggled;
             _indentRainbowRenderer.Opacity = vm.IsIndentRainbowEnabled ? 1.0 : 0.0;
         }
@@ -113,16 +120,37 @@ public partial class MainWindow : Window
 
     private void OnViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
-        if (e.PropertyName == nameof(MainViewModel.TerminalOutput))
-        {
-            TerminalScrollViewer.ScrollToEnd();
-        }
-        else if (e.PropertyName == nameof(MainViewModel.SelectedTab))
+        if (e.PropertyName == nameof(MainViewModel.SelectedTab))
         {
             _suppressEditorTextChanged = true;
+            _syntaxColorizer.IsEnabled = ViewModel?.SelectedTab?.Language == "NetWall";
             CodeEditor.Text = ViewModel?.SelectedTab?.Content ?? string.Empty;
             _suppressEditorTextChanged = false;
         }
+    }
+
+    private void OnTerminalUpdated() =>
+        Dispatcher.UIThread.Post(TerminalScrollViewer.ScrollToEnd, DispatcherPriority.Background);
+
+    private void OnTerminalLinkClicked(object? sender, TerminalLinkEventArgs e)
+    {
+        if (!e.Uri.IsFile)
+        {
+            return;
+        }
+
+        // Diagnostic links look like file:///C:/project/firewall.nw#L12.
+        var fragment = e.Uri.Fragment.TrimStart('#').TrimStart('L');
+        var line = int.TryParse(fragment, out var parsed) ? parsed : 1;
+        ViewModel?.OpenFileAtLine(e.Uri.LocalPath, line);
+    }
+
+    private void OnRequestRevealLine(int line)
+    {
+        var lineNumber = Math.Clamp(line, 1, Math.Max(1, CodeEditor.Document.LineCount));
+        CodeEditor.TextArea.Caret.Location = new AvaloniaEdit.Document.TextLocation(lineNumber, 1);
+        CodeEditor.ScrollToLine(lineNumber);
+        CodeEditor.TextArea.Focus();
     }
 
     private void OnEditorTextChanged(object? sender, EventArgs e)
@@ -224,6 +252,8 @@ public partial class MainWindow : Window
             e.Handled = true;
         }
     }
+
+    private void OnThemeApplied(object? sender, EventArgs e) => CodeEditor.TextArea.TextView.Redraw();
 
     private void OnThemeMenuItemClick(object? sender, RoutedEventArgs e)
     {

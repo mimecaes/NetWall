@@ -17,9 +17,15 @@ public static class ThemeManager
         "TextPrimary", "TextMuted", "TextDisabled", "Border",
         "Hover", "Active", "RunGreen", "StopRed",
         "TabActiveBackground", "TabInactiveBackground", "TerminalBackground", "EditorBackground",
+        "Ansi0", "Ansi1", "Ansi2", "Ansi3", "Ansi4", "Ansi5", "Ansi6", "Ansi7",
+        "Ansi8", "Ansi9", "Ansi10", "Ansi11", "Ansi12", "Ansi13", "Ansi14", "Ansi15",
     ];
 
     private static DispatcherTimer? _topBarFadeTimer;
+
+    public static SyntaxPalette CurrentSyntax { get; private set; } = SyntaxPalette.Empty;
+
+    public static event EventHandler? ThemeApplied;
 
     public static void Apply(AppTheme theme)
     {
@@ -59,8 +65,10 @@ public static class ThemeManager
             AnimateGradientStops(topBar, targets);
         }
 
+        CurrentSyntax = SyntaxPalette.FromResources(themeDictionary, prefix);
 
         app.RequestedThemeVariant = ThemeVariant.Dark;
+        ThemeApplied?.Invoke(null, EventArgs.Empty);
     }
 
     private static void AnimateGradientStops(LinearGradientBrush brush, Color[] targets)

@@ -6,6 +6,8 @@ using System.Threading.Tasks;
 
 namespace NetWall.IDE.Services;
 
+public sealed record TerminalResult(string Output, int ExitCode);
+
 public sealed class TerminalSession
 {
     private readonly string _rootPath;
@@ -18,12 +20,12 @@ public sealed class TerminalSession
 
     public string CurrentDirectory { get; private set; }
 
-    public async Task<string> RunAsync(string commandLine)
+    public async Task<TerminalResult> RunAsync(string commandLine)
     {
         var trimmed = commandLine.Trim();
         if (trimmed.Length == 0)
         {
-            return string.Empty;
+            return new TerminalResult(string.Empty, 0);
         }
 
         if (trimmed == "cd" || trimmed.StartsWith("cd ", StringComparison.Ordinal))
@@ -33,10 +35,10 @@ public sealed class TerminalSession
             if (Directory.Exists(resolved))
             {
                 CurrentDirectory = resolved;
-                return string.Empty;
+                return new TerminalResult(string.Empty, 0);
             }
 
-            return $"cd: no such file or directory: {target}";
+            return new TerminalResult($"cd: no such file or directory: {target}", 1);
         }
 
         var isWindows = OperatingSystem.IsWindows();
@@ -48,9 +50,22 @@ public sealed class TerminalSession
             RedirectStandardError = true,
             UseShellExecute = false,
             CreateNoWindow = true,
+            StandardOutputEncoding = Encoding.UTF8,
+            StandardErrorEncoding = Encoding.UTF8,
         };
-        startInfo.ArgumentList.Add(isWindows ? "/c" : "-lc");
-        startInfo.ArgumentList.Add(commandLine);
+
+        // The output panel renders ANSI colors, so ask tools for them, and use UTF-8 end to end.
+        startInfo.Environment["FORCE_COLOR"] = "1";
+        startInfo.Environment["PYTHONIOENCODING"] = "utf-8";
+        if (isWindows)
+        {
+            startInfo.Arguments = $"/c \"chcp 65001 >nul & {commandLine}\"";
+        }
+        else
+        {
+            startInfo.ArgumentList.Add("-lc");
+            startInfo.ArgumentList.Add(commandLine);
+        }
 
         using var process = new Process { StartInfo = startInfo };
         var output = new StringBuilder();
@@ -64,13 +79,13 @@ public sealed class TerminalSession
         }
         catch (Exception ex)
         {
-            return $"Failed to start command: {ex.Message}";
+            return new TerminalResult($"Failed to start command: {ex.Message}", -1);
         }
 
         process.BeginOutputReadLine();
         process.BeginErrorReadLine();
         await process.WaitForExitAsync();
 
-        return output.ToString().TrimEnd('\n', '\r');
+        return new TerminalResult(output.ToString().TrimEnd('\n', '\r'), process.ExitCode);
     }
 }
