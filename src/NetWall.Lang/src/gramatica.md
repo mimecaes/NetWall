@@ -8,6 +8,8 @@ literales entre comillas.
 ```
 programa        ::= { importacion | declaracion | funcion_decl | regla_decl } bloque_principal
 
+modulo          ::= { importacion | declaracion | funcion_decl | regla_decl }
+
 importacion     ::= "importar" STRING ";"
 
 declaracion     ::= "declarar" IDENT ":" tipo "=" expresion ";"
@@ -110,3 +112,11 @@ STRING  ::= '"' { cualquier_caracter_excepto('"') } '"'
 - Bloque de control (`principal`, `funcion`, `si`/`sino`, `para`) → **no** lleva `;` después del `}`.
 - Bloque `regla { }` → **sí** lleva `;` después del `}` (es una declaración, no un bloque de control).
 - Campo dentro de `regla { }` o de un struct literal → separado por `,` (excepto el último).
+
+## Importaciones
+
+- El archivo que se compila es un `programa` y debe terminar con `bloque_principal`.
+- Un archivo importado con `importar` es un `modulo`: no lleva `bloque_principal`.
+- Un `modulo` puede importar otros módulos.
+- Las reglas de los módulos importados se colocan antes que las del archivo que los importa, en el orden de los `importar`.
+- La ruta del `importar` es relativa a la carpeta del archivo que contiene el `importar`.
