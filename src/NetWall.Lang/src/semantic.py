@@ -1,7 +1,7 @@
 import ipaddress
 from typing import Dict, List, Optional, Tuple
 
-from errors import Diagnostic
+from errors import Diagnostic, lineReference
 from nodes import Declaration, Identifier, Network, Port, Program, Rule
 
 
@@ -54,10 +54,10 @@ def checkPort(port: Port) -> Optional[str]:
     return None
 
 
-def checkAddress(value, symbols: Dict[str, Declaration], line: int) -> Tuple[object, Optional[str]]:
+def checkAddress(value, symbols: Dict[str, Declaration], file: str, line: int) -> Tuple[object, Optional[str]]:
     if isinstance(value, Identifier):
         referenced = symbols.get(value.name)
-        if referenced is None or referenced.line > line:
+        if referenced is None or (referenced.file == file and referenced.line > line):
             return value, f"'{value.name}' no está declarada"
         if referenced.dataType != "Red":
             return value, f"'{value.name}' es de tipo {referenced.dataType}, se esperaba Red"
@@ -70,28 +70,28 @@ def checkAddress(value, symbols: Dict[str, Declaration], line: int) -> Tuple[obj
     return value, None
 
 
-def checkHost(value, symbols: Dict[str, Declaration], line: int, fieldName: str) -> Tuple[object, Optional[str]]:
-    value, message = checkAddress(value, symbols, line)
+def checkHost(value, symbols: Dict[str, Declaration], file: str, line: int, fieldName: str) -> Tuple[object, Optional[str]]:
+    value, message = checkAddress(value, symbols, file, line)
     if message is None and isinstance(value, Network) and value.mask != 32:
         message = f"el {fieldName} de un paquete debe ser una dirección, no una red"
     return value, message
 
 
-def check(program: Program, file: str = "<entrada>") -> List[Diagnostic]:
+def check(program: Program) -> List[Diagnostic]:
     diagnostics: List[Diagnostic] = []
     symbols: Dict[str, Declaration] = {}
 
     for declaration in program.declarations:
         previous = symbols.get(declaration.name)
         if previous is not None:
-            message = f"'{declaration.name}' ya fue declarada en la línea {previous.line}"
+            message = f"'{declaration.name}' ya fue declarada ({lineReference(previous.file, previous.line, declaration.file)})"
         else:
             message = checkDeclaration(declaration, symbols)
             symbols[declaration.name] = declaration
 
         if message is not None:
             diagnostics.append(Diagnostic(
-                file=file, line=declaration.line, type="error_semantico", message=message,
+                file=declaration.file, line=declaration.line, type="error_semantico", message=message,
             ))
 
     seenRules: Dict[str, Rule] = {}
@@ -100,44 +100,44 @@ def check(program: Program, file: str = "<entrada>") -> List[Diagnostic]:
         previous = seenRules.get(rule.name)
         if previous is not None:
             diagnostics.append(Diagnostic(
-                file=file, line=rule.line, type="error_semantico",
-                message=f"la regla '{rule.name}' ya fue definida en la línea {previous.line}",
+                file=rule.file, line=rule.line, type="error_semantico",
+                message=f"la regla '{rule.name}' ya fue definida ({lineReference(previous.file, previous.line, rule.file)})",
             ))
         else:
             seenRules[rule.name] = rule
 
         if rule.action is None:
             diagnostics.append(Diagnostic(
-                file=file, line=rule.line, type="error_semantico",
+                file=rule.file, line=rule.line, type="error_semantico",
                 message=f"a la regla '{rule.name}' le falta el campo 'accion'",
             ))
 
         if rule.port is not None:
             message = checkPort(rule.port)
             if message is not None:
-                diagnostics.append(Diagnostic(file=file, line=rule.port.line, type="error_semantico", message=message))
+                diagnostics.append(Diagnostic(file=rule.file, line=rule.port.line, type="error_semantico", message=message))
 
         line = rule.fieldLines.get("origen", rule.line)
-        rule.source, message = checkAddress(rule.source, symbols, line)
+        rule.source, message = checkAddress(rule.source, symbols, rule.file, line)
         if message is not None:
-            diagnostics.append(Diagnostic(file=file, line=line, type="error_semantico", message=message))
+            diagnostics.append(Diagnostic(file=rule.file, line=line, type="error_semantico", message=message))
 
         line = rule.fieldLines.get("destino", rule.line)
-        rule.destination, message = checkAddress(rule.destination, symbols, line)
+        rule.destination, message = checkAddress(rule.destination, symbols, rule.file, line)
         if message is not None:
-            diagnostics.append(Diagnostic(file=file, line=line, type="error_semantico", message=message))
+            diagnostics.append(Diagnostic(file=rule.file, line=line, type="error_semantico", message=message))
 
     for packet in program.simulations:
         for name in PACKET_FIELDS:
             if name not in packet.fieldLines:
                 diagnostics.append(Diagnostic(
-                    file=file, line=packet.line, type="error_semantico",
+                    file=packet.file, line=packet.line, type="error_semantico",
                     message=f"al paquete le falta el campo '{name}'",
                 ))
 
         if "accion" in packet.fieldLines:
             diagnostics.append(Diagnostic(
-                file=file, line=packet.fieldLines["accion"], type="error_semantico",
+                file=packet.file, line=packet.fieldLines["accion"], type="error_semantico",
                 message="un paquete no puede tener 'accion'",
             ))
 
@@ -147,16 +147,16 @@ def check(program: Program, file: str = "<entrada>") -> List[Diagnostic]:
             else:
                 message = checkPort(packet.port)
             if message is not None:
-                diagnostics.append(Diagnostic(file=file, line=packet.port.line, type="error_semantico", message=message))
+                diagnostics.append(Diagnostic(file=packet.file, line=packet.port.line, type="error_semantico", message=message))
 
         line = packet.fieldLines.get("origen", packet.line)
-        packet.source, message = checkHost(packet.source, symbols, line, "origen")
+        packet.source, message = checkHost(packet.source, symbols, packet.file, line, "origen")
         if message is not None:
-            diagnostics.append(Diagnostic(file=file, line=line, type="error_semantico", message=message))
+            diagnostics.append(Diagnostic(file=packet.file, line=line, type="error_semantico", message=message))
 
         line = packet.fieldLines.get("destino", packet.line)
-        packet.destination, message = checkHost(packet.destination, symbols, line, "destino")
+        packet.destination, message = checkHost(packet.destination, symbols, packet.file, line, "destino")
         if message is not None:
-            diagnostics.append(Diagnostic(file=file, line=line, type="error_semantico", message=message))
+            diagnostics.append(Diagnostic(file=packet.file, line=line, type="error_semantico", message=message))
 
     return diagnostics

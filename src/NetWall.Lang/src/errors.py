@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Optional
 
 VALID_TYPES = {
@@ -8,6 +9,12 @@ VALID_TYPES = {
     "contradiccion",
     "redundancia",
 }
+
+
+def lineReference(file: str, line: int, fromFile: str) -> str:
+    if file == fromFile:
+        return f"línea {line}"
+    return f"{Path(file).name}:{line}"
 
 
 @dataclass

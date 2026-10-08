@@ -37,6 +37,7 @@ class Rule:
     comment: Optional[str]
     line: int
     fieldLines: Dict[str, int] = field(default_factory=dict)
+    file: str = ""
 
     def __str__(self) -> str:
         text = f"{self.name}: {self.action} {self.protocol} {self.port} de {self.source} a {self.destination}"
@@ -59,6 +60,13 @@ class Declaration:
     dataType: str
     value: object
     line: int
+    file: str = ""
+
+
+@dataclass
+class Import:
+    path: str
+    line: int
 
 
 @dataclass
@@ -77,6 +85,7 @@ class Packet:
     destination: Optional[Union[Network, str]]
     line: int
     fieldLines: Dict[str, int] = field(default_factory=dict)
+    file: str = ""
 
     def __str__(self) -> str:
         return f"{self.protocol} {self.source} → {self.destination} puerto {self.port}"
@@ -87,6 +96,6 @@ class Program:
     declarations: List[Declaration] = field(default_factory=list)
     rules: List[Rule] = field(default_factory=list)
     functions: List[FunctionDef] = field(default_factory=list)
-    imports: List[str] = field(default_factory=list)
+    imports: List[Import] = field(default_factory=list)
     defaultPolicy: Optional[str] = None
     simulations: List[Packet] = field(default_factory=list)

@@ -1,6 +1,6 @@
 from typing import List, Optional, Set, Tuple
 
-from errors import Diagnostic
+from errors import Diagnostic, lineReference
 from nodes import Network, Port, Program, Rule
 from simulator import networkContains
 
@@ -58,7 +58,7 @@ def findCovering(rules: List[Rule], rule: Rule) -> Optional[Rule]:
     return None
 
 
-def analyze(program: Program, file: str = "<entrada>") -> List[Diagnostic]:
+def analyze(program: Program) -> List[Diagnostic]:
     diagnostics: List[Diagnostic] = []
     neverApplied: Set[int] = set()
 
@@ -69,11 +69,11 @@ def analyze(program: Program, file: str = "<entrada>") -> List[Diagnostic]:
         if covering is not None:
             if covering.action != rule.action:
                 type = "advertencia_alcanzabilidad"
-                message = f"la regla '{rule.name}' nunca se aplica: '{covering.name}' (línea {covering.line}) la cubre por completo"
+                message = f"la regla '{rule.name}' nunca se aplica: '{covering.name}' ({lineReference(covering.file, covering.line, rule.file)}) la cubre por completo"
             else:
                 type = "redundancia"
-                message = f"la regla '{rule.name}' es redundante: '{covering.name}' (línea {covering.line}) ya {VERBS[rule.action]} todo lo que ella cubre"
-            diagnostics.append(Diagnostic(file=file, line=rule.line, type=type, message=message))
+                message = f"la regla '{rule.name}' es redundante: '{covering.name}' ({lineReference(covering.file, covering.line, rule.file)}) ya {VERBS[rule.action]} todo lo que ella cubre"
+            diagnostics.append(Diagnostic(file=rule.file, line=rule.line, type=type, message=message))
             neverApplied.add(index)
             continue
 
@@ -87,8 +87,8 @@ def analyze(program: Program, file: str = "<entrada>") -> List[Diagnostic]:
             others = len(conflicts) - 1
             extra = f" y {plural(others, 'regla más', 'reglas más')}" if others else ""
             diagnostics.append(Diagnostic(
-                file=file, line=rule.line, type="contradiccion",
-                message=f"la regla '{rule.name}' se cruza con '{first.name}' (línea {first.line}){extra} con acciones opuestas: en la parte común decide '{first.name}' porque va antes",
+                file=rule.file, line=rule.line, type="contradiccion",
+                message=f"la regla '{rule.name}' se cruza con '{first.name}' ({lineReference(first.file, first.line, rule.file)}){extra} con acciones opuestas: en la parte común decide '{first.name}' porque va antes",
             ))
 
     return diagnostics

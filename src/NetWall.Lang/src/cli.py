@@ -2,8 +2,7 @@ import os
 import sys
 from pathlib import Path
 
-from lexer import tokenize
-from parser import parse
+from loader import Loader
 from semantic import check
 from analyzer import analyze
 from simulator import simulate
@@ -97,24 +96,23 @@ def main() -> int:
     if paint.enabled and os.name == "nt" and sys.stdout.isatty():
         os.system("")
 
-    path = Path(sys.argv[1])
-    with open(path, encoding="utf-8") as f:
-        text = f.read()
+    path = Path(sys.argv[1]).resolve()
+    loader = Loader()
+    program = loader.load(path)
+    semanticDiagnostics = check(program)
 
-    tokens, lexerDiagnostics = tokenize(text, file=str(path))
-    program, parserDiagnostics = parse(tokens, file=str(path))
-    semanticDiagnostics = check(program, file=str(path))
-
-    diagnostics = lexerDiagnostics + parserDiagnostics + semanticDiagnostics
+    diagnostics = loader.diagnostics + semanticDiagnostics
     errors = sum(1 for d in diagnostics if d.type in ERROR_TYPES)
     if not errors:
-        diagnostics += analyze(program, file=str(path))
+        diagnostics += analyze(program)
     warnings = len(diagnostics) - errors
 
-    diagnostics.sort(key=lambda d: d.line)
-    sourceLines = text.splitlines()
+    order = {file: index for index, file in enumerate(loader.files)}
+    diagnostics.sort(key=lambda d: (order.get(d.file, 0), d.line))
+    sourceLines = path.read_text(encoding="utf-8").splitlines()
     for d in diagnostics:
-        print(formatDiagnostic(d, sourceLines, path, paint))
+        lines = sourceLines if d.file == str(path) else []
+        print(formatDiagnostic(d, lines, Path(d.file), paint))
         print()
 
     for declaration in program.declarations:
