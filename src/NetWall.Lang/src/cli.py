@@ -96,7 +96,7 @@ def main() -> int:
     path = Path(sys.argv[1]).resolve()
     loader = Loader()
     program = loader.load(path)
-    semanticDiagnostics = check(program)
+    semanticDiagnostics = check(program, loader.files)
 
     diagnostics = loader.diagnostics + semanticDiagnostics
     errors = sum(1 for d in diagnostics if d.type in ERROR_TYPES)

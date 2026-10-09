@@ -54,10 +54,10 @@ def checkPort(port: Port) -> Optional[str]:
     return None
 
 
-def checkAddress(value, symbols: Dict[str, Declaration], file: str, line: int) -> Tuple[object, Optional[str]]:
+def checkAddress(value, symbols: Dict[str, Declaration], order: Dict[str, int], file: str, line: int) -> Tuple[object, Optional[str]]:
     if isinstance(value, Identifier):
         referenced = symbols.get(value.name)
-        if referenced is None or (referenced.file == file and referenced.line > line):
+        if referenced is None or (order.get(referenced.file, 0), referenced.line) > (order.get(file, 0), line):
             return value, f"'{value.name}' no está declarada"
         if referenced.dataType != "Red":
             return value, f"'{value.name}' es de tipo {referenced.dataType}, se esperaba Red"
@@ -70,16 +70,17 @@ def checkAddress(value, symbols: Dict[str, Declaration], file: str, line: int) -
     return value, None
 
 
-def checkHost(value, symbols: Dict[str, Declaration], file: str, line: int, fieldName: str) -> Tuple[object, Optional[str]]:
-    value, message = checkAddress(value, symbols, file, line)
+def checkHost(value, symbols: Dict[str, Declaration], order: Dict[str, int], file: str, line: int, fieldName: str) -> Tuple[object, Optional[str]]:
+    value, message = checkAddress(value, symbols, order, file, line)
     if message is None and isinstance(value, Network) and value.mask != 32:
         message = f"el {fieldName} de un paquete debe ser una dirección, no una red"
     return value, message
 
 
-def check(program: Program) -> List[Diagnostic]:
+def check(program: Program, files: List[str]) -> List[Diagnostic]:
     diagnostics: List[Diagnostic] = []
     symbols: Dict[str, Declaration] = {}
+    order = {file: index for index, file in enumerate(files)}
 
     for declaration in program.declarations:
         previous = symbols.get(declaration.name)
@@ -118,12 +119,12 @@ def check(program: Program) -> List[Diagnostic]:
                 diagnostics.append(Diagnostic(file=rule.file, line=rule.port.line, type="error_semantico", message=message))
 
         line = rule.fieldLines.get("origen", rule.line)
-        rule.source, message = checkAddress(rule.source, symbols, rule.file, line)
+        rule.source, message = checkAddress(rule.source, symbols, order, rule.file, line)
         if message is not None:
             diagnostics.append(Diagnostic(file=rule.file, line=line, type="error_semantico", message=message))
 
         line = rule.fieldLines.get("destino", rule.line)
-        rule.destination, message = checkAddress(rule.destination, symbols, rule.file, line)
+        rule.destination, message = checkAddress(rule.destination, symbols, order, rule.file, line)
         if message is not None:
             diagnostics.append(Diagnostic(file=rule.file, line=line, type="error_semantico", message=message))
 
@@ -150,12 +151,12 @@ def check(program: Program) -> List[Diagnostic]:
                 diagnostics.append(Diagnostic(file=packet.file, line=packet.port.line, type="error_semantico", message=message))
 
         line = packet.fieldLines.get("origen", packet.line)
-        packet.source, message = checkHost(packet.source, symbols, packet.file, line, "origen")
+        packet.source, message = checkHost(packet.source, symbols, order, packet.file, line, "origen")
         if message is not None:
             diagnostics.append(Diagnostic(file=packet.file, line=line, type="error_semantico", message=message))
 
         line = packet.fieldLines.get("destino", packet.line)
-        packet.destination, message = checkHost(packet.destination, symbols, packet.file, line, "destino")
+        packet.destination, message = checkHost(packet.destination, symbols, order, packet.file, line, "destino")
         if message is not None:
             diagnostics.append(Diagnostic(file=packet.file, line=line, type="error_semantico", message=message))
 

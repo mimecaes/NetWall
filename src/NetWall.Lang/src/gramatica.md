@@ -120,3 +120,4 @@ STRING  ::= '"' { cualquier_caracter_excepto('"') } '"'
 - Un `modulo` puede importar otros módulos.
 - Las reglas de los módulos importados se colocan antes que las del archivo que los importa, en el orden de los `importar`.
 - La ruta del `importar` es relativa a la carpeta del archivo que contiene el `importar`.
+- Todos los archivos comparten los mismos nombres: una variable o regla no puede declararse en dos archivos distintos.
