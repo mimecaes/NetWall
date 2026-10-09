@@ -55,7 +55,7 @@ def plural(count: int, singular: str, pluralForm: str) -> str:
     return f"{count} {singular if count == 1 else pluralForm}"
 
 
-def formatDiagnostic(d, sourceLines, path: Path, paint: Painter) -> str:
+def formatDiagnostic(d, path: Path, paint: Painter) -> str:
     isError = d.type in ERROR_TYPES
     color = DIAGNOSTIC_COLORS.get(d.type, "31")
     symbol = "✖" if isError else "▲"
@@ -66,9 +66,6 @@ def formatDiagnostic(d, sourceLines, path: Path, paint: Painter) -> str:
         f"{paint.color(color, f'{symbol} {d.type}')}: {d.message}",
         f"{gutter} {paint.color(DIM, '┌─')} {paint.color(LOCATION, location)}",
     ]
-    if 1 <= d.line <= len(sourceLines):
-        source = sourceLines[d.line - 1].rstrip()
-        out.append(f"{paint.color(DIM, f'{d.line} │')} {source}")
     if d.relatedRule:
         out.append(f"{gutter} {paint.color(DIM, '=')} relacionado con la regla '{d.relatedRule}'")
     return "\n".join(out)
@@ -109,10 +106,8 @@ def main() -> int:
 
     order = {file: index for index, file in enumerate(loader.files)}
     diagnostics.sort(key=lambda d: (order.get(d.file, 0), d.line))
-    sourceLines = path.read_text(encoding="utf-8").splitlines()
     for d in diagnostics:
-        lines = sourceLines if d.file == str(path) else []
-        print(formatDiagnostic(d, lines, Path(d.file), paint))
+        print(formatDiagnostic(d, Path(d.file), paint))
         print()
 
     for declaration in program.declarations:
