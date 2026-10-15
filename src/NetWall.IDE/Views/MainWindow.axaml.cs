@@ -209,11 +209,26 @@ public partial class MainWindow : Window
     {
         var document = CodeEditor.Document;
         var caret = CodeEditor.TextArea.Caret;
+        var line = document.GetLineByNumber(caret.Line);
         var newLine = TextUtilities.GetNewLineFromDocument(document, caret.Line);
-        var text = code.Replace("\n", newLine);
-        if (caret.Column > 1)
+        var indent = document.GetText(TextUtilities.GetLeadingWhitespace(document, line));
+        var beforeCaret = document.GetText(line.Offset, CodeEditor.CaretOffset - line.Offset);
+        var afterCaret = document.GetText(CodeEditor.CaretOffset, line.EndOffset - CodeEditor.CaretOffset);
+
+        // Every generated line keeps the indentation of the current line. The block starts on
+        // a new line if there is code before the caret, and ends with one if there is code after.
+        var text = string.Join(newLine + indent, code.TrimEnd('\n').Split('\n'));
+        if (!string.IsNullOrWhiteSpace(afterCaret))
         {
-            text = newLine + text;
+            text += newLine;
+        }
+        if (!string.IsNullOrWhiteSpace(beforeCaret))
+        {
+            text = newLine + indent + text;
+        }
+        else if (beforeCaret.Length < indent.Length)
+        {
+            text = indent[beforeCaret.Length..] + text;
         }
 
         document.Insert(CodeEditor.CaretOffset, text);

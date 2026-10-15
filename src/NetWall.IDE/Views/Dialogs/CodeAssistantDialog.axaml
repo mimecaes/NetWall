@@ -20,6 +20,18 @@
                     <TextBlock Classes="assistant-hint" Text="Permite o bloquea tráfico según protocolo, puerto y direcciones" />
                 </StackPanel>
             </Button>
+            <Button Classes="assistant-option" Command="{Binding ChooseVariableCommand}">
+                <StackPanel Spacing="2">
+                    <TextBlock Classes="assistant-option-title" Text="Variable" />
+                    <TextBlock Classes="assistant-hint" Text="Declara un número, un texto o una red para usar en las reglas" />
+                </StackPanel>
+            </Button>
+            <Button Classes="assistant-option" Command="{Binding ChoosePacketCommand}">
+                <StackPanel Spacing="2">
+                    <TextBlock Classes="assistant-option-title" Text="Paquete para simular" />
+                    <TextBlock Classes="assistant-hint" Text="Prueba qué decide el firewall con un paquete (va dentro de principal)" />
+                </StackPanel>
+            </Button>
         </StackPanel>
 
         <StackPanel Spacing="10" IsVisible="{Binding IsRuleForm}">
@@ -61,6 +73,40 @@
 
                 <TextBlock Grid.Row="6" Classes="assistant-label" Text="Comentario" />
                 <TextBox Grid.Row="6" Grid.Column="1" Text="{Binding Comment}" Watermark="opcional" />
+            </Grid>
+        </StackPanel>
+
+        <StackPanel Spacing="10" IsVisible="{Binding IsVariableForm}">
+            <TextBlock Classes="assistant-title" Text="Nueva variable" />
+            <Grid ColumnDefinitions="96,*" RowDefinitions="Auto,Auto,Auto" RowSpacing="8">
+                <TextBlock Grid.Row="0" Classes="assistant-label" Text="Nombre" />
+                <TextBox Grid.Row="0" Grid.Column="1" Text="{Binding VariableName}" Watermark="lan" />
+
+                <TextBlock Grid.Row="1" Classes="assistant-label" Text="Tipo" />
+                <ComboBox Grid.Row="1" Grid.Column="1" ItemsSource="{x:Static vm:CodeAssistantViewModel.Types}"
+                          SelectedItem="{Binding VariableType}" HorizontalAlignment="Stretch" />
+
+                <TextBlock Grid.Row="2" Classes="assistant-label" Text="Valor" />
+                <TextBox Grid.Row="2" Grid.Column="1" Text="{Binding VariableValue}"
+                         Watermark="ej. 80, 2.5, servidor web o 192.168.1.0/24" />
+            </Grid>
+        </StackPanel>
+
+        <StackPanel Spacing="10" IsVisible="{Binding IsPacketForm}">
+            <TextBlock Classes="assistant-title" Text="Nuevo paquete para simular" />
+            <Grid ColumnDefinitions="96,*" RowDefinitions="Auto,Auto,Auto,Auto" RowSpacing="8">
+                <TextBlock Grid.Row="0" Classes="assistant-label" Text="Protocolo" />
+                <ComboBox Grid.Row="0" Grid.Column="1" ItemsSource="{x:Static vm:CodeAssistantViewModel.PacketProtocols}"
+                          SelectedItem="{Binding PacketProtocol}" HorizontalAlignment="Stretch" />
+
+                <TextBlock Grid.Row="1" Classes="assistant-label" Text="Puerto" />
+                <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding PacketPort}" Watermark="80" />
+
+                <TextBlock Grid.Row="2" Classes="assistant-label" Text="Origen" />
+                <TextBox Grid.Row="2" Grid.Column="1" Text="{Binding PacketSource}" Watermark="ej. 10.0.0.5" />
+
+                <TextBlock Grid.Row="3" Classes="assistant-label" Text="Destino" />
+                <TextBox Grid.Row="3" Grid.Column="1" Text="{Binding PacketDestination}" Watermark="ej. servidor o 192.168.1.10" />
             </Grid>
         </StackPanel>
 
