@@ -16,6 +16,7 @@ DIAGNOSTIC_COLORS = {
     "advertencia_alcanzabilidad": "33",
     "contradiccion": "35",
     "redundancia": "34",
+    "advertencia_no_usada": "33",
 }
 
 DIM = "90"
