@@ -2,8 +2,7 @@ import os
 import sys
 from pathlib import Path
 
-from lexer import tokenize
-from parser import parse
+from loader import Loader
 from semantic import check
 from analyzer import analyze
 from simulator import simulate
@@ -56,7 +55,7 @@ def plural(count: int, singular: str, pluralForm: str) -> str:
     return f"{count} {singular if count == 1 else pluralForm}"
 
 
-def formatDiagnostic(d, sourceLines, path: Path, paint: Painter) -> str:
+def formatDiagnostic(d, path: Path, paint: Painter) -> str:
     isError = d.type in ERROR_TYPES
     color = DIAGNOSTIC_COLORS.get(d.type, "31")
     symbol = "✖" if isError else "▲"
@@ -67,9 +66,6 @@ def formatDiagnostic(d, sourceLines, path: Path, paint: Painter) -> str:
         f"{paint.color(color, f'{symbol} {d.type}')}: {d.message}",
         f"{gutter} {paint.color(DIM, '┌─')} {paint.color(LOCATION, location)}",
     ]
-    if 1 <= d.line <= len(sourceLines):
-        source = sourceLines[d.line - 1].rstrip()
-        out.append(f"{paint.color(DIM, f'{d.line} │')} {source}")
     if d.relatedRule:
         out.append(f"{gutter} {paint.color(DIM, '=')} relacionado con la regla '{d.relatedRule}'")
     return "\n".join(out)
@@ -97,24 +93,21 @@ def main() -> int:
     if paint.enabled and os.name == "nt" and sys.stdout.isatty():
         os.system("")
 
-    path = Path(sys.argv[1])
-    with open(path, encoding="utf-8") as f:
-        text = f.read()
+    path = Path(sys.argv[1]).resolve()
+    loader = Loader()
+    program = loader.load(path)
+    semanticDiagnostics = check(program, loader.files)
 
-    tokens, lexerDiagnostics = tokenize(text, file=str(path))
-    program, parserDiagnostics = parse(tokens, file=str(path))
-    semanticDiagnostics = check(program, file=str(path))
-
-    diagnostics = lexerDiagnostics + parserDiagnostics + semanticDiagnostics
+    diagnostics = loader.diagnostics + semanticDiagnostics
     errors = sum(1 for d in diagnostics if d.type in ERROR_TYPES)
     if not errors:
-        diagnostics += analyze(program, file=str(path))
+        diagnostics += analyze(program)
     warnings = len(diagnostics) - errors
 
-    diagnostics.sort(key=lambda d: d.line)
-    sourceLines = text.splitlines()
+    order = {file: index for index, file in enumerate(loader.files)}
+    diagnostics.sort(key=lambda d: (order.get(d.file, 0), d.line))
     for d in diagnostics:
-        print(formatDiagnostic(d, sourceLines, path, paint))
+        print(formatDiagnostic(d, Path(d.file), paint))
         print()
 
     for declaration in program.declarations:

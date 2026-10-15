@@ -2,10 +2,10 @@ from typing import List, Optional, Tuple
 
 from errors import Diagnostic
 from lexer import SYMBOLS, Token
-from nodes import Declaration, Identifier, Network, Packet, Port, Program, Rule
+from nodes import Declaration, Identifier, Import, Network, Packet, Port, Program, Rule
 
 TYPES = {"String", "Int", "Float", "Red"}
-STATEMENT_KEYWORDS = {"declarar", "regla", "principal"}
+STATEMENT_KEYWORDS = {"importar", "declarar", "regla", "principal"}
 
 TOKEN_DESCRIPTIONS = {name: f"'{symbol}'" for symbol, name in SYMBOLS.items()}
 TOKEN_DESCRIPTIONS.update({
@@ -28,8 +28,9 @@ class _ParseError(Exception): #signals a parse error it returns diagnostics
 
 
 class Parser:
-    def __init__(self, tokens: List[Token], file: str):
+    def __init__(self, tokens: List[Token], file: str, isModule: bool = False):
         self.tokens = tokens
+        self.isModule = isModule
         self.pos = 0
         self.statementStart = 0
         self.depth = 0
@@ -110,7 +111,7 @@ class Parser:
         self._expect("EQUALS")
         value = self._parseValue()
         self._expect("SEMICOLON")
-        return Declaration(name=name, dataType=dataType, value=value, line=line)
+        return Declaration(name=name, dataType=dataType, value=value, line=line, file=self.file)
 
     def _parseAddress(self):
         if self._check("STRING"):
@@ -194,7 +195,7 @@ class Parser:
         return Rule(
             name=name, action=fields.get("accion"), protocol=fields.get("protocolo"),
             port=fields.get("puerto"), source=fields.get("origen"), destination=fields.get("destino"),
-            comment=fields.get("comentario"), line=line, fieldLines=lines,
+            comment=fields.get("comentario"), line=line, fieldLines=lines, file=self.file,
         )
 
     def _parsePolicy(self, program: Program, policyLine: Optional[int]) -> int:
@@ -217,7 +218,7 @@ class Parser:
         self._expect("SEMICOLON")
         program.simulations.append(Packet(
             protocol=fields.get("protocolo"), port=fields.get("puerto"), source=fields.get("origen"),
-            destination=fields.get("destino"), line=line, fieldLines=lines,
+            destination=fields.get("destino"), line=line, fieldLines=lines, file=self.file,
         ))
 
     def _parseMain(self, program: Program):
@@ -240,15 +241,25 @@ class Parser:
                 self._synchronizeInBlock(blockDepth)
         self._advance()
 
+    def _parseImport(self, program: Program):
+        line = self._advance().line
+        path = self._expect("STRING").value
+        self._expect("SEMICOLON")
+        program.imports.append(Import(path=path, line=line))
+
     def _parseStatement(self, program: Program):
-        if self._check("KEYWORD", "declarar"):
+        if self._check("KEYWORD", "importar"):
+            self._parseImport(program)
+        elif self._check("KEYWORD", "declarar"):
             program.declarations.append(self._parseDeclaration())
         elif self._check("KEYWORD", "regla"):
             program.rules.append(self._parseRule())
         elif self._check("KEYWORD", "principal"):
+            if self.isModule:
+                self._report(self._current().line, "error_sintactico", "un archivo importado no puede tener un bloque 'principal'")
             self._parseMain(program)
         else:
-            self._error("se esperaba 'declarar', 'regla' o 'principal'")
+            self._error("se esperaba 'importar', 'declarar', 'regla' o 'principal'")
 
     def _synchronize(self):
         while self._current() is not None:
@@ -281,13 +292,13 @@ class Parser:
                 self._parseStatement(program)
             except _ParseError:
                 self._synchronize()
-        if self.mainLine is None:
+        if self.mainLine is None and not self.isModule:
             line = self.tokens[-1].line if self.tokens else 1
             self._report(line, "error_sintactico", "falta el bloque 'principal'")
         return program
 
 
-def parse(tokens: List[Token], file: str = "<entrada>") -> Tuple[Program, List[Diagnostic]]:
-    parser = Parser(tokens, file)
+def parse(tokens: List[Token], file: str = "<entrada>", isModule: bool = False) -> Tuple[Program, List[Diagnostic]]:
+    parser = Parser(tokens, file, isModule)
     program = parser.parseProgram()
     return program, parser.diagnostics
