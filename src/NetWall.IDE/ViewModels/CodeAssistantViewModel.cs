@@ -1,11 +1,14 @@
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using NetWall.IDE.Services;
+using NetWall.IDE.Themes;
 
 namespace NetWall.IDE.ViewModels;
 
@@ -15,6 +18,8 @@ public enum AssistantKind
     Rule,
     Variable,
     Packet,
+    Import,
+    Main,
 }
 
 /// <summary>
@@ -25,6 +30,8 @@ public partial class CodeAssistantViewModel : ViewModelBase
 {
     public const string AnyProtocol = "(cualquiera)";
 
+    public const string NoPolicy = "(sin política)";
+
     public static IReadOnlyList<string> Actions { get; } = ["permitir", "bloquear"];
 
     public static IReadOnlyList<string> Protocols { get; } = [AnyProtocol, "tcp", "udp"];
@@ -33,10 +40,29 @@ public partial class CodeAssistantViewModel : ViewModelBase
 
     public static IReadOnlyList<string> Types { get; } = ["Int", "Float", "String", "Red"];
 
-    public CodeAssistantViewModel() => Validate();
+    public static IReadOnlyList<string> Policies { get; } = ["bloquear", "permitir", NoPolicy];
+
+    private readonly HashSet<string> _importedPaths = [];
+    private readonly bool _hasMainBlock;
+
+    public CodeAssistantViewModel() : this(null, null, string.Empty)
+    {
+    }
+
+    /// <param name="currentFile">The file open in the editor, used to compute import paths.</param>
+    /// <param name="projectRoot">The project folder, where importable files are searched.</param>
+    /// <param name="documentText">The editor text, to know what is already imported and declared.</param>
+    public CodeAssistantViewModel(string? currentFile, string? projectRoot, string documentText)
+    {
+        ScanDocument(documentText);
+        _hasMainBlock = _keywords.Contains("principal");
+        ImportFiles = FindImportFiles(currentFile, projectRoot);
+        Validate();
+    }
 
     [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(IsChoosing), nameof(IsRuleForm), nameof(IsVariableForm), nameof(IsPacketForm))]
+    [NotifyPropertyChangedFor(nameof(IsChoosing), nameof(IsRuleForm), nameof(IsVariableForm), nameof(IsPacketForm),
+        nameof(IsImportForm), nameof(IsMainForm))]
     public partial AssistantKind Kind { get; set; }
 
     public bool IsChoosing => Kind == AssistantKind.None;
@@ -46,6 +72,18 @@ public partial class CodeAssistantViewModel : ViewModelBase
     public bool IsVariableForm => Kind == AssistantKind.Variable;
 
     public bool IsPacketForm => Kind == AssistantKind.Packet;
+
+    public bool IsImportForm => Kind == AssistantKind.Import;
+
+    public bool IsMainForm => Kind == AssistantKind.Main;
+
+    public IReadOnlyList<string> ImportFiles { get; }
+
+    [ObservableProperty]
+    public partial string? SelectedImport { get; set; }
+
+    [ObservableProperty]
+    public partial string MainPolicy { get; set; } = "bloquear";
 
     [ObservableProperty]
     public partial string RuleName { get; set; } = string.Empty;
@@ -123,6 +161,12 @@ public partial class CodeAssistantViewModel : ViewModelBase
     private void ChoosePacket() => Kind = AssistantKind.Packet;
 
     [RelayCommand]
+    private void ChooseImport() => Kind = AssistantKind.Import;
+
+    [RelayCommand]
+    private void ChooseMain() => Kind = AssistantKind.Main;
+
+    [RelayCommand]
     private void Back() => Kind = AssistantKind.None;
 
     protected override void OnPropertyChanged(PropertyChangedEventArgs e)
@@ -147,6 +191,12 @@ public partial class CodeAssistantViewModel : ViewModelBase
                 break;
             case AssistantKind.Packet:
                 ValidatePacket(errors);
+                break;
+            case AssistantKind.Import:
+                ValidateImport(errors);
+                break;
+            case AssistantKind.Main when _hasMainBlock:
+                errors.Add("el archivo ya tiene un bloque principal");
                 break;
         }
 
@@ -225,13 +275,76 @@ public partial class CodeAssistantViewModel : ViewModelBase
         AddHostError(errors, PacketDestination, "destino");
     }
 
+    private void ValidateImport(List<string> errors)
+    {
+        if (ImportFiles.Count == 0)
+        {
+            errors.Add("no hay otros archivos .nw en el proyecto");
+        }
+        else if (SelectedImport is null)
+        {
+            errors.Add("elige el archivo que quieres importar");
+        }
+        else if (_importedPaths.Contains(SelectedImport))
+        {
+            errors.Add("ese archivo ya está importado");
+        }
+    }
+
     public string GenerateCode() => Kind switch
     {
         AssistantKind.Rule => GenerateRule(),
         AssistantKind.Variable => GenerateVariable(),
         AssistantKind.Packet => GeneratePacket(),
+        AssistantKind.Import => $"importar \"{SelectedImport}\";\n",
+        AssistantKind.Main => GenerateMain(),
         _ => string.Empty,
     };
+
+    private string GenerateMain() => MainPolicy == NoPolicy
+        ? "principal {\n}\n"
+        : $"principal {{\n    politica_defecto = {MainPolicy};\n}}\n";
+
+    private readonly HashSet<string> _keywords = [];
+
+    /// <summary>Collects the keywords and imported paths of the open file, skipping comments and strings.</summary>
+    private void ScanDocument(string text)
+    {
+        foreach (var line in text.Split('\n'))
+        {
+            var spans = NetWallSyntaxScanner.ScanLine(line);
+            for (var i = 0; i < spans.Count; i++)
+            {
+                if (spans[i].Token != SyntaxToken.Keyword)
+                {
+                    continue;
+                }
+
+                var word = line.Substring(spans[i].Start, spans[i].Length);
+                _keywords.Add(word);
+                if (word == "importar" && i + 1 < spans.Count && spans[i + 1].Token == SyntaxToken.String)
+                {
+                    _importedPaths.Add(line.Substring(spans[i + 1].Start, spans[i + 1].Length).Trim('"'));
+                }
+            }
+        }
+    }
+
+    private static IReadOnlyList<string> FindImportFiles(string? currentFile, string? projectRoot)
+    {
+        var folder = Path.GetDirectoryName(currentFile);
+        if (currentFile is null || folder is null)
+        {
+            return [];
+        }
+
+        var root = projectRoot is not null && Directory.Exists(projectRoot) ? projectRoot : folder;
+        return Directory.EnumerateFiles(root, "*.nw", SearchOption.AllDirectories)
+            .Where(file => !string.Equals(Path.GetFullPath(file), Path.GetFullPath(currentFile), StringComparison.OrdinalIgnoreCase))
+            .Select(file => Path.GetRelativePath(folder, file).Replace('\\', '/'))
+            .Order()
+            .ToList();
+    }
 
     private string GenerateRule()
     {

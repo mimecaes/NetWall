@@ -32,6 +32,18 @@
                     <TextBlock Classes="assistant-hint" Text="Prueba qué decide el firewall con un paquete (va dentro de principal)" />
                 </StackPanel>
             </Button>
+            <Button Classes="assistant-option" Command="{Binding ChooseImportCommand}">
+                <StackPanel Spacing="2">
+                    <TextBlock Classes="assistant-option-title" Text="Importación" />
+                    <TextBlock Classes="assistant-hint" Text="Usa las variables y reglas de otro archivo del proyecto" />
+                </StackPanel>
+            </Button>
+            <Button Classes="assistant-option" Command="{Binding ChooseMainCommand}">
+                <StackPanel Spacing="2">
+                    <TextBlock Classes="assistant-option-title" Text="Bloque principal" />
+                    <TextBlock Classes="assistant-hint" Text="El punto de entrada del programa, con su política por defecto" />
+                </StackPanel>
+            </Button>
         </StackPanel>
 
         <StackPanel Spacing="10" IsVisible="{Binding IsRuleForm}">
@@ -108,6 +120,26 @@
                 <TextBlock Grid.Row="3" Classes="assistant-label" Text="Destino" />
                 <TextBox Grid.Row="3" Grid.Column="1" Text="{Binding PacketDestination}" Watermark="ej. servidor o 192.168.1.10" />
             </Grid>
+        </StackPanel>
+
+        <StackPanel Spacing="10" IsVisible="{Binding IsImportForm}">
+            <TextBlock Classes="assistant-title" Text="Nueva importación" />
+            <Grid ColumnDefinitions="96,*">
+                <TextBlock Classes="assistant-label" Text="Archivo" />
+                <ComboBox Grid.Column="1" ItemsSource="{Binding ImportFiles}" SelectedItem="{Binding SelectedImport}"
+                          PlaceholderText="elige un archivo .nw" HorizontalAlignment="Stretch" />
+            </Grid>
+            <TextBlock Classes="assistant-hint" Text="La ruta se escribe relativa a la carpeta del archivo abierto." />
+        </StackPanel>
+
+        <StackPanel Spacing="10" IsVisible="{Binding IsMainForm}">
+            <TextBlock Classes="assistant-title" Text="Nuevo bloque principal" />
+            <Grid ColumnDefinitions="96,*">
+                <TextBlock Classes="assistant-label" Text="Política" />
+                <ComboBox Grid.Column="1" ItemsSource="{x:Static vm:CodeAssistantViewModel.Policies}"
+                          SelectedItem="{Binding MainPolicy}" HorizontalAlignment="Stretch" />
+            </Grid>
+            <TextBlock Classes="assistant-hint" Text="Qué hacer con los paquetes que no coinciden con ninguna regla. Va al final del archivo." />
         </StackPanel>
 
         <TextBlock Classes="assistant-errors" Text="{Binding Errors}" IsVisible="{Binding HasErrors}" />

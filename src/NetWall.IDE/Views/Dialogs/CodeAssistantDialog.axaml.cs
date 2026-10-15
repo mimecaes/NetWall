@@ -14,7 +14,14 @@ public partial class CodeAssistantDialog : Window
     }
 
     /// <summary>Shows the assistant and returns the generated code, or null if it was cancelled.</summary>
-    public static Task<string?> ShowAsync(Window owner) => new CodeAssistantDialog().ShowDialog<string?>(owner);
+    public static Task<string?> ShowAsync(Window owner, string? currentFile, string? projectRoot, string documentText)
+    {
+        var dialog = new CodeAssistantDialog
+        {
+            DataContext = new CodeAssistantViewModel(currentFile, projectRoot, documentText),
+        };
+        return dialog.ShowDialog<string?>(owner);
+    }
 
     private void OnInsertClick(object? sender, RoutedEventArgs e)
     {
