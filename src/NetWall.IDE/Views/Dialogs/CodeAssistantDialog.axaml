@@ -15,7 +15,6 @@
         WindowStartupLocation="CenterOwner">
 
     <Window.Styles>
-        <!-- The card that assembles itself: it grows from Helpy's avatar to the full menu. -->
         <Style Selector="Border#Card">
             <Setter Property="Transitions">
                 <Transitions>
@@ -78,7 +77,6 @@
             <Setter Property="BorderBrush" Value="{DynamicResource RunGreenBrush}" />
         </Style>
 
-        <!-- Rows that slide in one after another. -->
         <Style Selector=":is(Control).helpy-row">
             <Setter Property="Opacity" Value="0" />
             <Setter Property="RenderTransform" Value="translateY(-6px)" />
@@ -122,7 +120,6 @@
             <Setter Property="Foreground" Value="{DynamicResource TextMutedBrush}" />
         </Style>
 
-        <!-- Menu options: a card that slides right on hover and sinks on click. -->
         <Style Selector="Button.helpy-option">
             <Setter Property="HorizontalAlignment" Value="Stretch" />
             <Setter Property="HorizontalContentAlignment" Value="Stretch" />
@@ -177,13 +174,28 @@
             <Setter Property="Stretch" Value="Uniform" />
             <Setter Property="StrokeThickness" Value="2" />
         </Style>
+        <Style Selector="Button.helpy-suggestion">
+            <Setter Property="BorderBrush" Value="{DynamicResource Ansi3Brush}" />
+        </Style>
+        <Style Selector="Button.helpy-suggestion.shown:pointerover">
+            <Setter Property="BorderBrush" Value="{DynamicResource Ansi3Brush}" />
+        </Style>
+        <Style Selector="Button.helpy-suggestion controls|AnimatedIcon">
+            <Setter Property="Transitions">
+                <Transitions>
+                    <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.3" Easing="BackEaseOut" />
+                </Transitions>
+            </Setter>
+        </Style>
+        <Style Selector="Button.helpy-suggestion:pointerover controls|AnimatedIcon">
+            <Setter Property="RenderTransform" Value="rotate(12deg) scale(1.15)" />
+        </Style>
         <Style Selector="TextBlock.helpy-option-title">
             <Setter Property="FontSize" Value="13" />
             <Setter Property="FontWeight" Value="SemiBold" />
             <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
         </Style>
 
-        <!-- Text fields. -->
         <Style Selector="TextBox">
             <Setter Property="Background" Value="{DynamicResource SurfaceBackgroundBrush}" />
             <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
@@ -211,7 +223,6 @@
             <Setter Property="FontSize" Value="13" />
         </Style>
 
-        <!-- Segmented control: a ListBox whose items look like joined buttons. -->
         <Style Selector="ListBox.segmented">
             <Setter Property="Background" Value="{DynamicResource SurfaceBackgroundBrush}" />
             <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
@@ -256,7 +267,6 @@
             <Setter Property="RenderTransform" Value="scale(0.96)" />
         </Style>
 
-        <!-- Footer buttons. -->
         <Style Selector="Button.helpy-button">
             <Setter Property="Padding" Value="14,7" />
             <Setter Property="FontSize" Value="13" />
@@ -325,7 +335,6 @@
         <Canvas>
         <StackPanel Name="CardContent" Width="430">
 
-            <!-- Header: Helpy and its speech bubble. Dragging it moves the window. -->
             <Grid Name="Header" ColumnDefinitions="Auto,*,Auto" Height="62" Background="Transparent">
                 <Border Name="Avatar" Classes="helpy-avatar" Width="44" Height="44" CornerRadius="22" Margin="9,0,0,0"
                         Background="{DynamicResource ActiveBrush}">
@@ -347,8 +356,26 @@
                         ToolTip.Tip="Cerrar (Esc)" Click="OnCancelClick" />
             </Grid>
 
-            <!-- Step 1: what to create. -->
             <StackPanel Name="MenuView" Classes="helpy-view" Margin="12,2,12,12" IsVisible="False">
+                <StackPanel IsVisible="{Binding HasSuggestions}">
+                    <TextBlock Classes="helpy-section helpy-row" Text="Para tu archivo te sugiero" />
+                    <ItemsControl ItemsSource="{Binding Suggestions}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate x:DataType="vm:HelpySuggestion">
+                                <Button Classes="helpy-option helpy-suggestion helpy-row"
+                                        Command="{Binding $parent[ItemsControl].((vm:CodeAssistantViewModel)DataContext).ApplySuggestionCommand}"
+                                        CommandParameter="{Binding}">
+                                    <Grid ColumnDefinitions="Auto,*">
+                                        <controls:AnimatedIcon Kind="Lightbulb" Width="15" Height="15" Stretch="Uniform"
+                                                               StrokeThickness="2" Stroke="{DynamicResource Ansi3Brush}" />
+                                        <TextBlock Grid.Column="1" Classes="helpy-option-title" Margin="10,0,0,0"
+                                                   VerticalAlignment="Center" Text="{Binding Text}" />
+                                    </Grid>
+                                </Button>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
                 <TextBlock Classes="helpy-section helpy-row" Text="O crea algo nuevo" />
                 <Button Classes="helpy-option helpy-row" Command="{Binding ChooseRuleCommand}">
                     <Grid ColumnDefinitions="Auto,*">
@@ -412,7 +439,6 @@
                 </Button>
             </StackPanel>
 
-            <!-- Step 2: the form of the chosen kind, with the code preview below. -->
             <StackPanel Name="FormView" Classes="helpy-view" Margin="16,0,16,16" IsVisible="False">
                 <Button Classes="helpy-back helpy-row" Command="{Binding BackCommand}" HorizontalAlignment="Left">
                     <StackPanel Orientation="Horizontal" Spacing="6">

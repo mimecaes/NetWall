@@ -7,17 +7,13 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
-using Avalonia.LogicalTree;
+using Avalonia.VisualTree;
 using NetWall.IDE.Controls;
 using NetWall.IDE.Models;
 using NetWall.IDE.ViewModels;
 
 namespace NetWall.IDE.Views.Dialogs;
 
-/// <summary>
-/// Helpy's window. The card assembles itself step by step: Helpy appears, the card widens for
-/// the speech bubble, the greeting is typed, and the menu unfolds one row at a time.
-/// </summary>
 public partial class CodeAssistantDialog : Window
 {
     private const double CardWidth = 432;
@@ -37,7 +33,6 @@ public partial class CodeAssistantDialog : Window
         KeyDown += OnKeyDown;
     }
 
-    /// <summary>Shows the assistant and returns the generated code, or null if it was cancelled.</summary>
     public static Task<string?> ShowAsync(Window owner, PetColor helpyColor, string? currentFile, string? projectRoot,
         string documentText)
     {
@@ -102,7 +97,6 @@ public partial class CodeAssistantDialog : Window
         }
     }
 
-    /// <summary>Writes the bubble text letter by letter while Helpy "talks".</summary>
     private async Task TypeAsync(string text, int millisecondsPerLetter)
     {
         _typing?.Cancel();
@@ -146,10 +140,10 @@ public partial class CodeAssistantDialog : Window
         await RevealRowsAsync(to, version);
     }
 
-    /// <summary>Shows the rows of a view one after another, so the card grows downward step by step.</summary>
     private async Task RevealRowsAsync(Control view, int version)
     {
-        var rows = view.GetLogicalDescendants().OfType<Control>()
+        view.UpdateLayout();
+        var rows = view.GetVisualDescendants().OfType<Control>()
             .Where(control => control.Classes.Contains("helpy-row") && IsShownWithin(control, view))
             .ToList();
 
@@ -173,11 +167,10 @@ public partial class CodeAssistantDialog : Window
         }
     }
 
-    /// <summary>True if every ancestor up to the view is visible (the active form, not a hidden one).</summary>
     private static bool IsShownWithin(Control control, Control view)
     {
-        for (var parent = control.GetLogicalParent() as Control; parent is not null && parent != view;
-             parent = parent.GetLogicalParent() as Control)
+        for (var parent = control.GetVisualParent() as Control; parent is not null && parent != view;
+             parent = parent.GetVisualParent() as Control)
         {
             if (!parent.IsVisible)
             {

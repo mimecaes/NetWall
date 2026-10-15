@@ -7,7 +7,6 @@ using NetWall.IDE.Themes;
 
 namespace NetWall.IDE.Controls;
 
-/// <summary>Shows NetWall code colored with the active theme's syntax palette.</summary>
 public sealed class CodePreview : TextBlock
 {
     public static readonly StyledProperty<string?> CodeProperty =

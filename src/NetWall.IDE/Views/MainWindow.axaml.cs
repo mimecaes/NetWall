@@ -216,8 +216,6 @@ public partial class MainWindow : Window
         var beforeCaret = document.GetText(line.Offset, CodeEditor.CaretOffset - line.Offset);
         var afterCaret = document.GetText(CodeEditor.CaretOffset, line.EndOffset - CodeEditor.CaretOffset);
 
-        // Every generated line keeps the indentation of the current line. The block starts on
-        // a new line if there is code before the caret, and ends with one if there is code after.
         var text = string.Join(newLine + indent, code.TrimEnd('\n').Split('\n'));
         if (!string.IsNullOrWhiteSpace(afterCaret))
         {

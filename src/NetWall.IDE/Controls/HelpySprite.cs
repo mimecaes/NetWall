@@ -15,10 +15,6 @@ public enum HelpyMood
     Happy,
 }
 
-/// <summary>
-/// Helpy, the code assistant mascot: the same pixel cat as the terminal pet, animated with
-/// a sprite row per mood.
-/// </summary>
 public sealed class HelpySprite : Image
 {
     private const int Cell = 32;
@@ -46,7 +42,6 @@ public sealed class HelpySprite : Image
 
     public void SetColor(PetColor color) => _sheet = PetWidget.LoadSheet(color);
 
-    // Row, frame count and frame duration of each mood in the sprite sheet.
     private (int Row, int Frames, int Milliseconds) Animation => Mood switch
     {
         HelpyMood.Talking => (32, 8, 90),

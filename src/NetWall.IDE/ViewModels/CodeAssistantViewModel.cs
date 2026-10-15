@@ -22,10 +22,8 @@ public enum AssistantKind
     Main,
 }
 
-/// <summary>
-/// Backs the code assistant dialog: the user picks what to create, fills a form, and the
-/// assistant validates it with the same rules as the compiler and generates NetWall code.
-/// </summary>
+public sealed record HelpySuggestion(string Text, AssistantKind Kind, string? Source = null);
+
 public partial class CodeAssistantViewModel : ViewModelBase
 {
     public const string AnyProtocol = "todos";
@@ -63,9 +61,6 @@ public partial class CodeAssistantViewModel : ViewModelBase
     {
     }
 
-    /// <param name="currentFile">The file open in the editor, used to compute import paths.</param>
-    /// <param name="projectRoot">The project folder, where importable files are searched.</param>
-    /// <param name="documentText">The editor text, to know what is already imported and declared.</param>
     public CodeAssistantViewModel(string? currentFile, string? projectRoot, string documentText)
     {
         ScanDocument(documentText);
@@ -85,13 +80,16 @@ public partial class CodeAssistantViewModel : ViewModelBase
 
         NetworkVariables = networks.Keys.Order().ToList();
         HostVariables = NetworkVariables.Where(name => IsHostVariable(name, networks)).ToList();
+        Suggestions = FindSuggestions(documentText);
         Validate();
     }
 
-    /// <summary>Red variables declared in the open file and the files it imports.</summary>
+    public IReadOnlyList<HelpySuggestion> Suggestions { get; }
+
+    public bool HasSuggestions => Suggestions.Count > 0;
+
     public IReadOnlyList<string> NetworkVariables { get; }
 
-    /// <summary>The Red variables that hold a single address, valid as a packet's origin or destination.</summary>
     public IReadOnlyList<string> HostVariables { get; }
 
     [ObservableProperty]
@@ -185,7 +183,6 @@ public partial class CodeAssistantViewModel : ViewModelBase
     [ObservableProperty]
     public partial string PacketDestination { get; set; } = string.Empty;
 
-    /// <summary>What Helpy says in its bubble: a greeting, a hint, the first problem, or that all is ready.</summary>
     [ObservableProperty]
     public partial string HelpyMessage { get; set; } = Greeting;
 
@@ -218,6 +215,17 @@ public partial class CodeAssistantViewModel : ViewModelBase
 
     [RelayCommand]
     private void Back() => Kind = AssistantKind.None;
+
+    [RelayCommand]
+    private void ApplySuggestion(HelpySuggestion suggestion)
+    {
+        if (suggestion.Source is not null)
+        {
+            Source = suggestion.Source;
+        }
+
+        Kind = suggestion.Kind;
+    }
 
     protected override void OnPropertyChanged(PropertyChangedEventArgs e)
     {
@@ -378,7 +386,6 @@ public partial class CodeAssistantViewModel : ViewModelBase
 
     private readonly HashSet<string> _keywords = [];
 
-    /// <summary>Collects the keywords and imported paths of the open file, skipping comments and strings.</summary>
     private void ScanDocument(string text)
     {
         foreach (var line in text.Split('\n'))
@@ -401,7 +408,44 @@ public partial class CodeAssistantViewModel : ViewModelBase
         }
     }
 
-    /// <summary>Finds "declarar name: Red = value;" and stores each name with its value.</summary>
+    private List<HelpySuggestion> FindSuggestions(string text)
+    {
+        var suggestions = new List<HelpySuggestion>();
+        if (!_hasMainBlock)
+        {
+            suggestions.Add(new HelpySuggestion("Agrega el bloque principal", AssistantKind.Main));
+        }
+        else if (!_keywords.Contains("simular"))
+        {
+            suggestions.Add(new HelpySuggestion("Prueba tus reglas con un paquete", AssistantKind.Packet));
+        }
+
+        var declared = new Dictionary<string, string>();
+        CollectNetworks(text, declared);
+        var uses = CountIdentifiers(text);
+        foreach (var name in declared.Keys.Where(name => uses.GetValueOrDefault(name) == 1).Order())
+        {
+            suggestions.Add(new HelpySuggestion($"Usa la red {name} en una regla", AssistantKind.Rule, name));
+        }
+
+        return suggestions.Take(3).ToList();
+    }
+
+    private static Dictionary<string, int> CountIdentifiers(string text)
+    {
+        var counts = new Dictionary<string, int>();
+        foreach (var line in text.Split('\n'))
+        {
+            foreach (var span in NetWallSyntaxScanner.ScanLine(line).Where(span => span.Token == SyntaxToken.Identifier))
+            {
+                var word = line.Substring(span.Start, span.Length);
+                counts[word] = counts.GetValueOrDefault(word) + 1;
+            }
+        }
+
+        return counts;
+    }
+
     private static void CollectNetworks(string text, Dictionary<string, string> networks)
     {
         foreach (var line in text.Split('\n'))
