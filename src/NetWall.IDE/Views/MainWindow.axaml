@@ -102,6 +102,7 @@
                 BorderBrush="{DynamicResource BorderBrush}"
                 BorderThickness="0,0,0,1"
                 Padding="6,4">
+            <Grid ColumnDefinitions="*,Auto">
             <StackPanel Orientation="Horizontal" Spacing="6">
 
                 <Border Classes="toolbar-pill">
@@ -234,6 +235,17 @@
                     </StackPanel>
                 </Border>
             </StackPanel>
+
+                <Border Grid.Column="1" Classes="toolbar-pill">
+                    <Button Classes="icon toolbar-icon toolbar-simulate" Click="OnSimulationModeClick"
+                            Classes.active="{Binding IsSimulationMode}">
+                        <ToolTip.Tip>
+                            <TextBlock Text="Modo simulación" />
+                        </ToolTip.Tip>
+                        <controls:AnimatedIcon Classes="icon" Kind="BrickWall" />
+                    </Button>
+                </Border>
+            </Grid>
         </Border>
 
         <Border DockPanel.Dock="Bottom" Background="{DynamicResource PanelBackgroundBrush}" Height="24">
@@ -250,6 +262,7 @@
             </Grid>
         </Border>
 
+        <Panel>
         <Grid ColumnDefinitions="Auto,Auto,*">
 
             <Border Grid.Column="0" Width="260"
@@ -552,22 +565,8 @@
                     <DockPanel>
                         <Grid DockPanel.Dock="Top" ColumnDefinitions="*,Auto,Auto,Auto"
                               Background="{DynamicResource SurfaceBackgroundBrush}" Height="30">
-                            <StackPanel Grid.Column="0" Orientation="Horizontal" Margin="4,0">
-                                <Button Classes="panel-tab" Classes.active="{Binding !IsSimulationTabActive}"
-                                        Command="{Binding ShowTerminalTabCommand}">
-                                    <TextBlock Classes="sidebar-header" Text="TERMINAL" />
-                                </Button>
-                                <Button Classes="panel-tab" Classes.active="{Binding IsSimulationTabActive}"
-                                        Command="{Binding ShowSimulationTabCommand}">
-                                    <StackPanel Orientation="Horizontal" Spacing="6">
-                                        <TextBlock Classes="sidebar-header" Text="SIMULACIÓN" />
-                                        <Ellipse Width="7" Height="7" VerticalAlignment="Center"
-                                                 Fill="{DynamicResource AccentBrush}"
-                                                 IsVisible="{Binding Simulation.HasUnseenResults}"
-                                                 ToolTip.Tip="Hay una simulación nueva" />
-                                    </StackPanel>
-                                </Button>
-                            </StackPanel>
+                            <TextBlock Grid.Column="0" Classes="sidebar-header" Text="TERMINAL"
+                                       VerticalAlignment="Center" Margin="12,0" />
                             <Button Grid.Column="1" Classes="icon" Width="24" Height="24" ToolTip.Tip="Cat color">
                                 <controls:AnimatedIcon Classes="icon-sm" Kind="Cat" />
                                 <Button.Flyout>
@@ -591,7 +590,6 @@
                                 </Button.Flyout>
                             </Button>
                             <Button Grid.Column="2" Classes="icon" Width="24" Height="24"
-                                    IsVisible="{Binding !IsSimulationTabActive}"
                                     Command="{Binding ClearTerminalCommand}" ToolTip.Tip="Clear Terminal">
                                 <controls:AnimatedIcon Classes="icon-sm" Kind="Eraser" />
                             </Button>
@@ -601,11 +599,6 @@
                             </Button>
                         </Grid>
 
-                        <Panel>
-                        <Panel IsVisible="{Binding IsSimulationTabActive}">
-                            <views:SimulationPanel Name="SimulationView" DataContext="{Binding Simulation}" />
-                        </Panel>
-                        <DockPanel IsVisible="{Binding !IsSimulationTabActive}">
                         <controls:PetWidget Name="Pet" DockPanel.Dock="Top"
                                             IsVisible="{Binding IsPetEnabled}"
                                             Classes.pet-pop="{Binding IsPetEnabled}" />
@@ -650,13 +643,36 @@
                                 </ItemsControl.DataTemplates>
                             </ItemsControl>
                         </ScrollViewer>
-                        </DockPanel>
-                        </Panel>
                     </DockPanel>
                     </Panel>
                 </Border>
             </Grid>
         </Grid>
+
+        <DockPanel Name="SimulationLayer" IsVisible="{Binding IsSimulationMode}"
+                   Background="{DynamicResource BackgroundBrush}">
+            <Border DockPanel.Dock="Top" Classes="simulation-header">
+                <Grid ColumnDefinitions="Auto,Auto,Auto,*,Auto">
+                    <controls:AnimatedIcon Classes="icon" Kind="BrickWall" Stroke="{DynamicResource AccentBrush}"
+                                           VerticalAlignment="Center" />
+                    <TextBlock Grid.Column="1" Classes="sidebar-header" Text="MODO SIMULACIÓN" Margin="10,0"
+                               VerticalAlignment="Center" />
+                    <Border Grid.Column="2" Classes="simulation-chip">
+                        <TextBlock Text="{Binding Simulation.ModeTitle}" />
+                    </Border>
+                    <Button Grid.Column="4" Classes="simulation-exit" Click="OnExitSimulationClick">
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <controls:AnimatedIcon Classes="icon-sm" Kind="LogOut" />
+                            <TextBlock Text="Salir" VerticalAlignment="Center" />
+                        </StackPanel>
+                    </Button>
+                </Grid>
+            </Border>
+            <views:SimulationPanel Name="SimulationView" DataContext="{Binding Simulation}" />
+        </DockPanel>
+
+        <controls:SimulationIntro Name="Intro" />
+        </Panel>
     </DockPanel>
 
 </Window>

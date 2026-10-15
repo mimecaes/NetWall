@@ -21,7 +21,6 @@ public partial class SimulationPanel : UserControl
     private SimulationViewModel? _viewModel;
     private CancellationTokenSource _cancel = new();
     private bool _playing;
-    private bool _pending;
     private int _speedIndex;
 
     public SimulationPanel()
@@ -63,40 +62,18 @@ public partial class SimulationPanel : UserControl
             return;
         }
 
-        _pending = true;
-        if (_viewModel.IsVisible)
-        {
-            await StartAsync();
-        }
-    }
-
-    private async Task StartAsync()
-    {
-        _pending = false;
         var token = _cancel.Token;
         await Dispatcher.UIThread.InvokeAsync(() => { }, DispatcherPriority.Background);
-        await Canvas.SayAsync(_viewModel!.HelpyGreeting);
+        await Canvas.SayAsync(_viewModel.HelpyGreeting);
         if (!token.IsCancellationRequested)
         {
             await PlayAsync();
         }
     }
 
-    private async void OnViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    private void OnViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
-        if (e.PropertyName == nameof(SimulationViewModel.IsVisible) && _viewModel is { } viewModel)
-        {
-            if (!viewModel.IsVisible)
-            {
-                _playing = false;
-                UpdatePlayIcon();
-            }
-            else if (_pending)
-            {
-                await StartAsync();
-            }
-        }
-        else if (e.PropertyName == nameof(SimulationViewModel.SelectedEntry)
+        if (e.PropertyName == nameof(SimulationViewModel.SelectedEntry)
             && _viewModel is { IsAnimating: false, SelectedEntry: { } entry })
         {
             Canvas.ShowRoute(entry.Packet);

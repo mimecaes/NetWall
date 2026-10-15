@@ -98,18 +98,7 @@ public partial class SimulationViewModel : ViewModelBase
     public partial bool IsHelpyEnabled { get; set; } = true;
 
     [ObservableProperty]
-    public partial bool IsVisible { get; set; }
-
-    [ObservableProperty]
-    public partial bool HasUnseenResults { get; set; }
-
-    partial void OnIsVisibleChanged(bool value)
-    {
-        if (value)
-        {
-            HasUnseenResults = false;
-        }
-    }
+    public partial string ModeTitle { get; set; } = string.Empty;
 
     public string HelpyGreeting =>
         $"¡Hola! Voy a vigilar {Packets.Count} {(Packets.Count == 1 ? "paquete" : "paquetes")}.";
@@ -151,7 +140,14 @@ public partial class SimulationViewModel : ViewModelBase
             : Packets.Count == 0 ? "El archivo no tiene paquetes para simular."
             : string.Empty;
         Reset();
-        HasUnseenResults = !IsVisible && Packets.Count > 0;
+        Loaded?.Invoke();
+    }
+
+    public void Unload()
+    {
+        Result = null;
+        Message = string.Empty;
+        Reset();
         Loaded?.Invoke();
     }
 

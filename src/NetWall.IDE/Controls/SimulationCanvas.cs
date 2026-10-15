@@ -738,25 +738,7 @@ public sealed class SimulationCanvas : Control
         context.DrawRectangle(Brush("TerminalBackgroundBrush"), null, wall.Inflate(2), 4, 4);
         using (context.PushClip(wall))
         {
-            var rows = (int)Math.Ceiling(wall.Height / (BrickHeight + Mortar));
-            for (var row = 0; row < rows; row++)
-            {
-                var y = wall.Y + row * (BrickHeight + Mortar);
-                var offset = row % 2 == 0 ? 0 : -BrickWidth / 2;
-                var inDoor = door > 0 && Math.Abs(y + BrickHeight / 2 - doorY) < 20;
-                for (var x = wall.X + offset; x < wall.Right; x += BrickWidth + Mortar)
-                {
-                    var column = (int)Math.Round((x - wall.X) / (BrickWidth + Mortar)) + 2;
-                    var shade = 0.6 + (row * 7 + column * 13) % 5 * 0.08;
-                    var slide = inDoor ? (x + BrickWidth / 2 < wall.Center.X ? -1 : 1) * door * 18 : 0;
-                    var rect = new Rect(x + slide, y, BrickWidth, BrickHeight);
-                    var alpha = inDoor ? shade * (1 - door * 0.85) : shade;
-                    context.DrawRectangle(new SolidColorBrush(brick, alpha), null, rect, 2, 2);
-                    context.DrawLine(new Pen(new SolidColorBrush(Colors.White, 0.14 * alpha), 1),
-                        rect.TopLeft + new Vector(2, 1.5), rect.TopRight + new Vector(-2, 1.5));
-                }
-            }
-
+            DrawBricks(context, wall, brick, door, doorY);
             if (flash > 0)
             {
                 context.DrawRectangle(new SolidColorBrush(ColorOf("StopRedBrush"), 0.4 * flash), null, wall);
@@ -782,6 +764,28 @@ public sealed class SimulationCanvas : Control
         {
             DrawCentered(context, $"{(_allowed ? "✓" : "✕")} {_decision}", 11,
                 Brush(_allowed ? "RunGreenBrush" : "StopRedBrush"), wall.Center.X, wall.Bottom + 40, 220, bold: true);
+        }
+    }
+
+    internal static void DrawBricks(DrawingContext context, Rect wall, Color brick, double door, double doorY)
+    {
+        var rows = (int)Math.Ceiling(wall.Height / (BrickHeight + Mortar));
+        for (var row = 0; row < rows; row++)
+        {
+            var y = wall.Y + row * (BrickHeight + Mortar);
+            var offset = row % 2 == 0 ? 0 : -BrickWidth / 2;
+            var inDoor = door > 0 && Math.Abs(y + BrickHeight / 2 - doorY) < 20;
+            for (var x = wall.X + offset; x < wall.Right; x += BrickWidth + Mortar)
+            {
+                var column = (int)Math.Round((x - wall.X) / (BrickWidth + Mortar)) + 2;
+                var shade = 0.6 + (row * 7 + column * 13) % 5 * 0.08;
+                var slide = inDoor ? (x + BrickWidth / 2 < wall.Center.X ? -1 : 1) * door * 18 : 0;
+                var rect = new Rect(x + slide, y, BrickWidth, BrickHeight);
+                var alpha = inDoor ? shade * (1 - door * 0.85) : shade;
+                context.DrawRectangle(new SolidColorBrush(brick, alpha), null, rect, 2, 2);
+                context.DrawLine(new Pen(new SolidColorBrush(Colors.White, 0.14 * alpha), 1),
+                    rect.TopLeft + new Vector(2, 1.5), rect.TopRight + new Vector(-2, 1.5));
+            }
         }
     }
 

@@ -1,0 +1,160 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:controls="using:NetWall.IDE.Controls"
+        x:Class="NetWall.IDE.Views.Dialogs.SimulationModeDialog"
+        Title="Modo simulación"
+        Width="480"
+        SizeToContent="Height"
+        CanResize="False"
+        ShowInTaskbar="False"
+        SystemDecorations="None"
+        Background="Transparent"
+        TransparencyLevelHint="Transparent"
+        WindowStartupLocation="CenterOwner">
+
+    <Window.Styles>
+        <Style Selector="Border#Card">
+            <Setter Property="Opacity" Value="0" />
+            <Setter Property="RenderTransform" Value="scale(0.92) translateY(12px)" />
+            <Setter Property="Transitions">
+                <Transitions>
+                    <DoubleTransition Property="Opacity" Duration="0:0:0.25" />
+                    <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.35" Easing="BackEaseOut" />
+                </Transitions>
+            </Setter>
+        </Style>
+        <Style Selector="Border#Card.shown">
+            <Setter Property="Opacity" Value="1" />
+            <Setter Property="RenderTransform" Value="scale(1) translateY(0px)" />
+        </Style>
+        <Style Selector="Border#Card.closing">
+            <Setter Property="Opacity" Value="0" />
+            <Setter Property="RenderTransform" Value="scale(0.94) translateY(8px)" />
+        </Style>
+
+        <Style Selector="Button.mode-option">
+            <Setter Property="HorizontalAlignment" Value="Stretch" />
+            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+            <Setter Property="Margin" Value="0,0,0,8" />
+            <Setter Property="Background" Value="{DynamicResource SurfaceBackgroundBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="Template">
+                <ControlTemplate>
+                    <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="1" CornerRadius="12" Padding="14,12">
+                        <ContentPresenter Content="{TemplateBinding Content}" />
+                    </Border>
+                </ControlTemplate>
+            </Setter>
+            <Setter Property="Transitions">
+                <Transitions>
+                    <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.2" Easing="CubicEaseOut" />
+                    <BrushTransition Property="Background" Duration="0:0:0.2" />
+                    <BrushTransition Property="BorderBrush" Duration="0:0:0.2" />
+                </Transitions>
+            </Setter>
+        </Style>
+        <Style Selector="Button.mode-option:pointerover">
+            <Setter Property="RenderTransform" Value="translateX(4px)" />
+            <Setter Property="Background" Value="{DynamicResource HoverBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}" />
+        </Style>
+        <Style Selector="Button.mode-option:pressed">
+            <Setter Property="RenderTransform" Value="translateX(4px) scale(0.98)" />
+        </Style>
+        <Style Selector="Button.mode-option:disabled">
+            <Setter Property="Opacity" Value="0.45" />
+        </Style>
+        <Style Selector="Button.mode-option Panel.mode-icon">
+            <Setter Property="Width" Value="38" />
+            <Setter Property="Height" Value="38" />
+            <Setter Property="Transitions">
+                <Transitions>
+                    <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.25" Easing="BackEaseOut" />
+                </Transitions>
+            </Setter>
+        </Style>
+        <Style Selector="Button.mode-option:pointerover Panel.mode-icon">
+            <Setter Property="RenderTransform" Value="rotate(-8deg) scale(1.1)" />
+        </Style>
+        <Style Selector="Panel.mode-icon Border">
+            <Setter Property="CornerRadius" Value="10" />
+            <Setter Property="Opacity" Value="0.18" />
+        </Style>
+        <Style Selector="Panel.mode-icon controls|AnimatedIcon">
+            <Setter Property="Width" Value="20" />
+            <Setter Property="Height" Value="20" />
+            <Setter Property="Stretch" Value="Uniform" />
+            <Setter Property="StrokeThickness" Value="2" />
+        </Style>
+        <Style Selector="TextBlock.mode-title">
+            <Setter Property="FontSize" Value="14" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
+        </Style>
+        <Style Selector="TextBlock.mode-hint">
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="TextWrapping" Value="Wrap" />
+            <Setter Property="Foreground" Value="{DynamicResource TextMutedBrush}" />
+        </Style>
+        <Style Selector="Button.mode-cancel">
+            <Setter Property="HorizontalAlignment" Value="Right" />
+            <Setter Property="Padding" Value="16,7" />
+            <Setter Property="CornerRadius" Value="8" />
+            <Setter Property="Background" Value="{DynamicResource SurfaceBackgroundBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
+        </Style>
+    </Window.Styles>
+
+    <Border Name="Card" Margin="20" CornerRadius="16" Padding="18"
+            Background="{DynamicResource PanelBackgroundBrush}"
+            BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1"
+            BoxShadow="0 12 32 0 #70000000">
+        <StackPanel>
+            <Grid Name="Header" ColumnDefinitions="Auto,*" Margin="0,0,0,16" Background="Transparent">
+                <Border Width="56" Height="56" CornerRadius="28" Background="{DynamicResource SurfaceBackgroundBrush}">
+                    <controls:HelpySprite Name="Helpy" Width="48" Height="48" />
+                </Border>
+                <Border Grid.Column="1" Margin="12,0,0,0" Padding="12,9" CornerRadius="12"
+                        VerticalAlignment="Center"
+                        Background="{DynamicResource SurfaceBackgroundBrush}"
+                        BorderBrush="{DynamicResource AccentBrush}" BorderThickness="1">
+                    <TextBlock Name="BubbleText" FontSize="13" TextWrapping="Wrap"
+                               Foreground="{DynamicResource TextPrimaryBrush}" />
+                </Border>
+            </Grid>
+
+            <Button Name="ProgramOption" Classes="mode-option" Click="OnProgramClick">
+                <Grid ColumnDefinitions="Auto,*">
+                    <Panel Classes="mode-icon">
+                        <Border Background="{DynamicResource Ansi2Brush}" />
+                        <controls:AnimatedIcon Kind="FileCode" Stroke="{DynamicResource Ansi2Brush}" />
+                    </Panel>
+                    <StackPanel Grid.Column="1" Margin="12,0,0,0" VerticalAlignment="Center" Spacing="2">
+                        <TextBlock Classes="mode-title" Text="Simular el programa completo" />
+                        <TextBlock Name="ProgramHint" Classes="mode-hint"
+                                   Text="Usa las reglas y los paquetes de simular del archivo abierto." />
+                    </StackPanel>
+                </Grid>
+            </Button>
+
+            <Button Name="RulesOption" Classes="mode-option" IsEnabled="False">
+                <Grid ColumnDefinitions="Auto,*">
+                    <Panel Classes="mode-icon">
+                        <Border Background="{DynamicResource Ansi5Brush}" />
+                        <controls:AnimatedIcon Kind="Network" Stroke="{DynamicResource Ansi5Brush}" />
+                    </Panel>
+                    <StackPanel Grid.Column="1" Margin="12,0,0,0" VerticalAlignment="Center" Spacing="2">
+                        <TextBlock Classes="mode-title" Text="Simular ciertas reglas" />
+                        <TextBlock Classes="mode-hint" Text="Elige reglas y arma tu propia red. Próximamente." />
+                    </StackPanel>
+                </Grid>
+            </Button>
+
+            <Button Classes="mode-cancel" Content="Cancelar" Margin="0,8,0,0" Click="OnCancelClick" />
+        </StackPanel>
+    </Border>
+</Window>

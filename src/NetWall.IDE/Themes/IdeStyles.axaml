@@ -505,24 +505,41 @@
         <Setter Property="Width" Value="96" />
         <Setter Property="Background" Value="{DynamicResource AccentBrush}" />
     </Style>
-    <Style Selector="Button.panel-tab">
-        <Setter Property="Background" Value="Transparent" />
-        <Setter Property="BorderBrush" Value="Transparent" />
-        <Setter Property="BorderThickness" Value="0,0,0,2" />
-        <Setter Property="CornerRadius" Value="0" />
-        <Setter Property="Height" Value="30" />
-        <Setter Property="Padding" Value="8,0" />
-        <Setter Property="VerticalContentAlignment" Value="Center" />
+    <Style Selector="Button.toolbar-simulate.active /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Background" Value="{DynamicResource ActiveBrush}" />
     </Style>
-    <Style Selector="Button.panel-tab:pointerover /template/ ContentPresenter#PART_ContentPresenter">
-        <Setter Property="Background" Value="{DynamicResource HoverBrush}" />
-        <Setter Property="BorderBrush" Value="Transparent" />
+    <Style Selector="Border.simulation-header">
+        <Setter Property="Height" Value="40" />
+        <Setter Property="Padding" Value="14,0,8,0" />
+        <Setter Property="Background" Value="{DynamicResource SurfaceBackgroundBrush}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+        <Setter Property="BorderThickness" Value="0,0,0,1" />
     </Style>
-    <Style Selector="Button.panel-tab.active /template/ ContentPresenter#PART_ContentPresenter">
-        <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}" />
+    <Style Selector="Border.simulation-chip">
+        <Setter Property="Background" Value="{DynamicResource ActiveBrush}" />
+        <Setter Property="CornerRadius" Value="10" />
+        <Setter Property="Padding" Value="10,3" />
+        <Setter Property="VerticalAlignment" Value="Center" />
     </Style>
-    <Style Selector="Button.panel-tab.active TextBlock">
+    <Style Selector="Border.simulation-chip TextBlock">
+        <Setter Property="FontSize" Value="11.5" />
         <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
+    </Style>
+    <Style Selector="Button.simulation-exit">
+        <Setter Property="Height" Value="28" />
+        <Setter Property="Padding" Value="12,0" />
+        <Setter Property="CornerRadius" Value="8" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+        <Setter Property="VerticalContentAlignment" Value="Center" />
+        <Setter Property="Background" Value="{DynamicResource PanelBackgroundBrush}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
+        <Setter Property="FontSize" Value="12" />
+    </Style>
+    <Style Selector="Button.simulation-exit:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Background" Value="{DynamicResource HoverBrush}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource StopRedBrush}" />
     </Style>
     <Style Selector="TextBlock.status-text">
         <Setter Property="FontSize" Value="12" />

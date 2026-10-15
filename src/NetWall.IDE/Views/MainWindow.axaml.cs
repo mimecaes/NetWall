@@ -13,6 +13,7 @@ using NetWall.IDE.Controls;
 using NetWall.IDE.Models;
 using NetWall.IDE.Themes;
 using NetWall.IDE.ViewModels;
+using NetWall.IDE.Views.Dialogs;
 
 namespace NetWall.IDE.Views;
 
@@ -40,6 +41,7 @@ public partial class MainWindow : Window
         Closed += (_, _) => ThemeManager.ThemeApplied -= OnThemeApplied;
         Loaded += OnWindowLoaded;
         SizeChanged += OnWindowSizeChanged;
+        KeyDown += OnWindowKeyDown;
     }
 
     private void OnWindowLoaded(object? sender, RoutedEventArgs e)
@@ -80,6 +82,42 @@ public partial class MainWindow : Window
     }
 
     private void OnPanelGripDoubleTapped(object? sender, TappedEventArgs e) => ViewModel?.ResetPanelHeight();
+
+    private async void OnSimulationModeClick(object? sender, RoutedEventArgs e)
+    {
+        if (ViewModel is not { } viewModel)
+        {
+            return;
+        }
+
+        if (viewModel.IsSimulationMode)
+        {
+            viewModel.ExitSimulationMode();
+            return;
+        }
+
+        var choice = await SimulationModeDialog.ShowAsync(this, Pet.Color, viewModel.CanSimulateProgram);
+        if (choice != SimulationChoice.Program)
+        {
+            return;
+        }
+
+        SimulationView.SetHelpyColor(Pet.Color);
+        var simulation = viewModel.RunProgramSimulationAsync();
+        await Intro.PlayAsync(simulation, Pet.Color, () => viewModel.IsSimulationMode = true,
+            () => viewModel.ShowProgramSimulation(simulation.Result));
+    }
+
+    private void OnExitSimulationClick(object? sender, RoutedEventArgs e) => ViewModel?.ExitSimulationMode();
+
+    private void OnWindowKeyDown(object? sender, KeyEventArgs e)
+    {
+        if (e.Key == Key.Escape && ViewModel is { IsSimulationMode: true } viewModel)
+        {
+            viewModel.ExitSimulationMode();
+            e.Handled = true;
+        }
+    }
 
     private void OnWindowSizeChanged(object? sender, SizeChangedEventArgs e)
     {
