@@ -145,6 +145,8 @@ public sealed class SimulationCanvas : Control
 
     public event Action<BuilderDevice>? DeviceConnected;
 
+    public event Action<BuilderDevice, BuilderDevice>? PacketDragged;
+
     public ObservableCollection<BuilderDevice>? Builder
     {
         get => _builder;
@@ -432,6 +434,10 @@ public sealed class SimulationCanvas : Control
             {
                 linking.IsConnected = true;
                 DeviceConnected?.Invoke(linking);
+            }
+            else if (DeviceAt(point) is { Model: { } target } && target != linking)
+            {
+                PacketDragged?.Invoke(linking, target);
             }
 
             _linking = null;
@@ -844,12 +850,20 @@ public sealed class SimulationCanvas : Control
 
         var accent = ColorOf("AccentBrush");
         var target = _wall.Inflate(14).Contains(_linkEnd);
+        var receiver = DeviceAt(_linkEnd) is { Model: { } model } hit && model != _linking ? hit : null;
         context.DrawLine(new Pen(new SolidColorBrush(accent), 2, new DashStyle([4, 3], 0), PenLineCap.Round),
             Port(device), _linkEnd);
-        context.DrawEllipse(new SolidColorBrush(accent, target ? 0.9 : 0.4), null, _linkEnd, 5, 5);
+        context.DrawEllipse(new SolidColorBrush(accent, target || receiver is not null ? 0.9 : 0.4), null, _linkEnd, 5, 5);
         if (target)
         {
             context.DrawRectangle(null, new Pen(new SolidColorBrush(accent), 2), _wall.Inflate(6), 6, 6);
+        }
+        else if (receiver is not null)
+        {
+            context.DrawRectangle(new SolidColorBrush(accent, 0.12), new Pen(new SolidColorBrush(accent), 2),
+                receiver.Cell.Deflate(new Thickness(6, 0)), 10, 10);
+            DrawCentered(context, "enviar paquete", 10, new SolidColorBrush(accent), receiver.Cell.Center.X,
+                receiver.Cell.Bottom + 2, 120, bold: true);
         }
     }
 

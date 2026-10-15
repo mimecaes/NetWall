@@ -25,6 +25,8 @@ public partial class MainViewModel : ViewModelBase
         LoadRecentProjects();
         OpenTabs.CollectionChanged += OnOpenTabsChanged;
         Simulation.RulesChanged += OnSimulationRulesChanged;
+        Simulation.PacketRequested += OnSimulationPacketRequested;
+        Simulation.ReplayRequested += OnSimulationReplayRequested;
 
         Extensions.Add(new ExtensionInfo
         {
@@ -205,6 +207,24 @@ public partial class MainViewModel : ViewModelBase
 
         _simulationFile = path;
         return await SimulationRunner.RunAsync(cliPath, path);
+    }
+
+    private async void OnSimulationPacketRequested(SimulatedPacket request)
+    {
+        if (_simulationFile is { } path && FindNetWallCliPath() is { } cliPath)
+        {
+            Simulation.Deliver(await SimulationRunner.RunCustomAsync(cliPath, path, Simulation.ActiveRules.ToList(),
+                [request]));
+        }
+    }
+
+    private async void OnSimulationReplayRequested()
+    {
+        if (_simulationFile is { } path && FindNetWallCliPath() is { } cliPath)
+        {
+            Simulation.Replay(await SimulationRunner.RunCustomAsync(cliPath, path, Simulation.ActiveRules.ToList(),
+                Simulation.SentPackets));
+        }
     }
 
     private async void OnSimulationRulesChanged()

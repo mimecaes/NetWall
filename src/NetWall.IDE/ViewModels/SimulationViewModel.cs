@@ -114,7 +114,132 @@ public partial class SimulationViewModel : ViewModelBase
     public ObservableCollection<BuilderDevice> Devices { get; } = [];
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(ResetTip))]
     public partial bool IsBuilder { get; set; }
+
+    public string ResetTip => IsBuilder ? "Repetir los paquetes enviados con las reglas activas" : "Reiniciar";
+
+    public List<SimulatedPacket> SentPackets { get; } = [];
+
+    public event Action<SimulatedPacket>? PacketRequested;
+
+    public event Action? ReplayRequested;
+
+    public event Action? PacketDelivered;
+
+    public event Action? Replayed;
+
+    private readonly Dictionary<SimulatedPacket, IReadOnlyList<SimulationRule>> _packetRules =
+        new(ReferenceEqualityComparer.Instance);
+
+    private string _lastProtocol = "tcp";
+    private string _lastPort = "80";
+
+    public PacketDraft NewDraft(BuilderDevice source, BuilderDevice? destination)
+    {
+        var choices = Devices.Where(device => device != source).Select(device => new DeviceChoice(device)).ToList();
+        return new PacketDraft(source, choices)
+        {
+            Destination = choices.FirstOrDefault(choice => choice.Device == destination),
+            Protocol = _lastProtocol,
+            Port = _lastPort,
+        };
+    }
+
+    public bool Send(PacketDraft draft)
+    {
+        draft.Error = PacketError(draft);
+        if (draft.HasError)
+        {
+            return false;
+        }
+
+        _lastProtocol = draft.Protocol;
+        _lastPort = draft.Port;
+        var request = new SimulatedPacket(draft.Protocol, int.Parse(draft.Port), draft.Source.Address,
+            draft.Destination!.Device.Address, 0, string.Empty, null, []);
+        SentPackets.Add(request);
+        PacketRequested?.Invoke(request);
+        return true;
+    }
+
+    public void RequestReplay()
+    {
+        if (SentPackets.Count > 0)
+        {
+            ReplayRequested?.Invoke();
+        }
+    }
+
+    public void Deliver(SimulationResult? result)
+    {
+        if (result is not { Errors: false, Packets: [var packet] } || Result?.Packets is not { } packets)
+        {
+            return;
+        }
+
+        _packetRules[packet] = result.Rules ?? [];
+        packets.Add(packet);
+        OnCountsChanged();
+        PacketDelivered?.Invoke();
+    }
+
+    public void Replay(SimulationResult? result)
+    {
+        if (result is not { Errors: false, Packets: { } replayed } || Result is null)
+        {
+            return;
+        }
+
+        Result.Packets?.Clear();
+        Result.Packets?.AddRange(replayed);
+        Reset();
+        foreach (var packet in replayed)
+        {
+            _packetRules[packet] = result.Rules ?? [];
+        }
+
+        Replayed?.Invoke();
+    }
+
+    private string PacketError(PacketDraft draft)
+    {
+        if (draft.Destination?.Device is not { } destination)
+        {
+            return "Elige a qué equipo enviarlo.";
+        }
+
+        if (!int.TryParse(draft.Port, out var port) || port is < 0 or > 65535)
+        {
+            return "El puerto debe ser un número entre 0 y 65535.";
+        }
+
+        foreach (var device in new[] { draft.Source, destination })
+        {
+            if (device.HasError)
+            {
+                return $"Corrige la dirección de {device.Address} antes de enviar.";
+            }
+
+            if (!device.IsConnected)
+            {
+                return $"Conecta {device.Address} a NetWall desde su puerto.";
+            }
+        }
+
+        return string.Empty;
+    }
+
+    private void UseRules(IReadOnlyList<SimulationRule> rules)
+    {
+        Steps.Clear();
+        foreach (var rule in rules)
+        {
+            Steps.Add(new RuleStep(rule.Name));
+        }
+
+        Steps.Add(new RuleStep("politica_defecto"));
+    }
 
     public IReadOnlyList<SimulatedPacket> ProgramPackets { get; private set; } = [];
 
@@ -235,6 +360,8 @@ public partial class SimulationViewModel : ViewModelBase
 
     private void ClearDevices()
     {
+        SentPackets.Clear();
+        _packetRules.Clear();
         foreach (var device in Devices)
         {
             device.PropertyChanged -= OnDevicePropertyChanged;
@@ -456,19 +583,19 @@ public partial class SimulationViewModel : ViewModelBase
         SelectedEntry = null;
         PacketFields = NoFields;
         Steps.Clear();
-        foreach (var rule in Result?.Rules ?? [])
-        {
-            Steps.Add(new RuleStep(rule.Name));
-        }
-
         if (Result is not null)
         {
-            Steps.Add(new RuleStep("politica_defecto"));
+            UseRules(Result.Rules ?? []);
         }
     }
 
     public void ShowPacket(SimulatedPacket packet)
     {
+        if (_packetRules.TryGetValue(packet, out var rules))
+        {
+            UseRules(rules);
+        }
+
         PacketFields = $"{packet.Protocol} {packet.Port} · {packet.Source} → {packet.Destination}";
         foreach (var step in Steps)
         {

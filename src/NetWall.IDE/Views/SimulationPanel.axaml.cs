@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Specialized;
 using System.ComponentModel;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Avalonia.Controls;
@@ -28,6 +29,7 @@ public partial class SimulationPanel : UserControl
         InitializeComponent();
         Canvas.DeviceClicked += OnDeviceClicked;
         Canvas.DeviceConnected += device => _ = Canvas.SayAsync($"¡{device.Address} quedó conectado a NetWall!");
+        Canvas.PacketDragged += (source, destination) => ShowPacketForm(source, destination);
     }
 
     private double Speed => Speeds[_speedIndex];
@@ -40,6 +42,9 @@ public partial class SimulationPanel : UserControl
         if (_viewModel is not null)
         {
             _viewModel.Loaded -= OnLoaded;
+            _viewModel.PacketDelivered -= OnPacketDelivered;
+            _viewModel.Replayed -= OnReplayed;
+            _viewModel.RulesChanged -= OnRulesChanged;
             _viewModel.PropertyChanged -= OnViewModelPropertyChanged;
             _viewModel.Entries.CollectionChanged -= OnEntriesChanged;
             _viewModel.Steps.CollectionChanged -= OnStepsChanged;
@@ -49,6 +54,9 @@ public partial class SimulationPanel : UserControl
         if (_viewModel is not null)
         {
             _viewModel.Loaded += OnLoaded;
+            _viewModel.PacketDelivered += OnPacketDelivered;
+            _viewModel.Replayed += OnReplayed;
+            _viewModel.RulesChanged += OnRulesChanged;
             _viewModel.PropertyChanged += OnViewModelPropertyChanged;
             _viewModel.Entries.CollectionChanged += OnEntriesChanged;
             _viewModel.Steps.CollectionChanged += OnStepsChanged;
@@ -157,6 +165,57 @@ public partial class SimulationPanel : UserControl
         flyout.ShowAt(Canvas, showAtPointer: true);
     }
 
+    private void OnSendFromEditorClick(object? sender, RoutedEventArgs e)
+    {
+        if (sender is Control { DataContext: BuilderDevice device })
+        {
+            (Resources["DeviceFlyout"] as Flyout)?.Hide();
+            ShowPacketForm(device, null);
+        }
+    }
+
+    private void ShowPacketForm(BuilderDevice source, BuilderDevice? destination)
+    {
+        if (_viewModel is null || Resources["PacketFlyout"] is not Flyout flyout || flyout.Content is not Control form)
+        {
+            return;
+        }
+
+        form.DataContext = _viewModel.NewDraft(source, destination);
+        flyout.ShowAt(Canvas, showAtPointer: true);
+    }
+
+    private void OnSendPacketClick(object? sender, RoutedEventArgs e)
+    {
+        if (sender is Control { DataContext: PacketDraft draft } && _viewModel is not null && _viewModel.Send(draft))
+        {
+            (Resources["PacketFlyout"] as Flyout)?.Hide();
+        }
+    }
+
+    private async void OnPacketDelivered()
+    {
+        while (await StepAsync())
+        {
+        }
+    }
+
+    private async void OnReplayed()
+    {
+        Stop();
+        await PlayAsync();
+    }
+
+    private void OnRulesChanged()
+    {
+        if (_viewModel is { IsBuilder: true } viewModel)
+        {
+            var active = viewModel.ActiveRules.Count();
+            _ = Canvas.SayAsync(
+                $"Los próximos paquetes usarán {active} {(active == 1 ? "regla" : "reglas")}. Con ↻ repito los enviados.");
+        }
+    }
+
     private void OnToggleConnectClick(object? sender, RoutedEventArgs e)
     {
         if (sender is Control { DataContext: BuilderDevice device })
@@ -206,6 +265,12 @@ public partial class SimulationPanel : UserControl
 
     private void OnResetClick(object? sender, RoutedEventArgs e)
     {
+        if (_viewModel is { IsBuilder: true } builder)
+        {
+            builder.RequestReplay();
+            return;
+        }
+
         Stop();
         _viewModel?.Reset();
     }
