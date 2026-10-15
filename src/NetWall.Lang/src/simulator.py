@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import Dict, List, Optional, Tuple
 
 from nodes import Network, Packet, Port, Program, Rule
 
@@ -18,29 +18,75 @@ def portContains(port: Port, value: int) -> bool:
     return port.value == value
 
 
-def matches(rule: Rule, packet: Packet) -> bool:
+def mismatch(rule: Rule, packet: Packet) -> Optional[str]:
     if rule.protocol is not None and rule.protocol != packet.protocol:
-        return False
+        return f"protocolo {packet.protocol} ≠ {rule.protocol}"
     if rule.port is not None and not portContains(rule.port, packet.port.value):
-        return False
+        if rule.port.type == "range":
+            return f"puerto {packet.port} fuera de {rule.port}"
+        return f"puerto {packet.port} ≠ {rule.port}"
     if rule.source is not None and not networkContains(rule.source, packet.source):
-        return False
+        return f"origen {packet.source} fuera de {rule.source}"
     if rule.destination is not None and not networkContains(rule.destination, packet.destination):
-        return False
-    return True
-
-
-def findRule(rules: List[Rule], packet: Packet) -> Optional[Rule]:
-    for rule in rules:
-        if matches(rule, packet):
-            return rule
+        return f"destino {packet.destination} fuera de {rule.destination}"
     return None
+
+
+def trace(rules: List[Rule], packet: Packet) -> Tuple[Optional[Rule], List[Tuple[Rule, str]]]:
+    skipped = []
+    for rule in rules:
+        reason = mismatch(rule, packet)
+        if reason is None:
+            return rule, skipped
+        skipped.append((rule, reason))
+    return None, skipped
+
+
+def address(value) -> Optional[str]:
+    return None if value is None else str(value)
+
+
+def simulationData(program: Program) -> Dict:
+    packets = []
+    for packet in program.simulations:
+        rule, skipped = trace(program.rules, packet)
+        packets.append({
+            "protocol": packet.protocol,
+            "port": packet.port.value,
+            "source": str(packet.source),
+            "destination": str(packet.destination),
+            "line": packet.line,
+            "action": rule.action if rule is not None else program.defaultPolicy or DEFAULT_POLICY,
+            "rule": rule.name if rule is not None else None,
+            "skipped": [{"rule": skippedRule.name, "reason": reason} for skippedRule, reason in skipped],
+        })
+
+    return {
+        "defaultPolicy": program.defaultPolicy or DEFAULT_POLICY,
+        "policyDefined": program.defaultPolicy is not None,
+        "networks": [
+            {"name": d.name, "cidr": str(d.value)}
+            for d in program.declarations if d.dataType == "Red" and isinstance(d.value, Network)
+        ],
+        "rules": [
+            {
+                "name": rule.name,
+                "action": rule.action,
+                "protocol": rule.protocol,
+                "port": address(rule.port),
+                "source": address(rule.source),
+                "destination": address(rule.destination),
+            }
+            for rule in program.rules
+        ],
+        "packets": packets,
+    }
 
 
 def simulate(program: Program) -> List[str]:
     results = []
     for packet in program.simulations:
-        rule = findRule(program.rules, packet)
+        rule, _ = trace(program.rules, packet)
         if rule is not None:
             decision = f"{RESULTS[rule.action]} por la regla '{rule.name}'"
         elif program.defaultPolicy is not None:

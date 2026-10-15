@@ -478,6 +478,52 @@
         <Setter Property="Foreground" Value="{DynamicResource TextMutedBrush}" />
         <Setter Property="LetterSpacing" Value="1" />
     </Style>
+    <Style Selector="Border.panel-grip">
+        <Setter Property="Height" Value="10" />
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="Cursor" Value="SizeNorthSouth" />
+    </Style>
+    <Style Selector="Border.panel-grip-handle">
+        <Setter Property="Width" Value="44" />
+        <Setter Property="Height" Value="4" />
+        <Setter Property="CornerRadius" Value="2" />
+        <Setter Property="HorizontalAlignment" Value="Center" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+        <Setter Property="Background" Value="{DynamicResource BorderBrush}" />
+        <Setter Property="Transitions">
+            <Transitions>
+                <DoubleTransition Property="Width" Duration="0:0:0.18" Easing="CubicEaseOut" />
+                <BrushTransition Property="Background" Duration="0:0:0.18" />
+            </Transitions>
+        </Setter>
+    </Style>
+    <Style Selector="Border.panel-grip:pointerover Border.panel-grip-handle">
+        <Setter Property="Width" Value="72" />
+        <Setter Property="Background" Value="{DynamicResource TextMutedBrush}" />
+    </Style>
+    <Style Selector="Border.panel-grip.dragging Border.panel-grip-handle">
+        <Setter Property="Width" Value="96" />
+        <Setter Property="Background" Value="{DynamicResource AccentBrush}" />
+    </Style>
+    <Style Selector="Button.panel-tab">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderBrush" Value="Transparent" />
+        <Setter Property="BorderThickness" Value="0,0,0,2" />
+        <Setter Property="CornerRadius" Value="0" />
+        <Setter Property="Height" Value="30" />
+        <Setter Property="Padding" Value="8,0" />
+        <Setter Property="VerticalContentAlignment" Value="Center" />
+    </Style>
+    <Style Selector="Button.panel-tab:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Background" Value="{DynamicResource HoverBrush}" />
+        <Setter Property="BorderBrush" Value="Transparent" />
+    </Style>
+    <Style Selector="Button.panel-tab.active /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}" />
+    </Style>
+    <Style Selector="Button.panel-tab.active TextBlock">
+        <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
+    </Style>
     <Style Selector="TextBlock.status-text">
         <Setter Property="FontSize" Value="12" />
         <Setter Property="Foreground" Value="White" />

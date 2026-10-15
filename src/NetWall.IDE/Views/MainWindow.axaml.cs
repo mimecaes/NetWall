@@ -23,6 +23,8 @@ public partial class MainWindow : Window
     private readonly IndentRainbowRenderer _indentRainbowRenderer = new();
     private readonly NetWallSyntaxColorizer _syntaxColorizer = new();
     private DispatcherTimer? _indentFadeTimer;
+    private double? _gripStartY;
+    private double _gripStartHeight;
 
     public MainWindow()
     {
@@ -37,6 +39,7 @@ public partial class MainWindow : Window
         ThemeManager.ThemeApplied += OnThemeApplied;
         Closed += (_, _) => ThemeManager.ThemeApplied -= OnThemeApplied;
         Loaded += OnWindowLoaded;
+        SizeChanged += OnWindowSizeChanged;
     }
 
     private void OnWindowLoaded(object? sender, RoutedEventArgs e)
@@ -44,6 +47,45 @@ public partial class MainWindow : Window
         if (this.FindControl<ItemsControl>("TabsItemsControl") is { } tabsControl)
         {
             tabsControl.LayoutUpdated += OnTabsLayoutUpdated;
+        }
+    }
+
+    private void OnPanelGripPressed(object? sender, PointerPressedEventArgs e)
+    {
+        if (ViewModel is null || !e.GetCurrentPoint(PanelGrip).Properties.IsLeftButtonPressed)
+        {
+            return;
+        }
+
+        _gripStartY = e.GetPosition(this).Y;
+        _gripStartHeight = ViewModel.PanelHeight;
+        e.Pointer.Capture(PanelGrip);
+        PanelGrip.Classes.Add("dragging");
+        e.Handled = true;
+    }
+
+    private void OnPanelGripMoved(object? sender, PointerEventArgs e)
+    {
+        if (_gripStartY is { } start && ViewModel is { } viewModel)
+        {
+            viewModel.ResizePanel(_gripStartHeight + start - e.GetPosition(this).Y);
+        }
+    }
+
+    private void OnPanelGripReleased(object? sender, PointerReleasedEventArgs e)
+    {
+        _gripStartY = null;
+        e.Pointer.Capture(null);
+        PanelGrip.Classes.Remove("dragging");
+    }
+
+    private void OnPanelGripDoubleTapped(object? sender, TappedEventArgs e) => ViewModel?.ResetPanelHeight();
+
+    private void OnWindowSizeChanged(object? sender, SizeChangedEventArgs e)
+    {
+        if (ViewModel is { } viewModel)
+        {
+            viewModel.AvailableHeight = e.NewSize.Height;
         }
     }
 
@@ -268,6 +310,7 @@ public partial class MainWindow : Window
         if (sender is MenuItem { Tag: string tagValue } && Enum.TryParse<PetColor>(tagValue, out var color))
         {
             Pet.SetColor(color);
+            SimulationView.SetHelpyColor(color);
         }
     }
 

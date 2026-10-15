@@ -179,6 +179,63 @@ public partial class MainViewModel : ViewModelBase
     [ObservableProperty]
     public partial bool IsTerminalVisible { get; set; } = true;
 
+    public SimulationViewModel Simulation { get; } = new();
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(PanelHeight))]
+    public partial bool IsSimulationTabActive { get; set; }
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(PanelHeight))]
+    public partial double AvailableHeight { get; set; } = 800;
+
+    private double? _terminalHeight;
+    private double? _simulationHeight;
+
+    private double MaxPanelHeight => Math.Max(120, AvailableHeight - 200);
+
+    public double PanelHeight => Math.Min(MaxPanelHeight, IsSimulationTabActive
+        ? _simulationHeight ?? Math.Clamp(AvailableHeight * 0.7, 470, 900)
+        : _terminalHeight ?? 220);
+
+    public void ResizePanel(double height)
+    {
+        var minimum = IsSimulationTabActive ? 470 : 120;
+        var clamped = Math.Clamp(height, minimum, Math.Max(minimum, MaxPanelHeight));
+        if (IsSimulationTabActive)
+        {
+            _simulationHeight = clamped;
+        }
+        else
+        {
+            _terminalHeight = clamped;
+        }
+
+        OnPropertyChanged(nameof(PanelHeight));
+    }
+
+    public void ResetPanelHeight()
+    {
+        if (IsSimulationTabActive)
+        {
+            _simulationHeight = null;
+        }
+        else
+        {
+            _terminalHeight = null;
+        }
+
+        OnPropertyChanged(nameof(PanelHeight));
+    }
+
+    [RelayCommand]
+    private void ShowTerminalTab() => IsSimulationTabActive = false;
+
+    [RelayCommand]
+    private void ShowSimulationTab() => IsSimulationTabActive = true;
+
+    partial void OnIsSimulationTabActiveChanged(bool value) => Simulation.IsVisible = value;
+
     public ObservableCollection<TerminalEntry> TerminalEntries { get; } =
         [new TerminalLine(TerminalLineKind.Info, "NetWall.IDE terminal ready.")];
 
@@ -865,9 +922,11 @@ public partial class MainViewModel : ViewModelBase
         _terminal ??= new TerminalSession(Path.GetDirectoryName(SelectedTab.FilePath) ?? RootPath);
 
         string command;
-        if (string.Equals(Path.GetExtension(SelectedTab.FilePath), ".nw", StringComparison.OrdinalIgnoreCase))
+        string? cliPath = null;
+        var filePath = SelectedTab.FilePath;
+        if (string.Equals(Path.GetExtension(filePath), ".nw", StringComparison.OrdinalIgnoreCase))
         {
-            var cliPath = FindNetWallCliPath();
+            cliPath = FindNetWallCliPath();
             if (cliPath is null)
             {
                 AppendTerminalLine("No se encontró cli.py de NetWall.Lang.", TerminalLineKind.Error);
@@ -895,6 +954,17 @@ public partial class MainViewModel : ViewModelBase
         block.Duration = stopwatch.Elapsed;
         block.Status = result.ExitCode == 0 ? RunStatus.Succeeded : RunStatus.Failed;
         TerminalUpdated?.Invoke();
+
+        if (cliPath is not null)
+        {
+            var simulation = await SimulationRunner.RunAsync(cliPath, filePath);
+            Simulation.Load(simulation, Path.GetFileName(filePath));
+            if (Simulation.HasUnseenResults)
+            {
+                AppendTerminalLine(
+                    $"Simulación lista: {Simulation.Packets.Count} paquetes. Ábrela en la pestaña SIMULACIÓN.");
+            }
+        }
     }
 
     private static string? FindNetWallCliPath()

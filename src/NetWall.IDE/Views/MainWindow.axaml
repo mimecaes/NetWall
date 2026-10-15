@@ -4,6 +4,7 @@
         xmlns:models="using:NetWall.IDE.Models"
         xmlns:conv="using:NetWall.IDE.Converters"
         xmlns:controls="using:NetWall.IDE.Controls"
+        xmlns:views="using:NetWall.IDE.Views"
         xmlns:ae="https://github.com/avaloniaui/avaloniaedit"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
@@ -534,10 +535,15 @@
                     </Grid>
                 </Grid>
 
-                <GridSplitter Grid.Row="1" Height="4" Background="Transparent"
-                              IsVisible="{Binding IsTerminalVisible}" ResizeDirection="Rows" />
+                <Border Grid.Row="1" Name="PanelGrip" Classes="panel-grip"
+                        IsVisible="{Binding IsTerminalVisible}"
+                        ToolTip.Tip="Arrastra para cambiar el tamaño · doble clic para restaurarlo"
+                        PointerPressed="OnPanelGripPressed" PointerMoved="OnPanelGripMoved"
+                        PointerReleased="OnPanelGripReleased" DoubleTapped="OnPanelGripDoubleTapped">
+                    <Border Classes="panel-grip-handle" />
+                </Border>
 
-                <Border Grid.Row="2" Height="220"
+                <Border Grid.Row="2" Height="{Binding PanelHeight}"
                         Background="{DynamicResource TerminalBackgroundBrush}"
                         BorderBrush="{DynamicResource BorderBrush}"
                         BorderThickness="0,1,0,0"
@@ -546,8 +552,22 @@
                     <DockPanel>
                         <Grid DockPanel.Dock="Top" ColumnDefinitions="*,Auto,Auto,Auto"
                               Background="{DynamicResource SurfaceBackgroundBrush}" Height="30">
-                            <TextBlock Grid.Column="0" Classes="sidebar-header" Text="TERMINAL"
-                                       VerticalAlignment="Center" Margin="12,0" />
+                            <StackPanel Grid.Column="0" Orientation="Horizontal" Margin="4,0">
+                                <Button Classes="panel-tab" Classes.active="{Binding !IsSimulationTabActive}"
+                                        Command="{Binding ShowTerminalTabCommand}">
+                                    <TextBlock Classes="sidebar-header" Text="TERMINAL" />
+                                </Button>
+                                <Button Classes="panel-tab" Classes.active="{Binding IsSimulationTabActive}"
+                                        Command="{Binding ShowSimulationTabCommand}">
+                                    <StackPanel Orientation="Horizontal" Spacing="6">
+                                        <TextBlock Classes="sidebar-header" Text="SIMULACIÓN" />
+                                        <Ellipse Width="7" Height="7" VerticalAlignment="Center"
+                                                 Fill="{DynamicResource AccentBrush}"
+                                                 IsVisible="{Binding Simulation.HasUnseenResults}"
+                                                 ToolTip.Tip="Hay una simulación nueva" />
+                                    </StackPanel>
+                                </Button>
+                            </StackPanel>
                             <Button Grid.Column="1" Classes="icon" Width="24" Height="24" ToolTip.Tip="Cat color">
                                 <controls:AnimatedIcon Classes="icon-sm" Kind="Cat" />
                                 <Button.Flyout>
@@ -571,6 +591,7 @@
                                 </Button.Flyout>
                             </Button>
                             <Button Grid.Column="2" Classes="icon" Width="24" Height="24"
+                                    IsVisible="{Binding !IsSimulationTabActive}"
                                     Command="{Binding ClearTerminalCommand}" ToolTip.Tip="Clear Terminal">
                                 <controls:AnimatedIcon Classes="icon-sm" Kind="Eraser" />
                             </Button>
@@ -580,6 +601,11 @@
                             </Button>
                         </Grid>
 
+                        <Panel>
+                        <Panel IsVisible="{Binding IsSimulationTabActive}">
+                            <views:SimulationPanel Name="SimulationView" DataContext="{Binding Simulation}" />
+                        </Panel>
+                        <DockPanel IsVisible="{Binding !IsSimulationTabActive}">
                         <controls:PetWidget Name="Pet" DockPanel.Dock="Top"
                                             IsVisible="{Binding IsPetEnabled}"
                                             Classes.pet-pop="{Binding IsPetEnabled}" />
@@ -624,6 +650,8 @@
                                 </ItemsControl.DataTemplates>
                             </ItemsControl>
                         </ScrollViewer>
+                        </DockPanel>
+                        </Panel>
                     </DockPanel>
                     </Panel>
                 </Border>
