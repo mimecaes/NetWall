@@ -9,10 +9,12 @@ using Avalonia.Interactivity;
 using Avalonia.Platform.Storage;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
+using AvaloniaEdit.Document;
 using NetWall.IDE.Controls;
 using NetWall.IDE.Models;
 using NetWall.IDE.Themes;
 using NetWall.IDE.ViewModels;
+using NetWall.IDE.Views.Dialogs;
 
 namespace NetWall.IDE.Views;
 
@@ -76,6 +78,7 @@ public partial class MainWindow : Window
         if (ViewModel is { } vm)
         {
             vm.RequestOpenFolder += OnRequestOpenFolder;
+            vm.RequestCodeAssistant += OnRequestCodeAssistant;
             vm.RequestSaveAs += OnRequestSaveAs;
             vm.RequestDeleteConfirmation += OnRequestDeleteConfirmation;
             vm.PropertyChanged += OnViewModelPropertyChanged;
@@ -191,6 +194,30 @@ public partial class MainWindow : Window
         {
             ViewModel?.LoadFolder(path);
         }
+    }
+
+    private async void OnRequestCodeAssistant()
+    {
+        var code = await CodeAssistantDialog.ShowAsync(this);
+        if (code is not null)
+        {
+            InsertAtCaret(code);
+        }
+    }
+
+    private void InsertAtCaret(string code)
+    {
+        var document = CodeEditor.Document;
+        var caret = CodeEditor.TextArea.Caret;
+        var newLine = TextUtilities.GetNewLineFromDocument(document, caret.Line);
+        var text = code.Replace("\n", newLine);
+        if (caret.Column > 1)
+        {
+            text = newLine + text;
+        }
+
+        document.Insert(CodeEditor.CaretOffset, text);
+        CodeEditor.TextArea.Focus();
     }
 
     private async void OnRequestSaveAs(EditorTabViewModel tab)

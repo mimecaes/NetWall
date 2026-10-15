@@ -53,6 +53,8 @@ public static class NetWallSyntaxScanner
 
     private const string Punctuation = "{}(),;:.";
 
+    public static bool IsReserved(string word) => ReservedWords.ContainsKey(word);
+
     public static List<SyntaxSpan> ScanLine(string text)
     {
         var spans = new List<SyntaxSpan>();

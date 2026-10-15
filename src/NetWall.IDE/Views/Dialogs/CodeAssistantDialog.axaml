@@ -1,0 +1,79 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:NetWall.IDE.ViewModels"
+        x:Class="NetWall.IDE.Views.Dialogs.CodeAssistantDialog"
+        x:DataType="vm:CodeAssistantViewModel"
+        x:CompileBindings="True"
+        Title="Asistente de código"
+        Width="480" SizeToContent="Height"
+        CanResize="False"
+        WindowStartupLocation="CenterOwner"
+        Background="{DynamicResource PanelBackgroundBrush}">
+
+    <StackPanel Margin="20,18,20,16" Spacing="14">
+
+        <StackPanel Spacing="10" IsVisible="{Binding IsChoosing}">
+            <TextBlock Classes="assistant-title" Text="¿Qué quieres crear?" />
+            <Button Classes="assistant-option" Command="{Binding ChooseRuleCommand}">
+                <StackPanel Spacing="2">
+                    <TextBlock Classes="assistant-option-title" Text="Regla de firewall" />
+                    <TextBlock Classes="assistant-hint" Text="Permite o bloquea tráfico según protocolo, puerto y direcciones" />
+                </StackPanel>
+            </Button>
+        </StackPanel>
+
+        <StackPanel Spacing="10" IsVisible="{Binding IsRuleForm}">
+            <TextBlock Classes="assistant-title" Text="Nueva regla" />
+            <Grid ColumnDefinitions="96,*" RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto" RowSpacing="8">
+                <TextBlock Grid.Row="0" Classes="assistant-label" Text="Nombre" />
+                <TextBox Grid.Row="0" Grid.Column="1" Text="{Binding RuleName}" Watermark="web_oficina" />
+
+                <TextBlock Grid.Row="1" Classes="assistant-label" Text="Acción" />
+                <ComboBox Grid.Row="1" Grid.Column="1" ItemsSource="{x:Static vm:CodeAssistantViewModel.Actions}"
+                          SelectedItem="{Binding Action}" HorizontalAlignment="Stretch" />
+
+                <TextBlock Grid.Row="2" Classes="assistant-label" Text="Protocolo" />
+                <ComboBox Grid.Row="2" Grid.Column="1" ItemsSource="{x:Static vm:CodeAssistantViewModel.Protocols}"
+                          SelectedItem="{Binding Protocol}" HorizontalAlignment="Stretch" />
+
+                <TextBlock Grid.Row="3" Classes="assistant-label" Text="Puerto" VerticalAlignment="Top" Margin="0,6,0,0" />
+                <StackPanel Grid.Row="3" Grid.Column="1" Spacing="6">
+                    <StackPanel Orientation="Horizontal" Spacing="12">
+                        <RadioButton GroupName="Port" Content="ninguno" IsChecked="{Binding HasNoPort}" />
+                        <RadioButton GroupName="Port" Content="número" IsChecked="{Binding HasSinglePort}" />
+                        <RadioButton GroupName="Port" Content="rango" IsChecked="{Binding HasPortRange}" />
+                    </StackPanel>
+                    <TextBox Text="{Binding Port}" Watermark="80" IsVisible="{Binding HasSinglePort}" />
+                    <Grid ColumnDefinitions="*,Auto,*" IsVisible="{Binding HasPortRange}">
+                        <TextBox Grid.Column="0" Text="{Binding PortFrom}" Watermark="1000" />
+                        <TextBlock Grid.Column="1" Classes="assistant-hint" Text="hasta" VerticalAlignment="Center" Margin="8,0" />
+                        <TextBox Grid.Column="2" Text="{Binding PortTo}" Watermark="2000" />
+                    </Grid>
+                </StackPanel>
+
+                <TextBlock Grid.Row="4" Classes="assistant-label" Text="Origen" />
+                <TextBox Grid.Row="4" Grid.Column="1" Text="{Binding Source}"
+                         Watermark="vacío = cualquiera · ej. lan o 10.0.0.0/8" />
+
+                <TextBlock Grid.Row="5" Classes="assistant-label" Text="Destino" />
+                <TextBox Grid.Row="5" Grid.Column="1" Text="{Binding Destination}"
+                         Watermark="vacío = cualquiera · ej. servidor o 10.0.0.5" />
+
+                <TextBlock Grid.Row="6" Classes="assistant-label" Text="Comentario" />
+                <TextBox Grid.Row="6" Grid.Column="1" Text="{Binding Comment}" Watermark="opcional" />
+            </Grid>
+        </StackPanel>
+
+        <TextBlock Classes="assistant-errors" Text="{Binding Errors}" IsVisible="{Binding HasErrors}" />
+
+        <Grid ColumnDefinitions="Auto,*,Auto">
+            <Button Grid.Column="0" Content="Atrás" Command="{Binding BackCommand}" IsVisible="{Binding !IsChoosing}" />
+            <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="8">
+                <Button Content="Cancelar" Click="OnCancelClick" />
+                <Button Content="Insertar" Click="OnInsertClick" IsEnabled="{Binding CanInsert}"
+                        IsVisible="{Binding !IsChoosing}"
+                        Background="{DynamicResource AccentBrush}" Foreground="White" />
+            </StackPanel>
+        </Grid>
+    </StackPanel>
+</Window>
