@@ -57,8 +57,28 @@ public partial class CodeAssistantViewModel : ViewModelBase
         ScanDocument(documentText);
         _hasMainBlock = _keywords.Contains("principal");
         ImportFiles = FindImportFiles(currentFile, projectRoot);
+
+        var networks = new Dictionary<string, string>();
+        CollectNetworks(documentText, networks);
+        foreach (var imported in _importedPaths)
+        {
+            var path = Path.Combine(Path.GetDirectoryName(currentFile) ?? string.Empty, imported);
+            if (currentFile is not null && File.Exists(path))
+            {
+                CollectNetworks(File.ReadAllText(path), networks);
+            }
+        }
+
+        NetworkVariables = networks.Keys.Order().ToList();
+        HostVariables = NetworkVariables.Where(name => IsHostVariable(name, networks)).ToList();
         Validate();
     }
+
+    /// <summary>Red variables declared in the open file and the files it imports.</summary>
+    public IReadOnlyList<string> NetworkVariables { get; }
+
+    /// <summary>The Red variables that hold a single address, valid as a packet's origin or destination.</summary>
+    public IReadOnlyList<string> HostVariables { get; }
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(IsChoosing), nameof(IsRuleForm), nameof(IsVariableForm), nameof(IsPacketForm),
@@ -328,6 +348,42 @@ public partial class CodeAssistantViewModel : ViewModelBase
                 }
             }
         }
+    }
+
+    /// <summary>Finds "declarar name: Red = value;" and stores each name with its value.</summary>
+    private static void CollectNetworks(string text, Dictionary<string, string> networks)
+    {
+        foreach (var line in text.Split('\n'))
+        {
+            var spans = NetWallSyntaxScanner.ScanLine(line);
+            string Word(int i) => line.Substring(spans[i].Start, spans[i].Length);
+
+            for (var i = 0; i + 5 < spans.Count; i++)
+            {
+                if (Word(i) == "declarar" && spans[i + 1].Token == SyntaxToken.Identifier
+                    && Word(i + 2) == ":" && Word(i + 3) == "Red" && Word(i + 4) == "="
+                    && spans[i + 5].Token is SyntaxToken.String or SyntaxToken.Identifier)
+                {
+                    networks[Word(i + 1)] = Word(i + 5).Trim('"');
+                }
+            }
+        }
+    }
+
+    private static bool IsHostVariable(string name, Dictionary<string, string> networks)
+    {
+        var visited = new HashSet<string>();
+        while (networks.TryGetValue(name, out var value) && visited.Add(name))
+        {
+            if (!IsIdentifier(value))
+            {
+                return IsHost(value);
+            }
+
+            name = value;
+        }
+
+        return false;
     }
 
     private static IReadOnlyList<string> FindImportFiles(string? currentFile, string? projectRoot)

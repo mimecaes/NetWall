@@ -76,12 +76,14 @@
                 </StackPanel>
 
                 <TextBlock Grid.Row="4" Classes="assistant-label" Text="Origen" />
-                <TextBox Grid.Row="4" Grid.Column="1" Text="{Binding Source}"
-                         Watermark="vacío = cualquiera · ej. lan o 10.0.0.0/8" />
+                <AutoCompleteBox Grid.Row="4" Grid.Column="1" Text="{Binding Source, Mode=TwoWay}"
+                                 ItemsSource="{Binding NetworkVariables}" FilterMode="StartsWith"
+                                 Watermark="vacío = cualquiera · ej. lan o 10.0.0.0/8" />
 
                 <TextBlock Grid.Row="5" Classes="assistant-label" Text="Destino" />
-                <TextBox Grid.Row="5" Grid.Column="1" Text="{Binding Destination}"
-                         Watermark="vacío = cualquiera · ej. servidor o 10.0.0.5" />
+                <AutoCompleteBox Grid.Row="5" Grid.Column="1" Text="{Binding Destination, Mode=TwoWay}"
+                                 ItemsSource="{Binding NetworkVariables}" FilterMode="StartsWith"
+                                 Watermark="vacío = cualquiera · ej. servidor o 10.0.0.5" />
 
                 <TextBlock Grid.Row="6" Classes="assistant-label" Text="Comentario" />
                 <TextBox Grid.Row="6" Grid.Column="1" Text="{Binding Comment}" Watermark="opcional" />
@@ -115,10 +117,13 @@
                 <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding PacketPort}" Watermark="80" />
 
                 <TextBlock Grid.Row="2" Classes="assistant-label" Text="Origen" />
-                <TextBox Grid.Row="2" Grid.Column="1" Text="{Binding PacketSource}" Watermark="ej. 10.0.0.5" />
+                <AutoCompleteBox Grid.Row="2" Grid.Column="1" Text="{Binding PacketSource, Mode=TwoWay}"
+                                 ItemsSource="{Binding HostVariables}" FilterMode="StartsWith" Watermark="ej. 10.0.0.5" />
 
                 <TextBlock Grid.Row="3" Classes="assistant-label" Text="Destino" />
-                <TextBox Grid.Row="3" Grid.Column="1" Text="{Binding PacketDestination}" Watermark="ej. servidor o 192.168.1.10" />
+                <AutoCompleteBox Grid.Row="3" Grid.Column="1" Text="{Binding PacketDestination, Mode=TwoWay}"
+                                 ItemsSource="{Binding HostVariables}" FilterMode="StartsWith"
+                                 Watermark="ej. servidor o 192.168.1.10" />
             </Grid>
         </StackPanel>
 
