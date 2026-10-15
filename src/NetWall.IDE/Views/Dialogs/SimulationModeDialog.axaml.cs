@@ -12,6 +12,7 @@ public enum SimulationChoice
 {
     None,
     Program,
+    Rules,
 }
 
 public partial class SimulationModeDialog : Window
@@ -32,9 +33,11 @@ public partial class SimulationModeDialog : Window
         var dialog = new SimulationModeDialog();
         dialog.Helpy.SetColor(helpyColor);
         dialog.ProgramOption.IsEnabled = canSimulateProgram;
+        dialog.RulesOption.IsEnabled = canSimulateProgram;
         if (!canSimulateProgram)
         {
             dialog.ProgramHint.Text = "Abre un archivo .nw para simularlo.";
+            dialog.RulesHint.Text = "Abre un archivo .nw para usar sus reglas y redes.";
         }
 
         return dialog.ShowDialog<SimulationChoice>(owner);
@@ -67,6 +70,12 @@ public partial class SimulationModeDialog : Window
     {
         Helpy.Mood = HelpyMood.Happy;
         _ = CloseAnimatedAsync(SimulationChoice.Program);
+    }
+
+    private void OnRulesClick(object? sender, RoutedEventArgs e)
+    {
+        Helpy.Mood = HelpyMood.Happy;
+        _ = CloseAnimatedAsync(SimulationChoice.Rules);
     }
 
     private void OnCancelClick(object? sender, RoutedEventArgs e) => _ = CloseAnimatedAsync(SimulationChoice.None);

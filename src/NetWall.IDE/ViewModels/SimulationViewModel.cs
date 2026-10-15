@@ -6,6 +6,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
 using NetWall.IDE.Models;
+using NetWall.IDE.Services;
 
 namespace NetWall.IDE.ViewModels;
 
@@ -95,7 +96,10 @@ public partial class SimulationViewModel : ViewModelBase
 {
     private const string NoFields = "—";
 
+    private const string InternetPrefix = "203.0.113.";
+
     private bool _updatingCatalog;
+    private int _nextDeviceId;
 
     public SimulationResult? Result { get; private set; }
 
@@ -106,6 +110,11 @@ public partial class SimulationViewModel : ViewModelBase
     public ObservableCollection<RuleStep> Steps { get; } = [];
 
     public ObservableCollection<RuleToggle> Catalog { get; } = [];
+
+    public ObservableCollection<BuilderDevice> Devices { get; } = [];
+
+    [ObservableProperty]
+    public partial bool IsBuilder { get; set; }
 
     public IReadOnlyList<SimulatedPacket> ProgramPackets { get; private set; } = [];
 
@@ -148,6 +157,11 @@ public partial class SimulationViewModel : ViewModelBase
     {
         get
         {
+            if (IsBuilder)
+            {
+                return "Arrastra equipos desde la paleta y conéctalos a NetWall desde su puerto.";
+            }
+
             if (!IsRerun)
             {
                 return $"¡Hola! Voy a vigilar {Packets.Count} {(Packets.Count == 1 ? "paquete" : "paquetes")}.";
@@ -186,9 +200,125 @@ public partial class SimulationViewModel : ViewModelBase
 
     public SimulatedPacket? NextPacket => NextIndex < Packets.Count ? Packets[NextIndex] : null;
 
+    public void LoadBuilder(SimulationResult? result, string fileName)
+    {
+        IsRerun = false;
+        IsBuilder = true;
+        var valid = result is { Errors: false } ? result with { Packets = [] } : null;
+        BuildCatalog(valid);
+        ProgramPackets = [];
+        ClearDevices();
+        FileName = fileName;
+        Result = valid;
+        Message = result is null ? "No se pudo ejecutar la simulación."
+            : result.Errors ? "Corrige los errores del archivo para simular."
+            : string.Empty;
+        Reset();
+        Loaded?.Invoke();
+    }
+
+    public BuilderDevice AddDevice(DeviceKind kind, double x, double y)
+    {
+        var device = new BuilderDevice(++_nextDeviceId, kind, NetworkOptions(kind)) { X = x, Y = y };
+        device.PropertyChanged += OnDevicePropertyChanged;
+        Devices.Add(device);
+        device.Network = device.Options[0];
+        return device;
+    }
+
+    public void RemoveDevice(BuilderDevice device)
+    {
+        device.PropertyChanged -= OnDevicePropertyChanged;
+        Devices.Remove(device);
+        ValidateDevices();
+    }
+
+    private void ClearDevices()
+    {
+        foreach (var device in Devices)
+        {
+            device.PropertyChanged -= OnDevicePropertyChanged;
+        }
+
+        Devices.Clear();
+    }
+
+    private IReadOnlyList<NetworkOption> NetworkOptions(DeviceKind kind)
+    {
+        var networks = Result?.Networks ?? [];
+        var zones = networks.Where(network => Ipv4.Parse(network.Cidr) is { Mask: < 32 })
+            .Select(network => new NetworkOption($"{network.Name} · {network.Cidr}", network));
+        var hosts = networks.Where(network => Ipv4.IsHost(network.Cidr))
+            .Select(network => new NetworkOption($"{network.Name} · {network.Cidr}", network));
+        NetworkOption[] internet = [new("internet · fuera de las redes", null)];
+        return kind switch
+        {
+            DeviceKind.Computer => [.. zones, .. internet],
+            DeviceKind.Server => [.. hosts, .. zones, .. internet],
+            _ => internet,
+        };
+    }
+
+    private void OnDevicePropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+    {
+        if (sender is not BuilderDevice device)
+        {
+            return;
+        }
+
+        if (e.PropertyName == nameof(BuilderDevice.Network))
+        {
+            device.Address = FreeAddress(device);
+        }
+        else if (e.PropertyName == nameof(BuilderDevice.Address))
+        {
+            ValidateDevices();
+        }
+    }
+
+    private string FreeAddress(BuilderDevice device)
+    {
+        var used = Devices.Where(other => other != device).Select(other => other.Address).ToHashSet();
+        if (device.Network?.Network is not { } network || Ipv4.Parse(network.Cidr) is not { } parsed)
+        {
+            return Enumerable.Range(10, 240).Select(i => InternetPrefix + i).FirstOrDefault(address => !used.Contains(address))
+                   ?? InternetPrefix + "10";
+        }
+
+        if (parsed.Mask == 32)
+        {
+            return Ipv4.Format(parsed.Base);
+        }
+
+        var size = 1L << (32 - parsed.Mask);
+        var first = parsed.Base >> (32 - parsed.Mask) << (32 - parsed.Mask);
+        var offsets = Enumerable.Range(10, (int)Math.Max(0, Math.Min(size - 11, 500)))
+            .Concat(Enumerable.Range(1, (int)Math.Min(9, Math.Max(0, size - 2))));
+        return offsets.Select(offset => Ipv4.Format((uint)(first + offset))).FirstOrDefault(address => !used.Contains(address))
+               ?? Ipv4.Format(first);
+    }
+
+    private void ValidateDevices()
+    {
+        foreach (var device in Devices)
+        {
+            var zone = device.Network?.Network;
+            var parsedZone = zone is null ? null : Ipv4.Parse(zone.Cidr);
+            device.Error = Ipv4.Parse(device.Address) is not { Mask: 32 } host
+                ? "Escribe una dirección IPv4, por ejemplo 192.168.1.10."
+                : parsedZone is { Mask: < 32 } inside && !Ipv4.Contains(inside, host.Base)
+                    ? $"Está fuera de {zone!.Name} ({zone.Cidr})."
+                    : Devices.Count(other => other.Address == device.Address) > 1
+                        ? "Otro equipo ya usa esta dirección."
+                        : string.Empty;
+        }
+    }
+
     public void Load(SimulationResult? result, string fileName)
     {
         IsRerun = false;
+        IsBuilder = false;
+        ClearDevices();
         BuildCatalog(result is { Errors: false } ? result : null);
         ProgramPackets = result?.Packets ?? [];
         Show(result, fileName);
@@ -302,6 +432,8 @@ public partial class SimulationViewModel : ViewModelBase
 
     public void Unload()
     {
+        IsBuilder = false;
+        ClearDevices();
         BuildCatalog(null);
         ProgramPackets = [];
         Result = null;

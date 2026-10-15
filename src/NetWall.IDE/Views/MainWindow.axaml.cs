@@ -97,7 +97,7 @@ public partial class MainWindow : Window
         }
 
         var choice = await SimulationModeDialog.ShowAsync(this, Pet.Color, viewModel.CanSimulateProgram);
-        if (choice != SimulationChoice.Program)
+        if (choice == SimulationChoice.None)
         {
             return;
         }
@@ -105,7 +105,17 @@ public partial class MainWindow : Window
         SimulationView.SetHelpyColor(Pet.Color);
         var simulation = viewModel.RunProgramSimulationAsync();
         await Intro.PlayAsync(simulation, Pet.Color, () => viewModel.IsSimulationMode = true,
-            () => viewModel.ShowProgramSimulation(simulation.Result));
+            () =>
+            {
+                if (choice == SimulationChoice.Program)
+                {
+                    viewModel.ShowProgramSimulation(simulation.Result);
+                }
+                else
+                {
+                    viewModel.ShowNetworkBuilder(simulation.Result);
+                }
+            });
     }
 
     private void OnExitSimulationClick(object? sender, RoutedEventArgs e) => ViewModel?.ExitSimulationMode();

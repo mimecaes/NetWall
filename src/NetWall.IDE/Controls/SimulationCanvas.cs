@@ -1,9 +1,11 @@
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.Collections.Specialized;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.Globalization;
 using System.Linq;
-using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
 using Avalonia;
@@ -13,6 +15,7 @@ using Avalonia.Media;
 using Avalonia.Media.Imaging;
 using Avalonia.Threading;
 using NetWall.IDE.Models;
+using NetWall.IDE.Services;
 using NetWall.IDE.Themes;
 
 namespace NetWall.IDE.Controls;
@@ -52,6 +55,8 @@ public sealed class SimulationCanvas : Control
     private const int SpriteCell = 32;
     private const int TrailLength = 6;
     private const string WallKey = "\0wall";
+    private const double BuilderMinWidth = 700;
+    private const double PortRadius = 6;
     private const double DeviceGrow = 0.22;
     private const double WallGrow = 0.06;
     private const double GrowMilliseconds = 90;
@@ -93,6 +98,14 @@ public sealed class SimulationCanvas : Control
     private long _lastIdleFrame;
     private long _lastTick;
 
+    private ObservableCollection<BuilderDevice>? _builder;
+    private BuilderDevice? _dragging;
+    private Vector _dragOffset;
+    private Point _pressPoint;
+    private bool _dragMoved;
+    private BuilderDevice? _linking;
+    private Point _linkEnd;
+
     private bool _helpyEnabled = true;
     private Bitmap _sheet = PetWidget.LoadSheet(PetColor.Gray);
     private Mood _mood = Mood.Idle;
@@ -115,13 +128,6 @@ public sealed class SimulationCanvas : Control
         Happy,
     }
 
-    private enum DeviceKind
-    {
-        Computer,
-        Server,
-        Internet,
-    }
-
     public SimulationResult? Result
     {
         get => _result;
@@ -133,6 +139,49 @@ public sealed class SimulationCanvas : Control
             _bubble = string.Empty;
             InvalidateArrange();
         }
+    }
+
+    public event Action<BuilderDevice>? DeviceClicked;
+
+    public event Action<BuilderDevice>? DeviceConnected;
+
+    public ObservableCollection<BuilderDevice>? Builder
+    {
+        get => _builder;
+        set
+        {
+            if (_builder is not null)
+            {
+                _builder.CollectionChanged -= OnBuilderChanged;
+                foreach (var device in _builder)
+                {
+                    device.PropertyChanged -= OnBuilderDeviceChanged;
+                }
+            }
+
+            _builder = value;
+            if (_builder is not null)
+            {
+                _builder.CollectionChanged += OnBuilderChanged;
+                foreach (var device in _builder)
+                {
+                    device.PropertyChanged += OnBuilderDeviceChanged;
+                }
+            }
+
+            InvalidateArrange();
+        }
+    }
+
+    public Point Normalize(Point position) =>
+        new(Math.Clamp(position.X / _scale / _design.Width, 0, 1), Math.Clamp(position.Y / _scale / _design.Height, 0, 1));
+
+    public void BeginCarry(BuilderDevice device, PointerPressedEventArgs e)
+    {
+        _dragging = device;
+        _dragOffset = default;
+        _dragMoved = true;
+        e.Pointer.Capture(this);
     }
 
     public bool HelpyEnabled
@@ -298,6 +347,12 @@ public sealed class SimulationCanvas : Control
 
     protected override Size ArrangeOverride(Size finalSize)
     {
+        if (_builder is not null)
+        {
+            ArrangeBuilder(finalSize);
+            return finalSize;
+        }
+
         var (left, right, reach, radius, above, below, scale) = Enumerable.Range(1, MaxFirstRing)
             .Select(capacity => Fit(finalSize, capacity))
             .MaxBy(fit => fit.Scale);
@@ -336,14 +391,90 @@ public sealed class SimulationCanvas : Control
         return (left, right, reach, radius, above, below, scale);
     }
 
+    protected override void OnPointerPressed(PointerPressedEventArgs e)
+    {
+        base.OnPointerPressed(e);
+        var point = DesignPoint(e.GetPosition(this));
+        if (_builder is null || !e.GetCurrentPoint(this).Properties.IsLeftButtonPressed)
+        {
+            return;
+        }
+
+        if (_devices.Values.FirstOrDefault(device => device.Model is not null && Distance(Port(device), point) <= PortRadius + 5)
+            is { Model: { } linking })
+        {
+            _linking = linking;
+            _linkEnd = point;
+        }
+        else if (DeviceAt(point) is { Model: { } model } device)
+        {
+            _dragging = model;
+            _dragOffset = device.Cell.Center - point;
+            _dragMoved = false;
+            _pressPoint = point;
+        }
+        else
+        {
+            return;
+        }
+
+        e.Pointer.Capture(this);
+        e.Handled = true;
+    }
+
+    protected override void OnPointerReleased(PointerReleasedEventArgs e)
+    {
+        base.OnPointerReleased(e);
+        var point = DesignPoint(e.GetPosition(this));
+        if (_linking is { } linking)
+        {
+            if (_wall.Inflate(14).Contains(point))
+            {
+                linking.IsConnected = true;
+                DeviceConnected?.Invoke(linking);
+            }
+
+            _linking = null;
+            InvalidateVisual();
+        }
+        else if (_dragging is { } dragging)
+        {
+            _dragging = null;
+            if (!_dragMoved)
+            {
+                DeviceClicked?.Invoke(dragging);
+            }
+        }
+        else
+        {
+            return;
+        }
+
+        e.Pointer.Capture(null);
+    }
+
     protected override void OnPointerMoved(PointerEventArgs e)
     {
         base.OnPointerMoved(e);
         var position = e.GetPosition(this);
-        var point = new Point(position.X / _scale, position.Y / _scale);
-        var hover = _devices.Values.FirstOrDefault(device => device.Cell.Deflate(new Thickness(10, 2)).Contains(point))
-                        ?.Address
-                    ?? (_wall.Inflate(6).Contains(point) ? WallKey : null);
+        var point = DesignPoint(position);
+        if (_dragging is { } dragging)
+        {
+            _dragMoved |= Distance(point, _pressPoint) > 4;
+            var center = point + _dragOffset;
+            dragging.X = Math.Clamp(center.X / _design.Width, 0, 1);
+            dragging.Y = Math.Clamp(center.Y / _design.Height, 0, 1);
+            return;
+        }
+
+        if (_linking is not null)
+        {
+            _linkEnd = point;
+            InvalidateVisual();
+            return;
+        }
+
+        var hover = DeviceAt(point)?.Key ?? (_wall.Inflate(6).Contains(point) ? WallKey : null);
         if (hover != _hover || hover is not null)
         {
             _hover = hover;
@@ -371,8 +502,9 @@ public sealed class SimulationCanvas : Control
         var now = _clock.ElapsedMilliseconds;
 
         DrawWires(context);
+        DrawLink(context);
         DrawRoute(context, now);
-        foreach (var device in _devices.Values.OrderBy(device => Grow(device.Address)))
+        foreach (var device in _devices.Values.OrderBy(device => Grow(device.Key)))
         {
             DrawDevice(context, device);
         }
@@ -433,6 +565,81 @@ public sealed class SimulationCanvas : Control
 
     private double Grow(string key) => _grow.GetValueOrDefault(key);
 
+    private Point DesignPoint(Point position) => new(position.X / _scale, position.Y / _scale);
+
+    private Device? DeviceAt(Point point) =>
+        _devices.Values.LastOrDefault(device => device.Cell.Deflate(new Thickness(10, 2)).Contains(point));
+
+    private Point Port(Device device)
+    {
+        var towardWall = device.Icon.Center.X < _wall.Center.X ? 1 : -1;
+        return device.Icon.Center + new Vector(towardWall * (IconWidth / 2 + 10), 0);
+    }
+
+    private void OnBuilderChanged(object? sender, NotifyCollectionChangedEventArgs e)
+    {
+        foreach (BuilderDevice device in e.NewItems ?? Array.Empty<BuilderDevice>())
+        {
+            device.PropertyChanged += OnBuilderDeviceChanged;
+        }
+
+        foreach (BuilderDevice device in e.OldItems ?? Array.Empty<BuilderDevice>())
+        {
+            device.PropertyChanged -= OnBuilderDeviceChanged;
+        }
+
+        InvalidateArrange();
+    }
+
+    private void OnBuilderDeviceChanged(object? sender, PropertyChangedEventArgs e) => InvalidateArrange();
+
+    private void ArrangeBuilder(Size size)
+    {
+        var required = TopSpace + WallMinHeight + WallFooter + 2 * Inset;
+        _scale = Math.Clamp(Math.Min(size.Height / required, size.Width / BuilderMinWidth), 0.6, 1);
+        _design = new Size(size.Width / _scale, size.Height / _scale);
+        var wallHeight = Math.Clamp(_design.Height - TopSpace - WallFooter - 2 * Inset, WallMinHeight, WallMaxHeight);
+        var center = new Point(_design.Width / 2,
+            Math.Max(Inset + TopSpace + wallHeight / 2, (_design.Height - WallFooter + TopSpace) / 2));
+        _wall = new Rect(center.X - WallWidth / 2, center.Y - wallHeight / 2, WallWidth, wallHeight);
+
+        var zones = (_result?.Networks ?? [])
+            .Where(network => Ipv4.Parse(network.Cidr) is { Mask: < 32 and > 0 })
+            .OrderByDescending(network => Ipv4.Parse(network.Cidr)!.Value.Mask)
+            .ToList();
+        _devices.Clear();
+        var placed = new List<(BuilderDevice Model, Point Position)>();
+        foreach (var model in _builder!)
+        {
+            var position = new Point(
+                Math.Clamp(model.X * _design.Width, CellWidth / 2, _design.Width - CellWidth / 2),
+                Math.Clamp(model.Y * _design.Height, CellHeight / 2, _design.Height - CellHeight / 2));
+            placed.Add((model, position));
+        }
+
+        foreach (var side in placed.GroupBy(item => item.Position.X < center.X))
+        {
+            var connected = side.Where(item => item.Model.IsConnected).OrderBy(item => item.Position.Y).ToList();
+            foreach (var (model, position) in side)
+            {
+                var index = connected.FindIndex(item => item.Model == model);
+                var wallY = index < 0
+                    ? Math.Clamp(position.Y, _wall.Top + 12, _wall.Bottom - 12)
+                    : _wall.Top + (index + 1) * _wall.Height / (connected.Count + 1);
+                var zone = model.Network?.Network is { } network && zones.Contains(network) ? network : null;
+                var host = new Host(model.Address, zone, zone is null ? -1 : zones.IndexOf(zone));
+                var cell = new Rect(position.X - CellWidth / 2, position.Y - CellHeight / 2, CellWidth, CellHeight);
+                var icon = new Rect(cell.Center.X - IconWidth / 2, cell.Y + 20, IconWidth, IconHeight);
+                var name = zone is null && model.Network?.Network is { } named ? named.Name : null;
+                var key = Ipv4.Parse(model.Address) is null || _devices.ContainsKey(model.Address)
+                    ? $"#{model.Id}"
+                    : model.Address;
+                _devices[key] = new Device(host, name, cell, icon, model.Kind,
+                    new Point(side.Key ? _wall.Left : _wall.Right, wallY), key, model);
+            }
+        }
+    }
+
     private static Matrix ScaleAround(Point center, double scale) =>
         Matrix.CreateTranslation(-center.X, -center.Y) * Matrix.CreateScale(scale, scale)
         * Matrix.CreateTranslation(center.X, center.Y);
@@ -477,7 +684,7 @@ public sealed class SimulationCanvas : Control
         }
 
         var zones = (_result.Networks ?? [])
-            .Select(network => (Network: network, Parsed: ParseNetwork(network.Cidr)))
+            .Select(network => (Network: network, Parsed: Ipv4.Parse(network.Cidr)))
             .Where(zone => zone.Parsed is { Mask: < 32 and > 0 })
             .OrderByDescending(zone => zone.Parsed!.Value.Mask)
             .ToList();
@@ -490,9 +697,9 @@ public sealed class SimulationCanvas : Control
         IEnumerable<Host> Hosts(List<string> addresses) => addresses
             .Select(address =>
             {
-                var host = ParseNetwork(address);
+                var host = Ipv4.Parse(address);
                 var zone = host is null ? null
-                    : zones.FirstOrDefault(zone => Contains(zone.Parsed!.Value, host.Value.Base)).Network;
+                    : zones.FirstOrDefault(zone => Ipv4.Contains(zone.Parsed!.Value, host.Value.Base)).Network;
                 return new Host(address, zone, zones.FindIndex(candidate => candidate.Network == zone));
             })
             .OrderBy(host => host.ColorIndex < 0 ? int.MaxValue : host.ColorIndex);
@@ -544,7 +751,7 @@ public sealed class SimulationCanvas : Control
             var kind = name is not null ? DeviceKind.Server
                 : host.Zone is not null ? DeviceKind.Computer
                 : DeviceKind.Internet;
-            _devices[host.Address] = new Device(host, name, cell, icon, kind, wall);
+            _devices[host.Address] = new Device(host, name, cell, icon, kind, wall, host.Address);
         }
     }
 
@@ -622,10 +829,45 @@ public sealed class SimulationCanvas : Control
     private void DrawWires(DrawingContext context)
     {
         var wire = new Pen(new SolidColorBrush(ColorOf("TextMutedBrush"), 0.35), 1.5);
-        foreach (var device in _devices.Values)
+        foreach (var device in _devices.Values.Where(device => device.Model?.IsConnected ?? true))
         {
             context.DrawLine(wire, device.Icon.Center, device.WallPoint);
         }
+    }
+
+    private void DrawLink(DrawingContext context)
+    {
+        if (_linking is null || _devices.Values.FirstOrDefault(device => device.Model == _linking) is not { } device)
+        {
+            return;
+        }
+
+        var accent = ColorOf("AccentBrush");
+        var target = _wall.Inflate(14).Contains(_linkEnd);
+        context.DrawLine(new Pen(new SolidColorBrush(accent), 2, new DashStyle([4, 3], 0), PenLineCap.Round),
+            Port(device), _linkEnd);
+        context.DrawEllipse(new SolidColorBrush(accent, target ? 0.9 : 0.4), null, _linkEnd, 5, 5);
+        if (target)
+        {
+            context.DrawRectangle(null, new Pen(new SolidColorBrush(accent), 2), _wall.Inflate(6), 6, 6);
+        }
+    }
+
+    private void DrawPort(DrawingContext context, Device device, long now)
+    {
+        var accent = ColorOf("AccentBrush");
+        var center = Port(device);
+        if (device.Model!.IsConnected)
+        {
+            context.DrawEllipse(new SolidColorBrush(accent), null, center, 3.5, 3.5);
+            return;
+        }
+
+        var pulse = 0.5 + 0.5 * Math.Sin(now / 260.0);
+        context.DrawEllipse(Brush("TerminalBackgroundBrush"), new Pen(new SolidColorBrush(accent, 0.5 + 0.5 * pulse), 2),
+            center, PortRadius, PortRadius);
+        context.DrawEllipse(null, new Pen(new SolidColorBrush(accent, 0.3 * (1 - pulse)), 1.5), center,
+            PortRadius + 3 + pulse * 4, PortRadius + 3 + pulse * 4);
     }
 
     private void DrawRoute(DrawingContext context, long now)
@@ -652,7 +894,7 @@ public sealed class SimulationCanvas : Control
         var stroke = Brush(active ? "AccentBrush" : "TextMutedBrush");
         var tint = ZoneColor(device.Host);
         var backdrop = device.Cell.Deflate(new Thickness(10, 2));
-        using var grow = context.PushTransform(ScaleAround(device.Cell.Center, 1 + DeviceGrow * Grow(device.Address)));
+        using var grow = context.PushTransform(ScaleAround(device.Cell.Center, 1 + DeviceGrow * Grow(device.Key)));
         context.DrawRectangle(Brush("TerminalBackgroundBrush"), null, backdrop, 10, 10);
         if (active)
         {
@@ -672,11 +914,17 @@ public sealed class SimulationCanvas : Control
                 break;
         }
 
-        var title = device.Name ?? device.Host.Zone?.Name ?? "internet";
+        var title = device.Name ?? device.Host.Zone?.Name
+            ?? (device.Kind == DeviceKind.Internet ? "internet" : device.Model?.KindLabel.ToLowerInvariant() ?? "internet");
         DrawCentered(context, title, 11, new SolidColorBrush(tint), device.Cell.Center.X, device.Cell.Y + 3,
             CellWidth - 6, bold: true);
-        DrawCentered(context, device.Address, 10, Brush("TextPrimaryBrush"), device.Cell.Center.X,
+        DrawCentered(context, device.Address, 10,
+            Brush(device.Model is { HasError: true } ? "StopRedBrush" : "TextPrimaryBrush"), device.Cell.Center.X,
             device.Icon.Bottom + 4, CellWidth - 6);
+        if (device.Model is not null)
+        {
+            DrawPort(context, device, _clock.ElapsedMilliseconds);
+        }
     }
 
     private void DrawComputer(DrawingContext context, Rect icon, IBrush stroke, Color tint)
@@ -1006,33 +1254,10 @@ public sealed class SimulationCanvas : Control
 
     private static double Distance(Point a, Point b) => Math.Sqrt(Math.Pow(a.X - b.X, 2) + Math.Pow(a.Y - b.Y, 2));
 
-    private static (uint Base, int Mask)? ParseNetwork(string cidr)
-    {
-        var parts = cidr.Split('/');
-        if (!IPAddress.TryParse(parts[0], out var address) || address.GetAddressBytes().Length != 4)
-        {
-            return null;
-        }
-
-        var mask = 32;
-        if (parts.Length == 2 && !int.TryParse(parts[1], out mask))
-        {
-            return null;
-        }
-
-        var bytes = address.GetAddressBytes();
-        return ((uint)(bytes[0] << 24 | bytes[1] << 16 | bytes[2] << 8 | bytes[3]), mask);
-    }
-
-    private static bool Contains((uint Base, int Mask) network, uint address)
-    {
-        var bits = 32 - network.Mask;
-        return network.Base >> bits == address >> bits;
-    }
-
     private sealed record Host(string Address, SimulationNetwork? Zone, int ColorIndex);
 
-    private sealed record Device(Host Host, string? Name, Rect Cell, Rect Icon, DeviceKind Kind, Point WallPoint)
+    private sealed record Device(Host Host, string? Name, Rect Cell, Rect Icon, DeviceKind Kind, Point WallPoint,
+        string Key, BuilderDevice? Model = null)
     {
         public string Address => Host.Address;
     }

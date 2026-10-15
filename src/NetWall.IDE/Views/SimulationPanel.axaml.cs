@@ -26,6 +26,8 @@ public partial class SimulationPanel : UserControl
     public SimulationPanel()
     {
         InitializeComponent();
+        Canvas.DeviceClicked += OnDeviceClicked;
+        Canvas.DeviceConnected += device => _ = Canvas.SayAsync($"¡{device.Address} quedó conectado a NetWall!");
     }
 
     private double Speed => Speeds[_speedIndex];
@@ -57,8 +59,16 @@ public partial class SimulationPanel : UserControl
     {
         Stop();
         Canvas.Result = _viewModel?.Result;
+        Canvas.Builder = _viewModel is { IsBuilder: true } ? _viewModel.Devices : null;
         if (_viewModel?.Result is null)
         {
+            return;
+        }
+
+        if (_viewModel.IsBuilder)
+        {
+            await Dispatcher.UIThread.InvokeAsync(() => { }, DispatcherPriority.Background);
+            await Canvas.SayAsync(_viewModel.HelpyGreeting);
             return;
         }
 
@@ -121,6 +131,47 @@ public partial class SimulationPanel : UserControl
 
         _viewModel.IsHelpyEnabled = !_viewModel.IsHelpyEnabled;
         Canvas.HelpyEnabled = _viewModel.IsHelpyEnabled;
+    }
+
+    private void OnPaletteItemPressed(object? sender, PointerPressedEventArgs e)
+    {
+        if (sender is not Control { Tag: string tag } || !Enum.TryParse<DeviceKind>(tag, out var kind)
+            || _viewModel is null)
+        {
+            return;
+        }
+
+        var position = Canvas.Normalize(e.GetPosition(Canvas));
+        Canvas.BeginCarry(_viewModel.AddDevice(kind, position.X, position.Y), e);
+        e.Handled = true;
+    }
+
+    private void OnDeviceClicked(BuilderDevice device)
+    {
+        if (Resources["DeviceFlyout"] is not Flyout flyout || flyout.Content is not Control editor)
+        {
+            return;
+        }
+
+        editor.DataContext = device;
+        flyout.ShowAt(Canvas, showAtPointer: true);
+    }
+
+    private void OnToggleConnectClick(object? sender, RoutedEventArgs e)
+    {
+        if (sender is Control { DataContext: BuilderDevice device })
+        {
+            device.IsConnected = !device.IsConnected;
+        }
+    }
+
+    private void OnRemoveDeviceClick(object? sender, RoutedEventArgs e)
+    {
+        if (sender is Control { DataContext: BuilderDevice device })
+        {
+            (Resources["DeviceFlyout"] as Flyout)?.Hide();
+            _viewModel?.RemoveDevice(device);
+        }
     }
 
     private void OnAllRulesClick(object? sender, RoutedEventArgs e) => _viewModel?.SetAllRules(true);

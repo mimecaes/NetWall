@@ -141,7 +141,7 @@
                 </Grid>
             </Button>
 
-            <Button Name="RulesOption" Classes="mode-option" IsEnabled="False">
+            <Button Name="RulesOption" Classes="mode-option" Click="OnRulesClick">
                 <Grid ColumnDefinitions="Auto,*">
                     <Panel Classes="mode-icon">
                         <Border Background="{DynamicResource Ansi5Brush}" />
@@ -149,7 +149,8 @@
                     </Panel>
                     <StackPanel Grid.Column="1" Margin="12,0,0,0" VerticalAlignment="Center" Spacing="2">
                         <TextBlock Classes="mode-title" Text="Simular ciertas reglas" />
-                        <TextBlock Classes="mode-hint" Text="Elige reglas y arma tu propia red. Próximamente." />
+                        <TextBlock Name="RulesHint" Classes="mode-hint"
+                                   Text="Elige reglas y arma tu propia red con las redes del archivo." />
                     </StackPanel>
                 </Grid>
             </Button>

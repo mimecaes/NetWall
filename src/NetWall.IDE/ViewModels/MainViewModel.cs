@@ -209,7 +209,7 @@ public partial class MainViewModel : ViewModelBase
 
     private async void OnSimulationRulesChanged()
     {
-        if (_simulationFile is not { } path || FindNetWallCliPath() is not { } cliPath)
+        if (Simulation.IsBuilder || _simulationFile is not { } path || FindNetWallCliPath() is not { } cliPath)
         {
             return;
         }
@@ -227,6 +227,12 @@ public partial class MainViewModel : ViewModelBase
     {
         Simulation.ModeTitle = "Programa completo";
         Simulation.Load(result, SelectedTab?.Title ?? string.Empty);
+    }
+
+    public void ShowNetworkBuilder(SimulationResult? result)
+    {
+        Simulation.ModeTitle = "Red propia";
+        Simulation.LoadBuilder(result, SelectedTab?.Title ?? string.Empty);
     }
 
     public void ExitSimulationMode()
