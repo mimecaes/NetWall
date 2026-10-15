@@ -123,6 +123,10 @@ public partial class SimulationPanel : UserControl
         Canvas.HelpyEnabled = _viewModel.IsHelpyEnabled;
     }
 
+    private void OnAllRulesClick(object? sender, RoutedEventArgs e) => _viewModel?.SetAllRules(true);
+
+    private void OnNoRulesClick(object? sender, RoutedEventArgs e) => _viewModel?.SetAllRules(false);
+
     private void OnSpeedClick(object? sender, RoutedEventArgs e)
     {
         _speedIndex = (_speedIndex + 1) % Speeds.Length;
@@ -235,6 +239,7 @@ public partial class SimulationPanel : UserControl
         Canvas.EndInspect();
 
         Canvas.ShowDecision(packet);
+        viewModel.MarkDecisive(packet);
         var verdict = Canvas.SayAsync(viewModel.HelpyVerdict(packet),
             packet.IsAllowed ? BubbleTone.Allowed : BubbleTone.Blocked);
         if (packet.IsAllowed)

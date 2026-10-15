@@ -62,9 +62,40 @@ public sealed partial class SimulationEntry(
     public partial bool IsSelected { get; set; }
 }
 
+public sealed partial class RuleToggle(string name, string summary, bool allows, bool isPolicy) : ObservableObject
+{
+    public string Name { get; } = name;
+
+    public string Summary { get; } = summary;
+
+    public bool Allows { get; } = allows;
+
+    public bool Blocks => !Allows;
+
+    public bool IsPolicy { get; } = isPolicy;
+
+    public bool IsRule => !IsPolicy;
+
+    [ObservableProperty]
+    public partial bool IsActive { get; set; } = true;
+
+    [ObservableProperty]
+    public partial bool IsDecisive { get; set; }
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasHits), nameof(HitsText))]
+    public partial int Hits { get; set; }
+
+    public bool HasHits => Hits > 0;
+
+    public string HitsText => $"×{Hits}";
+}
+
 public partial class SimulationViewModel : ViewModelBase
 {
     private const string NoFields = "—";
+
+    private bool _updatingCatalog;
 
     public SimulationResult? Result { get; private set; }
 
@@ -74,7 +105,20 @@ public partial class SimulationViewModel : ViewModelBase
 
     public ObservableCollection<RuleStep> Steps { get; } = [];
 
+    public ObservableCollection<RuleToggle> Catalog { get; } = [];
+
+    public IReadOnlyList<SimulatedPacket> ProgramPackets { get; private set; } = [];
+
+    public IEnumerable<string> ActiveRules => Catalog.Where(rule => rule is { IsRule: true, IsActive: true })
+        .Select(rule => rule.Name);
+
+    public string ActiveRulesText => $"{ActiveRules.Count()} de {Catalog.Count(rule => rule.IsRule)} activas";
+
+    public bool IsRerun { get; private set; }
+
     public event Action? Loaded;
+
+    public event Action? RulesChanged;
 
     [ObservableProperty]
     public partial string FileName { get; set; } = string.Empty;
@@ -100,8 +144,19 @@ public partial class SimulationViewModel : ViewModelBase
     [ObservableProperty]
     public partial string ModeTitle { get; set; } = string.Empty;
 
-    public string HelpyGreeting =>
-        $"¡Hola! Voy a vigilar {Packets.Count} {(Packets.Count == 1 ? "paquete" : "paquetes")}.";
+    public string HelpyGreeting
+    {
+        get
+        {
+            if (!IsRerun)
+            {
+                return $"¡Hola! Voy a vigilar {Packets.Count} {(Packets.Count == 1 ? "paquete" : "paquetes")}.";
+            }
+
+            var active = ActiveRules.Count();
+            return $"Probemos otra vez con {active} {(active == 1 ? "regla activa" : "reglas activas")}.";
+        }
+    }
 
     public string HelpySummary
     {
@@ -133,6 +188,108 @@ public partial class SimulationViewModel : ViewModelBase
 
     public void Load(SimulationResult? result, string fileName)
     {
+        IsRerun = false;
+        BuildCatalog(result is { Errors: false } ? result : null);
+        ProgramPackets = result?.Packets ?? [];
+        Show(result, fileName);
+    }
+
+    public void Reload(SimulationResult? result)
+    {
+        IsRerun = true;
+        Show(result, FileName);
+    }
+
+    public void SetAllRules(bool active)
+    {
+        _updatingCatalog = true;
+        foreach (var rule in Catalog.Where(rule => rule.IsRule))
+        {
+            rule.IsActive = active;
+        }
+
+        _updatingCatalog = false;
+        OnRulesChanged();
+    }
+
+    public async void MarkDecisive(SimulatedPacket packet)
+    {
+        var rule = Catalog.FirstOrDefault(rule => packet.Rule is null ? rule.IsPolicy : rule.Name == packet.Rule);
+        if (rule is null)
+        {
+            return;
+        }
+
+        rule.Hits++;
+        rule.IsDecisive = true;
+        await Task.Delay(1300);
+        rule.IsDecisive = false;
+    }
+
+    private void BuildCatalog(SimulationResult? result)
+    {
+        foreach (var rule in Catalog)
+        {
+            rule.PropertyChanged -= OnRulePropertyChanged;
+        }
+
+        Catalog.Clear();
+        if (result is null)
+        {
+            OnPropertyChanged(nameof(ActiveRulesText));
+            return;
+        }
+
+        Result = result;
+        foreach (var rule in result.Rules ?? [])
+        {
+            var toggle = new RuleToggle(rule.Name, RuleSummary(rule), rule.Action == "permitir", isPolicy: false);
+            toggle.PropertyChanged += OnRulePropertyChanged;
+            Catalog.Add(toggle);
+        }
+
+        Catalog.Add(new RuleToggle("politica_defecto",
+            $"{result.DefaultPolicy} · si ninguna regla coincide", result.DefaultPolicy == "permitir", isPolicy: true));
+        OnPropertyChanged(nameof(ActiveRulesText));
+    }
+
+    private void OnRulePropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(RuleToggle.IsActive) && !_updatingCatalog)
+        {
+            OnRulesChanged();
+        }
+    }
+
+    private void OnRulesChanged()
+    {
+        OnPropertyChanged(nameof(ActiveRulesText));
+        RulesChanged?.Invoke();
+    }
+
+    private string RuleSummary(SimulationRule rule)
+    {
+        var parts = new List<string> { rule.Action ?? string.Empty, rule.Protocol ?? "todos los protocolos" };
+        if (rule.Port is not null)
+        {
+            parts.Add($"puerto {rule.Port}");
+        }
+
+        if (rule.Source is not null && rule.Source != "cualquiera")
+        {
+            parts.Add($"desde {HostLabel(rule.Source)}");
+        }
+
+        if (rule.Destination is not null && rule.Destination != "cualquiera")
+        {
+            parts.Add($"hacia {HostLabel(rule.Destination)}");
+        }
+
+        return string.Join(" · ", parts);
+    }
+
+    private void Show(SimulationResult? result, string fileName)
+    {
         FileName = fileName;
         Result = result is { Errors: false } ? result : null;
         Message = result is null ? "No se pudo ejecutar la simulación."
@@ -145,6 +302,8 @@ public partial class SimulationViewModel : ViewModelBase
 
     public void Unload()
     {
+        BuildCatalog(null);
+        ProgramPackets = [];
         Result = null;
         Message = string.Empty;
         Reset();
@@ -153,6 +312,12 @@ public partial class SimulationViewModel : ViewModelBase
 
     public void Reset()
     {
+        foreach (var rule in Catalog)
+        {
+            rule.Hits = 0;
+            rule.IsDecisive = false;
+        }
+
         NextIndex = 0;
         Entries.Clear();
         OnCountsChanged();

@@ -152,129 +152,247 @@
         <Style Selector="GridSplitter.sim-split:pressed /template/ Border#PART_Pill">
             <Setter Property="Background" Value="{DynamicResource AccentBrush}" />
         </Style>
+        <Style Selector="Border.rule-card">
+            <Setter Property="Background" Value="{DynamicResource SurfaceBackgroundBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="10" />
+            <Setter Property="Padding" Value="10,8" />
+            <Setter Property="Margin" Value="0,0,8,6" />
+            <Setter Property="Transitions">
+                <Transitions>
+                    <BrushTransition Property="BorderBrush" Duration="0:0:0.25" />
+                    <BrushTransition Property="Background" Duration="0:0:0.25" />
+                    <DoubleTransition Property="Opacity" Duration="0:0:0.2" />
+                    <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.3" Easing="BackEaseOut" />
+                </Transitions>
+            </Setter>
+        </Style>
+        <Style Selector="Border.rule-card.inactive">
+            <Setter Property="Opacity" Value="0.45" />
+        </Style>
+        <Style Selector="Border.rule-card.decisive">
+            <Setter Property="RenderTransform" Value="scale(1.03)" />
+        </Style>
+        <Style Selector="Border.rule-card.decisive.allows">
+            <Setter Property="BorderBrush" Value="{DynamicResource RunGreenBrush}" />
+        </Style>
+        <Style Selector="Border.rule-card.decisive.blocks">
+            <Setter Property="BorderBrush" Value="{DynamicResource StopRedBrush}" />
+        </Style>
+        <Style Selector="Border.rule-card.policy">
+            <Setter Property="Background" Value="Transparent" />
+        </Style>
+        <Style Selector="Ellipse.rule-dot">
+            <Setter Property="Width" Value="8" />
+            <Setter Property="Height" Value="8" />
+            <Setter Property="Margin" Value="0,0,8,0" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+        </Style>
+        <Style Selector="Ellipse.rule-dot.allows">
+            <Setter Property="Fill" Value="{DynamicResource RunGreenBrush}" />
+        </Style>
+        <Style Selector="Ellipse.rule-dot.blocks">
+            <Setter Property="Fill" Value="{DynamicResource StopRedBrush}" />
+        </Style>
+        <Style Selector="ToggleSwitch.rule-switch">
+            <Setter Property="OnContent" Value="" />
+            <Setter Property="OffContent" Value="" />
+            <Setter Property="MinWidth" Value="0" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+        </Style>
+        <Style Selector="ToggleSwitch.rule-switch:checked /template/ Border#SwitchKnobBounds">
+            <Setter Property="Background" Value="{DynamicResource AccentBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}" />
+        </Style>
+        <Style Selector="ToggleSwitch.rule-switch:checked:pointerover /template/ Border#SwitchKnobBounds">
+            <Setter Property="Background" Value="{DynamicResource AccentBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}" />
+        </Style>
+        <Style Selector="Button.catalog-action">
+            <Setter Property="Padding" Value="8,2" />
+            <Setter Property="FontSize" Value="11" />
+            <Setter Property="CornerRadius" Value="6" />
+            <Setter Property="Background" Value="{DynamicResource SurfaceBackgroundBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
+        </Style>
     </UserControl.Styles>
 
     <Grid>
-        <Grid.RowDefinitions>
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="3*" MinHeight="240" />
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="2*" MinHeight="130" />
-        </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="300" MinWidth="230" MaxWidth="460" />
+            <ColumnDefinition Width="Auto" />
+            <ColumnDefinition Width="*" MinWidth="520" />
+        </Grid.ColumnDefinitions>
 
-        <Grid Grid.Row="0" ColumnDefinitions="Auto,Auto,*,Auto,Auto,Auto,Auto,Auto" Margin="12,6,10,6">
-            <TextBlock Grid.Column="0" Classes="sim-mono" Foreground="{DynamicResource TextMutedBrush}"
-                       VerticalAlignment="Center" Text="{Binding FileName}" />
-            <StackPanel Grid.Column="1" Orientation="Horizontal" Margin="6,0,0,0" IsVisible="{Binding !HasMessage}">
-                <Border Classes="sim-chip">
-                    <TextBlock Classes="sim-mono allowed" Text="{Binding AllowedText}" />
+        <Border Grid.Column="0" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,1,0"
+                Padding="12,10,4,10">
+            <DockPanel>
+                <Grid DockPanel.Dock="Top" ColumnDefinitions="*,Auto,Auto" Margin="0,0,8,4">
+                    <TextBlock Classes="sidebar-header" Text="REGLAS" VerticalAlignment="Center" />
+                    <Button Grid.Column="1" Classes="catalog-action" Content="Todas" Margin="0,0,6,0"
+                            Click="OnAllRulesClick" />
+                    <Button Grid.Column="2" Classes="catalog-action" Content="Ninguna" Click="OnNoRulesClick" />
+                </Grid>
+                <TextBlock DockPanel.Dock="Top" Classes="sim-label" Margin="0,0,0,10" Text="{Binding ActiveRulesText}" />
+                <ScrollViewer>
+                    <ItemsControl ItemsSource="{Binding Catalog}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate x:DataType="vm:RuleToggle">
+                                <Border Classes="rule-card" Classes.inactive="{Binding !IsActive}"
+                                        Classes.decisive="{Binding IsDecisive}" Classes.allows="{Binding Allows}"
+                                        Classes.blocks="{Binding Blocks}" Classes.policy="{Binding IsPolicy}">
+                                    <Grid ColumnDefinitions="Auto,*,Auto,Auto">
+                                        <Ellipse Classes="rule-dot" Classes.allows="{Binding Allows}"
+                                                 Classes.blocks="{Binding Blocks}" />
+                                        <StackPanel Grid.Column="1" Spacing="2">
+                                            <TextBlock Classes="sim-mono" FontWeight="SemiBold" Text="{Binding Name}"
+                                                       TextTrimming="CharacterEllipsis" />
+                                            <TextBlock Classes="sim-mono" FontSize="11" TextWrapping="Wrap"
+                                                       Foreground="{DynamicResource TextMutedBrush}"
+                                                       Text="{Binding Summary}" />
+                                        </StackPanel>
+                                        <TextBlock Grid.Column="2" Classes="sim-mono" Margin="6,0"
+                                                   VerticalAlignment="Center" Foreground="{DynamicResource TextMutedBrush}"
+                                                   IsVisible="{Binding HasHits}" Text="{Binding HitsText}" />
+                                        <ToggleSwitch Grid.Column="3" Classes="rule-switch" IsVisible="{Binding IsRule}"
+                                                      IsChecked="{Binding IsActive}" />
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </ScrollViewer>
+            </DockPanel>
+        </Border>
+
+        <GridSplitter Grid.Column="1" Classes="sim-split columns" ResizeDirection="Columns" />
+
+        <Grid Grid.Column="2">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="3*" MinHeight="240" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="2*" MinHeight="130" />
+            </Grid.RowDefinitions>
+
+            <Grid Grid.Row="0" ColumnDefinitions="Auto,Auto,*,Auto,Auto,Auto,Auto,Auto" Margin="12,6,10,6">
+                <TextBlock Grid.Column="0" Classes="sim-mono" Foreground="{DynamicResource TextMutedBrush}"
+                           VerticalAlignment="Center" Text="{Binding FileName}" />
+                <StackPanel Grid.Column="1" Orientation="Horizontal" Margin="6,0,0,0" IsVisible="{Binding !HasMessage}">
+                    <Border Classes="sim-chip">
+                        <TextBlock Classes="sim-mono allowed" Text="{Binding AllowedText}" />
+                    </Border>
+                    <Border Classes="sim-chip">
+                        <TextBlock Classes="sim-mono blocked" Text="{Binding BlockedText}" />
+                    </Border>
+                    <Border Classes="sim-chip">
+                        <TextBlock Classes="sim-mono" Foreground="{DynamicResource TextMutedBrush}"
+                                   Text="{Binding ProgressText}" />
+                    </Border>
+                </StackPanel>
+                <Button Grid.Column="3" Name="HelpyButton" Classes="icon sim-control" Margin="0,0,10,0"
+                        Classes.off="{Binding !IsHelpyEnabled}" ToolTip.Tip="Mostrar u ocultar a Helpy"
+                        Click="OnHelpyClick">
+                    <controls:AnimatedIcon Classes="icon-sm" Kind="Cat" />
+                </Button>
+                <Button Grid.Column="4" Name="PlayButton" Classes="icon sim-control" ToolTip.Tip="Reproducir"
+                        Click="OnPlayClick">
+                    <controls:AnimatedIcon Name="PlayIcon" Classes="icon-sm" Kind="Play" />
+                </Button>
+                <Button Grid.Column="5" Classes="icon sim-control" ToolTip.Tip="Siguiente paquete" Click="OnStepClick">
+                    <controls:AnimatedIcon Classes="icon-sm" Kind="SkipForward" />
+                </Button>
+                <Button Grid.Column="6" Classes="icon sim-control" ToolTip.Tip="Reiniciar" Click="OnResetClick">
+                    <controls:AnimatedIcon Classes="icon-sm" Kind="RotateCcw" />
+                </Button>
+                <Button Grid.Column="7" Name="SpeedButton" Classes="sim-speed" Margin="8,0,0,0" Content="x1"
+                        ToolTip.Tip="Velocidad" Click="OnSpeedClick" />
+            </Grid>
+
+            <GridSplitter Grid.Row="2" Classes="sim-split rows" ResizeDirection="Rows"
+                          ToolTip.Tip="Arrastra para repartir el espacio entre el mapa y los detalles" />
+
+            <Grid Grid.Row="3">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="1.3*" MinWidth="240" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" MinWidth="220" />
+                </Grid.ColumnDefinitions>
+
+                <Border Grid.Column="0" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,1,0,0"
+                        Padding="12,8,6,8">
+                    <DockPanel>
+                        <TextBlock DockPanel.Dock="Top" Classes="sim-label" Text="Registro" />
+                        <ScrollViewer Name="LogScroll">
+                            <ItemsControl ItemsSource="{Binding Entries}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate x:DataType="vm:SimulationEntry">
+                                        <Border Classes="sim-entry" Classes.selected="{Binding IsSelected}"
+                                                Tapped="OnEntryTapped">
+                                            <Grid ColumnDefinitions="Auto,*">
+                                                <TextBlock Classes="sim-mono" Foreground="{DynamicResource TextMutedBrush}"
+                                                           Margin="0,0,10,0" Text="{Binding Number}" />
+                                                <StackPanel Grid.Column="1" Spacing="2">
+                                                    <TextBlock Classes="sim-mono" Text="{Binding Header}" />
+                                                    <TextBlock Classes="sim-mono" FontWeight="SemiBold"
+                                                               Classes.allowed="{Binding IsAllowed}"
+                                                               Classes.blocked="{Binding !IsAllowed}"
+                                                               Text="{Binding Result}" />
+                                                    <TextBlock Classes="sim-mono" TextWrapping="Wrap"
+                                                               Foreground="{DynamicResource TextMutedBrush}"
+                                                               Text="{Binding Explanation}" />
+                                                </StackPanel>
+                                            </Grid>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </ScrollViewer>
+                    </DockPanel>
                 </Border>
-                <Border Classes="sim-chip">
-                    <TextBlock Classes="sim-mono blocked" Text="{Binding BlockedText}" />
+
+                <GridSplitter Grid.Column="1" Classes="sim-split columns" ResizeDirection="Columns" />
+
+                <Border Grid.Column="2" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,1,0,0"
+                        Padding="12,8,6,8">
+                    <DockPanel>
+                        <TextBlock DockPanel.Dock="Top" Classes="sim-label" Text="Inspector" />
+                        <TextBlock DockPanel.Dock="Top" Classes="sim-mono" Margin="0,0,0,8"
+                                   Foreground="{DynamicResource TextMutedBrush}" Text="{Binding PacketFields}" />
+                        <TextBlock DockPanel.Dock="Top" Classes="sim-label" Text="Recorrido por las reglas" />
+                        <ScrollViewer>
+                            <ItemsControl Name="StepList" ItemsSource="{Binding Steps}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate x:DataType="vm:RuleStep">
+                                        <Border Classes="sim-step"
+                                                Classes.evaluating="{Binding IsEvaluating}"
+                                                Classes.skipped="{Binding IsSkipped}"
+                                                Classes.allowed="{Binding IsAllowed}"
+                                                Classes.blocked="{Binding IsBlocked}">
+                                            <Grid ColumnDefinitions="Auto,*">
+                                                <TextBlock Text="{Binding Name}" />
+                                                <TextBlock Grid.Column="1" HorizontalAlignment="Right" Margin="12,0,0,0"
+                                                           TextTrimming="CharacterEllipsis" Text="{Binding Reason}" />
+                                            </Grid>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </ScrollViewer>
+                    </DockPanel>
                 </Border>
-                <Border Classes="sim-chip">
-                    <TextBlock Classes="sim-mono" Foreground="{DynamicResource TextMutedBrush}"
-                               Text="{Binding ProgressText}" />
-                </Border>
-            </StackPanel>
-            <Button Grid.Column="3" Name="HelpyButton" Classes="icon sim-control" Margin="0,0,10,0"
-                    Classes.off="{Binding !IsHelpyEnabled}" ToolTip.Tip="Mostrar u ocultar a Helpy"
-                    Click="OnHelpyClick">
-                <controls:AnimatedIcon Classes="icon-sm" Kind="Cat" />
-            </Button>
-            <Button Grid.Column="4" Name="PlayButton" Classes="icon sim-control" ToolTip.Tip="Reproducir"
-                    Click="OnPlayClick">
-                <controls:AnimatedIcon Name="PlayIcon" Classes="icon-sm" Kind="Play" />
-            </Button>
-            <Button Grid.Column="5" Classes="icon sim-control" ToolTip.Tip="Siguiente paquete" Click="OnStepClick">
-                <controls:AnimatedIcon Classes="icon-sm" Kind="SkipForward" />
-            </Button>
-            <Button Grid.Column="6" Classes="icon sim-control" ToolTip.Tip="Reiniciar" Click="OnResetClick">
-                <controls:AnimatedIcon Classes="icon-sm" Kind="RotateCcw" />
-            </Button>
-            <Button Grid.Column="7" Name="SpeedButton" Classes="sim-speed" Margin="8,0,0,0" Content="x1"
-                    ToolTip.Tip="Velocidad" Click="OnSpeedClick" />
+            </Grid>
+
+            <Panel Grid.Row="1">
+                <controls:SimulationCanvas Name="Canvas" IsVisible="{Binding !HasMessage}" />
+                <TextBlock Classes="sim-mono" Foreground="{DynamicResource TextMutedBrush}"
+                           HorizontalAlignment="Center" VerticalAlignment="Center"
+                           IsVisible="{Binding HasMessage}" Text="{Binding Message}" />
+            </Panel>
         </Grid>
-
-        <GridSplitter Grid.Row="2" Classes="sim-split rows" ResizeDirection="Rows"
-                      ToolTip.Tip="Arrastra para repartir el espacio entre el mapa y los detalles" />
-
-        <Grid Grid.Row="3">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="1.3*" MinWidth="240" />
-                <ColumnDefinition Width="Auto" />
-                <ColumnDefinition Width="*" MinWidth="220" />
-            </Grid.ColumnDefinitions>
-
-            <Border Grid.Column="0" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,1,0,0"
-                    Padding="12,8,6,8">
-                <DockPanel>
-                    <TextBlock DockPanel.Dock="Top" Classes="sim-label" Text="Registro" />
-                    <ScrollViewer Name="LogScroll">
-                        <ItemsControl ItemsSource="{Binding Entries}">
-                            <ItemsControl.ItemTemplate>
-                                <DataTemplate x:DataType="vm:SimulationEntry">
-                                    <Border Classes="sim-entry" Classes.selected="{Binding IsSelected}"
-                                            Tapped="OnEntryTapped">
-                                        <Grid ColumnDefinitions="Auto,*">
-                                            <TextBlock Classes="sim-mono" Foreground="{DynamicResource TextMutedBrush}"
-                                                       Margin="0,0,10,0" Text="{Binding Number}" />
-                                            <StackPanel Grid.Column="1" Spacing="2">
-                                                <TextBlock Classes="sim-mono" Text="{Binding Header}" />
-                                                <TextBlock Classes="sim-mono" FontWeight="SemiBold"
-                                                           Classes.allowed="{Binding IsAllowed}"
-                                                           Classes.blocked="{Binding !IsAllowed}"
-                                                           Text="{Binding Result}" />
-                                                <TextBlock Classes="sim-mono" TextWrapping="Wrap"
-                                                           Foreground="{DynamicResource TextMutedBrush}"
-                                                           Text="{Binding Explanation}" />
-                                            </StackPanel>
-                                        </Grid>
-                                    </Border>
-                                </DataTemplate>
-                            </ItemsControl.ItemTemplate>
-                        </ItemsControl>
-                    </ScrollViewer>
-                </DockPanel>
-            </Border>
-
-            <GridSplitter Grid.Column="1" Classes="sim-split columns" ResizeDirection="Columns" />
-
-            <Border Grid.Column="2" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,1,0,0"
-                    Padding="12,8,6,8">
-                <DockPanel>
-                    <TextBlock DockPanel.Dock="Top" Classes="sim-label" Text="Inspector" />
-                    <TextBlock DockPanel.Dock="Top" Classes="sim-mono" Margin="0,0,0,8"
-                               Foreground="{DynamicResource TextMutedBrush}" Text="{Binding PacketFields}" />
-                    <TextBlock DockPanel.Dock="Top" Classes="sim-label" Text="Recorrido por las reglas" />
-                    <ScrollViewer>
-                        <ItemsControl Name="StepList" ItemsSource="{Binding Steps}">
-                            <ItemsControl.ItemTemplate>
-                                <DataTemplate x:DataType="vm:RuleStep">
-                                    <Border Classes="sim-step"
-                                            Classes.evaluating="{Binding IsEvaluating}"
-                                            Classes.skipped="{Binding IsSkipped}"
-                                            Classes.allowed="{Binding IsAllowed}"
-                                            Classes.blocked="{Binding IsBlocked}">
-                                        <Grid ColumnDefinitions="Auto,*">
-                                            <TextBlock Text="{Binding Name}" />
-                                            <TextBlock Grid.Column="1" HorizontalAlignment="Right" Margin="12,0,0,0"
-                                                       TextTrimming="CharacterEllipsis" Text="{Binding Reason}" />
-                                        </Grid>
-                                    </Border>
-                                </DataTemplate>
-                            </ItemsControl.ItemTemplate>
-                        </ItemsControl>
-                    </ScrollViewer>
-                </DockPanel>
-            </Border>
-        </Grid>
-
-        <Panel Grid.Row="1">
-            <controls:SimulationCanvas Name="Canvas" IsVisible="{Binding !HasMessage}" />
-            <TextBlock Classes="sim-mono" Foreground="{DynamicResource TextMutedBrush}"
-                       HorizontalAlignment="Center" VerticalAlignment="Center"
-                       IsVisible="{Binding HasMessage}" Text="{Binding Message}" />
-        </Panel>
     </Grid>
 </UserControl>

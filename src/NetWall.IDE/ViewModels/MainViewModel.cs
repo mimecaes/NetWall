@@ -24,6 +24,7 @@ public partial class MainViewModel : ViewModelBase
         _recentProjectsService = new RecentProjectsService();
         LoadRecentProjects();
         OpenTabs.CollectionChanged += OnOpenTabsChanged;
+        Simulation.RulesChanged += OnSimulationRulesChanged;
 
         Extensions.Add(new ExtensionInfo
         {
@@ -181,6 +182,9 @@ public partial class MainViewModel : ViewModelBase
 
     public SimulationViewModel Simulation { get; } = new();
 
+    private string? _simulationFile;
+    private int _simulationRun;
+
     [ObservableProperty]
     public partial bool IsSimulationMode { get; set; }
 
@@ -199,7 +203,24 @@ public partial class MainViewModel : ViewModelBase
             SaveTab(tab);
         }
 
+        _simulationFile = path;
         return await SimulationRunner.RunAsync(cliPath, path);
+    }
+
+    private async void OnSimulationRulesChanged()
+    {
+        if (_simulationFile is not { } path || FindNetWallCliPath() is not { } cliPath)
+        {
+            return;
+        }
+
+        var run = ++_simulationRun;
+        var result = await SimulationRunner.RunCustomAsync(cliPath, path, Simulation.ActiveRules.ToList(),
+            Simulation.ProgramPackets);
+        if (run == _simulationRun && IsSimulationMode)
+        {
+            Simulation.Reload(result);
+        }
     }
 
     public void ShowProgramSimulation(SimulationResult? result)
