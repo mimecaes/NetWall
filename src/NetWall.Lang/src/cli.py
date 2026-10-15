@@ -1,3 +1,4 @@
+import json
 import os
 import sys
 from pathlib import Path
@@ -5,7 +6,7 @@ from pathlib import Path
 from loader import Loader
 from semantic import check
 from analyzer import analyze
-from simulator import simulate
+from simulator import simulate, simulationData
 
 
 ERROR_TYPES = {"error_sintactico", "error_semantico"}
@@ -82,12 +83,26 @@ def formatSummary(errors: int, warnings: int, paint: Painter) -> str:
     return paint.color(SUCCESS, "✔ compilado sin errores")
 
 
+def printSimulation(path: Path) -> int:
+    loader = Loader()
+    program = loader.load(path)
+    diagnostics = loader.diagnostics + check(program, loader.files)
+    if any(d.type in ERROR_TYPES for d in diagnostics):
+        print(json.dumps({"errors": True}))
+        return 1
+    print(json.dumps({"errors": False, **simulationData(program)}, ensure_ascii=False))
+    return 0
+
+
 def main() -> int:
     sys.stdout.reconfigure(encoding="utf-8")
 
     if len(sys.argv) < 2:
         print("uso: python cli.py <archivo.nw>")
         return 2
+
+    if "--simulacion" in sys.argv[2:]:
+        return printSimulation(Path(sys.argv[1]).resolve())
 
     paint = Painter(useColor())
     if paint.enabled and os.name == "nt" and sys.stdout.isatty():
