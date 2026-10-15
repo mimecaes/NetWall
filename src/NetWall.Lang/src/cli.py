@@ -6,7 +6,7 @@ from pathlib import Path
 from loader import Loader
 from semantic import check
 from analyzer import analyze
-from simulator import simulate, simulationData
+from simulator import packetFrom, simulate, simulationData
 
 
 ERROR_TYPES = {"error_sintactico", "error_semantico"}
@@ -83,14 +83,25 @@ def formatSummary(errors: int, warnings: int, paint: Painter) -> str:
     return paint.color(SUCCESS, "✔ compilado sin errores")
 
 
-def printSimulation(path: Path) -> int:
+def printSimulation(path: Path, custom: bool) -> int:
     loader = Loader()
     program = loader.load(path)
     diagnostics = loader.diagnostics + check(program, loader.files)
     if any(d.type in ERROR_TYPES for d in diagnostics):
         print(json.dumps({"errors": True}))
         return 1
-    print(json.dumps({"errors": False, **simulationData(program)}, ensure_ascii=False))
+
+    rules, packets = program.rules, program.simulations
+    if custom:
+        request = json.load(sys.stdin)
+        selected = set(request.get("rules", []))
+        rules = [rule for rule in program.rules if rule.name in selected]
+        packets = [packetFrom(packet) for packet in request.get("packets", [])]
+        if None in packets:
+            print(json.dumps({"errors": True}))
+            return 1
+
+    print(json.dumps({"errors": False, **simulationData(program, rules, packets)}, ensure_ascii=False))
     return 0
 
 
@@ -101,8 +112,9 @@ def main() -> int:
         print("uso: python cli.py <archivo.nw>")
         return 2
 
-    if "--simulacion" in sys.argv[2:]:
-        return printSimulation(Path(sys.argv[1]).resolve())
+    if "--simulacion" in sys.argv[2:] or "--simulacion-personalizada" in sys.argv[2:]:
+        sys.stdin.reconfigure(encoding="utf-8")
+        return printSimulation(Path(sys.argv[1]).resolve(), "--simulacion-personalizada" in sys.argv[2:])
 
     paint = Painter(useColor())
     if paint.enabled and os.name == "nt" and sys.stdout.isatty():

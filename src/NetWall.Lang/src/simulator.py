@@ -1,6 +1,7 @@
 from typing import Dict, List, Optional, Tuple
 
 from nodes import Network, Packet, Port, Program, Rule
+from semantic import parseNetwork
 
 
 DEFAULT_POLICY = "bloquear"
@@ -46,10 +47,22 @@ def address(value) -> Optional[str]:
     return None if value is None else str(value)
 
 
-def simulationData(program: Program) -> Dict:
+def packetFrom(data: Dict) -> Optional[Packet]:
+    protocol = data.get("protocol")
+    port = data.get("port")
+    source = parseNetwork(str(data.get("source", "")))
+    destination = parseNetwork(str(data.get("destination", "")))
+    if protocol not in ("tcp", "udp") or not isinstance(port, int) or not 0 <= port <= 65535:
+        return None
+    if source is None or destination is None or source.mask != 32 or destination.mask != 32:
+        return None
+    return Packet(protocol=protocol, port=Port(type="value", value=port), source=source, destination=destination, line=0)
+
+
+def simulationData(program: Program, rules: List[Rule], simulations: List[Packet]) -> Dict:
     packets = []
-    for packet in program.simulations:
-        rule, skipped = trace(program.rules, packet)
+    for packet in simulations:
+        rule, skipped = trace(rules, packet)
         packets.append({
             "protocol": packet.protocol,
             "port": packet.port.value,
@@ -77,7 +90,7 @@ def simulationData(program: Program) -> Dict:
                 "source": address(rule.source),
                 "destination": address(rule.destination),
             }
-            for rule in program.rules
+            for rule in rules
         ],
         "packets": packets,
     }
