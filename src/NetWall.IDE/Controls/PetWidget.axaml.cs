@@ -79,9 +79,15 @@ public partial class PetWidget : UserControl
     public void NotifyActivity() => _lastActivity = DateTime.UtcNow;
 
     /// <summary>Swaps which color sprite sheet is used, taking effect on the next frame.</summary>
-    public void SetColor(PetColor color) => _sheetBitmap = LoadSheet(color);
+    public void SetColor(PetColor color)
+    {
+        Color = color;
+        _sheetBitmap = LoadSheet(color);
+    }
 
-    private static Bitmap LoadSheet(PetColor color)
+    public PetColor Color { get; private set; } = PetColor.Gray;
+
+    internal static Bitmap LoadSheet(PetColor color)
     {
         if (SheetCache.TryGetValue(color, out var cached))
         {

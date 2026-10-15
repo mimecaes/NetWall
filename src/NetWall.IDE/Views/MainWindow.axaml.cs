@@ -198,7 +198,8 @@ public partial class MainWindow : Window
 
     private async void OnRequestCodeAssistant()
     {
-        var code = await CodeAssistantDialog.ShowAsync(this, ViewModel?.SelectedTab?.FilePath, ViewModel?.RootPath, CodeEditor.Text);
+        var code = await CodeAssistantDialog.ShowAsync(this, Pet.Color, ViewModel?.SelectedTab?.FilePath, ViewModel?.RootPath,
+            CodeEditor.Text);
         if (code is not null)
         {
             InsertAtCaret(code);

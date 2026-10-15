@@ -1,162 +1,556 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:vm="using:NetWall.IDE.ViewModels"
+        xmlns:controls="using:NetWall.IDE.Controls"
         x:Class="NetWall.IDE.Views.Dialogs.CodeAssistantDialog"
         x:DataType="vm:CodeAssistantViewModel"
         x:CompileBindings="True"
-        Title="Asistente de código"
-        Width="480" SizeToContent="Height"
+        Title="Helpy"
+        Width="472" Height="720"
         CanResize="False"
-        WindowStartupLocation="CenterOwner"
-        Background="{DynamicResource PanelBackgroundBrush}">
+        ShowInTaskbar="False"
+        SystemDecorations="None"
+        Background="Transparent"
+        TransparencyLevelHint="Transparent"
+        WindowStartupLocation="CenterOwner">
 
-    <StackPanel Margin="20,18,20,16" Spacing="14">
+    <Window.Styles>
+        <!-- The card that assembles itself: it grows from Helpy's avatar to the full menu. -->
+        <Style Selector="Border#Card">
+            <Setter Property="Transitions">
+                <Transitions>
+                    <DoubleTransition Property="Width" Duration="0:0:0.45" Easing="CubicEaseOut" />
+                    <DoubleTransition Property="Height" Duration="0:0:0.32" Easing="CubicEaseOut" />
+                    <CornerRadiusTransition Property="CornerRadius" Duration="0:0:0.45" Easing="CubicEaseOut" />
+                    <DoubleTransition Property="Opacity" Duration="0:0:0.22" />
+                    <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.22" />
+                </Transitions>
+            </Setter>
+        </Style>
+        <Style Selector="Border#Card.closing">
+            <Setter Property="Opacity" Value="0" />
+            <Setter Property="RenderTransform" Value="scale(0.96)" />
+        </Style>
 
-        <StackPanel Spacing="10" IsVisible="{Binding IsChoosing}">
-            <TextBlock Classes="assistant-title" Text="¿Qué quieres crear?" />
-            <Button Classes="assistant-option" Command="{Binding ChooseRuleCommand}">
-                <StackPanel Spacing="2">
-                    <TextBlock Classes="assistant-option-title" Text="Regla de firewall" />
-                    <TextBlock Classes="assistant-hint" Text="Permite o bloquea tráfico según protocolo, puerto y direcciones" />
-                </StackPanel>
-            </Button>
-            <Button Classes="assistant-option" Command="{Binding ChooseVariableCommand}">
-                <StackPanel Spacing="2">
-                    <TextBlock Classes="assistant-option-title" Text="Variable" />
-                    <TextBlock Classes="assistant-hint" Text="Declara un número, un texto o una red para usar en las reglas" />
-                </StackPanel>
-            </Button>
-            <Button Classes="assistant-option" Command="{Binding ChoosePacketCommand}">
-                <StackPanel Spacing="2">
-                    <TextBlock Classes="assistant-option-title" Text="Paquete para simular" />
-                    <TextBlock Classes="assistant-hint" Text="Prueba qué decide el firewall con un paquete (va dentro de principal)" />
-                </StackPanel>
-            </Button>
-            <Button Classes="assistant-option" Command="{Binding ChooseImportCommand}">
-                <StackPanel Spacing="2">
-                    <TextBlock Classes="assistant-option-title" Text="Importación" />
-                    <TextBlock Classes="assistant-hint" Text="Usa las variables y reglas de otro archivo del proyecto" />
-                </StackPanel>
-            </Button>
-            <Button Classes="assistant-option" Command="{Binding ChooseMainCommand}">
-                <StackPanel Spacing="2">
-                    <TextBlock Classes="assistant-option-title" Text="Bloque principal" />
-                    <TextBlock Classes="assistant-hint" Text="El punto de entrada del programa, con su política por defecto" />
-                </StackPanel>
-            </Button>
-        </StackPanel>
+        <Style Selector="Border.helpy-avatar">
+            <Setter Property="RenderTransform" Value="scale(0)" />
+            <Setter Property="Transitions">
+                <Transitions>
+                    <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.45" Easing="BackEaseOut" />
+                </Transitions>
+            </Setter>
+        </Style>
+        <Style Selector="Border.helpy-avatar.shown">
+            <Setter Property="RenderTransform" Value="scale(1)" />
+        </Style>
 
-        <StackPanel Spacing="10" IsVisible="{Binding IsRuleForm}">
-            <TextBlock Classes="assistant-title" Text="Nueva regla" />
-            <Grid ColumnDefinitions="96,*" RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto" RowSpacing="8">
-                <TextBlock Grid.Row="0" Classes="assistant-label" Text="Nombre" />
-                <TextBox Grid.Row="0" Grid.Column="1" Text="{Binding RuleName}" Watermark="web_oficina" />
+        <Style Selector="controls|HelpySprite.floating">
+            <Style.Animations>
+                <Animation Duration="0:0:2.4" IterationCount="Infinite">
+                    <KeyFrame Cue="0%"><Setter Property="TranslateTransform.Y" Value="0" /></KeyFrame>
+                    <KeyFrame Cue="50%"><Setter Property="TranslateTransform.Y" Value="-3" /></KeyFrame>
+                    <KeyFrame Cue="100%"><Setter Property="TranslateTransform.Y" Value="0" /></KeyFrame>
+                </Animation>
+            </Style.Animations>
+        </Style>
 
-                <TextBlock Grid.Row="1" Classes="assistant-label" Text="Acción" />
-                <ComboBox Grid.Row="1" Grid.Column="1" ItemsSource="{x:Static vm:CodeAssistantViewModel.Actions}"
-                          SelectedItem="{Binding Action}" HorizontalAlignment="Stretch" />
+        <Style Selector="Border.helpy-bubble">
+            <Setter Property="Opacity" Value="0" />
+            <Setter Property="RenderTransform" Value="translateX(-8px) scale(0.9)" />
+            <Setter Property="Background" Value="{DynamicResource SurfaceBackgroundBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+            <Setter Property="Transitions">
+                <Transitions>
+                    <DoubleTransition Property="Opacity" Duration="0:0:0.25" />
+                    <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.35" Easing="BackEaseOut" />
+                    <BrushTransition Property="BorderBrush" Duration="0:0:0.2" />
+                </Transitions>
+            </Setter>
+        </Style>
+        <Style Selector="Border.helpy-bubble.shown">
+            <Setter Property="Opacity" Value="1" />
+            <Setter Property="RenderTransform" Value="translateX(0px) scale(1)" />
+        </Style>
+        <Style Selector="Border.helpy-bubble.warning">
+            <Setter Property="BorderBrush" Value="{DynamicResource StopRedBrush}" />
+        </Style>
+        <Style Selector="Border.helpy-bubble.happy">
+            <Setter Property="BorderBrush" Value="{DynamicResource RunGreenBrush}" />
+        </Style>
 
-                <TextBlock Grid.Row="2" Classes="assistant-label" Text="Protocolo" />
-                <ComboBox Grid.Row="2" Grid.Column="1" ItemsSource="{x:Static vm:CodeAssistantViewModel.Protocols}"
-                          SelectedItem="{Binding Protocol}" HorizontalAlignment="Stretch" />
+        <!-- Rows that slide in one after another. -->
+        <Style Selector=":is(Control).helpy-row">
+            <Setter Property="Opacity" Value="0" />
+            <Setter Property="RenderTransform" Value="translateY(-6px)" />
+            <Setter Property="Transitions">
+                <Transitions>
+                    <DoubleTransition Property="Opacity" Duration="0:0:0.28" />
+                    <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.28" Easing="CubicEaseOut" />
+                </Transitions>
+            </Setter>
+        </Style>
+        <Style Selector=":is(Control).helpy-row.shown">
+            <Setter Property="Opacity" Value="1" />
+            <Setter Property="RenderTransform" Value="translateY(0px)" />
+        </Style>
 
-                <TextBlock Grid.Row="3" Classes="assistant-label" Text="Puerto" VerticalAlignment="Top" Margin="0,6,0,0" />
-                <StackPanel Grid.Row="3" Grid.Column="1" Spacing="6">
-                    <StackPanel Orientation="Horizontal" Spacing="12">
-                        <RadioButton GroupName="Port" Content="ninguno" IsChecked="{Binding HasNoPort}" />
-                        <RadioButton GroupName="Port" Content="número" IsChecked="{Binding HasSinglePort}" />
-                        <RadioButton GroupName="Port" Content="rango" IsChecked="{Binding HasPortRange}" />
+        <Style Selector="StackPanel.helpy-view">
+            <Setter Property="Transitions">
+                <Transitions>
+                    <DoubleTransition Property="Opacity" Duration="0:0:0.2" />
+                    <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.2" />
+                </Transitions>
+            </Setter>
+        </Style>
+        <Style Selector="StackPanel.helpy-view.leaving">
+            <Setter Property="Opacity" Value="0" />
+            <Setter Property="RenderTransform" Value="translateX(-14px)" />
+        </Style>
+
+        <Style Selector="TextBlock.helpy-section">
+            <Setter Property="FontSize" Value="11" />
+            <Setter Property="Margin" Value="4,6,0,6" />
+            <Setter Property="Foreground" Value="{DynamicResource TextMutedBrush}" />
+        </Style>
+        <Style Selector="TextBlock.helpy-label">
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="Margin" Value="2,10,0,4" />
+            <Setter Property="Foreground" Value="{DynamicResource TextMutedBrush}" />
+        </Style>
+        <Style Selector="TextBlock.helpy-hint">
+            <Setter Property="FontSize" Value="11" />
+            <Setter Property="Foreground" Value="{DynamicResource TextMutedBrush}" />
+        </Style>
+
+        <!-- Menu options: a card that slides right on hover and sinks on click. -->
+        <Style Selector="Button.helpy-option">
+            <Setter Property="HorizontalAlignment" Value="Stretch" />
+            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+            <Setter Property="Margin" Value="0,0,0,6" />
+            <Setter Property="Background" Value="{DynamicResource SurfaceBackgroundBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="Template">
+                <ControlTemplate>
+                    <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="1" CornerRadius="10" Padding="10,8">
+                        <ContentPresenter Content="{TemplateBinding Content}" />
+                    </Border>
+                </ControlTemplate>
+            </Setter>
+            <Setter Property="Transitions">
+                <Transitions>
+                    <DoubleTransition Property="Opacity" Duration="0:0:0.28" />
+                    <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.2" Easing="CubicEaseOut" />
+                    <BrushTransition Property="Background" Duration="0:0:0.2" />
+                    <BrushTransition Property="BorderBrush" Duration="0:0:0.2" />
+                </Transitions>
+            </Setter>
+        </Style>
+        <Style Selector="Button.helpy-option.shown:pointerover">
+            <Setter Property="RenderTransform" Value="translateX(4px)" />
+            <Setter Property="Background" Value="{DynamicResource HoverBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}" />
+        </Style>
+        <Style Selector="Button.helpy-option.shown:pressed">
+            <Setter Property="RenderTransform" Value="translateX(4px) scale(0.98)" />
+        </Style>
+        <Style Selector="Button.helpy-option Panel.helpy-icon">
+            <Setter Property="Width" Value="30" />
+            <Setter Property="Height" Value="30" />
+            <Setter Property="Transitions">
+                <Transitions>
+                    <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.25" Easing="BackEaseOut" />
+                </Transitions>
+            </Setter>
+        </Style>
+        <Style Selector="Button.helpy-option:pointerover Panel.helpy-icon">
+            <Setter Property="RenderTransform" Value="rotate(-8deg) scale(1.1)" />
+        </Style>
+        <Style Selector="Panel.helpy-icon Border">
+            <Setter Property="CornerRadius" Value="8" />
+            <Setter Property="Opacity" Value="0.18" />
+        </Style>
+        <Style Selector="Panel.helpy-icon controls|AnimatedIcon">
+            <Setter Property="Width" Value="16" />
+            <Setter Property="Height" Value="16" />
+            <Setter Property="Stretch" Value="Uniform" />
+            <Setter Property="StrokeThickness" Value="2" />
+        </Style>
+        <Style Selector="TextBlock.helpy-option-title">
+            <Setter Property="FontSize" Value="13" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
+        </Style>
+
+        <!-- Text fields. -->
+        <Style Selector="TextBox">
+            <Setter Property="Background" Value="{DynamicResource SurfaceBackgroundBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+            <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
+            <Setter Property="CornerRadius" Value="8" />
+            <Setter Property="FontSize" Value="13" />
+        </Style>
+        <Style Selector="TextBox:pointerover /template/ Border#PART_BorderElement">
+            <Setter Property="Background" Value="{DynamicResource SurfaceBackgroundBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}" />
+        </Style>
+        <Style Selector="TextBox:focus /template/ Border#PART_BorderElement">
+            <Setter Property="Background" Value="{DynamicResource SurfaceBackgroundBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}" />
+            <Setter Property="BorderThickness" Value="1.5" />
+        </Style>
+        <Style Selector="TextBox /template/ TextBlock#PART_Watermark">
+            <Setter Property="Foreground" Value="{DynamicResource TextDisabledBrush}" />
+        </Style>
+        <Style Selector="AutoCompleteBox">
+            <Setter Property="Background" Value="{DynamicResource SurfaceBackgroundBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+            <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
+            <Setter Property="CornerRadius" Value="8" />
+            <Setter Property="FontSize" Value="13" />
+        </Style>
+
+        <!-- Segmented control: a ListBox whose items look like joined buttons. -->
+        <Style Selector="ListBox.segmented">
+            <Setter Property="Background" Value="{DynamicResource SurfaceBackgroundBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="9" />
+            <Setter Property="Padding" Value="3" />
+            <Setter Property="HorizontalAlignment" Value="Left" />
+            <Setter Property="ScrollViewer.HorizontalScrollBarVisibility" Value="Disabled" />
+            <Setter Property="ItemsPanel">
+                <ItemsPanelTemplate>
+                    <StackPanel Orientation="Horizontal" Spacing="2" />
+                </ItemsPanelTemplate>
+            </Setter>
+        </Style>
+        <Style Selector="ListBox.segmented ListBoxItem">
+            <Setter Property="Padding" Value="12,4" />
+            <Setter Property="MinHeight" Value="0" />
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="CornerRadius" Value="6" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="Foreground" Value="{DynamicResource TextMutedBrush}" />
+        </Style>
+        <Style Selector="ListBox.segmented ListBoxItem /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Transitions">
+                <Transitions>
+                    <BrushTransition Property="Background" Duration="0:0:0.18" />
+                </Transitions>
+            </Setter>
+        </Style>
+        <Style Selector="ListBox.segmented ListBoxItem:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource HoverBrush}" />
+            <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
+        </Style>
+        <Style Selector="ListBox.segmented ListBoxItem:selected /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource ActiveBrush}" />
+            <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
+        </Style>
+        <Style Selector="ListBox.segmented ListBoxItem:selected:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource ActiveBrush}" />
+        </Style>
+        <Style Selector="ListBox.segmented ListBoxItem:pressed">
+            <Setter Property="RenderTransform" Value="scale(0.96)" />
+        </Style>
+
+        <!-- Footer buttons. -->
+        <Style Selector="Button.helpy-button">
+            <Setter Property="Padding" Value="14,7" />
+            <Setter Property="FontSize" Value="13" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+            <Setter Property="Template">
+                <ControlTemplate>
+                    <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="1" CornerRadius="8" Padding="{TemplateBinding Padding}">
+                        <ContentPresenter Content="{TemplateBinding Content}" Foreground="{TemplateBinding Foreground}" />
+                    </Border>
+                </ControlTemplate>
+            </Setter>
+            <Setter Property="Transitions">
+                <Transitions>
+                    <BrushTransition Property="Background" Duration="0:0:0.18" />
+                    <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.12" />
+                    <DoubleTransition Property="Opacity" Duration="0:0:0.2" />
+                </Transitions>
+            </Setter>
+        </Style>
+        <Style Selector="Button.helpy-button:pointerover">
+            <Setter Property="Background" Value="{DynamicResource HoverBrush}" />
+        </Style>
+        <Style Selector="Button.helpy-button:pressed">
+            <Setter Property="RenderTransform" Value="scale(0.96)" />
+        </Style>
+        <Style Selector="Button.helpy-button.primary">
+            <Setter Property="Background" Value="{DynamicResource AccentBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}" />
+            <Setter Property="Foreground" Value="White" />
+        </Style>
+        <Style Selector="Button.helpy-button.primary:pointerover">
+            <Setter Property="Background" Value="{DynamicResource AccentBrush}" />
+            <Setter Property="Opacity" Value="0.88" />
+        </Style>
+        <Style Selector="Button.helpy-button:disabled">
+            <Setter Property="Opacity" Value="0.4" />
+        </Style>
+        <Style Selector="Button.helpy-back">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="Padding" Value="4,2" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="Foreground" Value="{DynamicResource TextMutedBrush}" />
+            <Setter Property="Template">
+                <ControlTemplate>
+                    <Border Background="{TemplateBinding Background}" CornerRadius="6" Padding="{TemplateBinding Padding}">
+                        <ContentPresenter Content="{TemplateBinding Content}" Foreground="{TemplateBinding Foreground}" />
+                    </Border>
+                </ControlTemplate>
+            </Setter>
+        </Style>
+        <Style Selector="Button.helpy-back:pointerover">
+            <Setter Property="Background" Value="{DynamicResource HoverBrush}" />
+            <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
+        </Style>
+    </Window.Styles>
+
+    <Border Name="Card" Margin="20" Width="64" Height="64" CornerRadius="32"
+            HorizontalAlignment="Left" VerticalAlignment="Top" ClipToBounds="True"
+            Background="{DynamicResource PanelBackgroundBrush}"
+            BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1"
+            BoxShadow="0 12 32 0 #70000000">
+        <Canvas>
+        <StackPanel Name="CardContent" Width="430">
+
+            <!-- Header: Helpy and its speech bubble. Dragging it moves the window. -->
+            <Grid Name="Header" ColumnDefinitions="Auto,*,Auto" Height="62" Background="Transparent">
+                <Border Name="Avatar" Classes="helpy-avatar" Width="44" Height="44" CornerRadius="22" Margin="9,0,0,0"
+                        Background="{DynamicResource ActiveBrush}">
+                    <controls:HelpySprite Name="Helpy" Width="38" Height="38">
+                        <controls:HelpySprite.RenderTransform>
+                            <TranslateTransform />
+                        </controls:HelpySprite.RenderTransform>
+                    </controls:HelpySprite>
+                </Border>
+                <Border Name="Bubble" Grid.Column="1" Classes="helpy-bubble" Margin="10,0,12,0"
+                        Classes.warning="{Binding HelpyIsWarning}"
+                        Classes.happy="{Binding HelpyIsHappy}"
+                        HorizontalAlignment="Left" VerticalAlignment="Center"
+                        BorderThickness="1" CornerRadius="12" Padding="11,7">
+                    <TextBlock Name="BubbleText" FontSize="13" TextWrapping="Wrap" MaxWidth="300"
+                               Foreground="{DynamicResource TextPrimaryBrush}" />
+                </Border>
+                <Button Grid.Column="2" Classes="helpy-back" Content="✕" Margin="0,0,10,0" VerticalAlignment="Center"
+                        ToolTip.Tip="Cerrar (Esc)" Click="OnCancelClick" />
+            </Grid>
+
+            <!-- Step 1: what to create. -->
+            <StackPanel Name="MenuView" Classes="helpy-view" Margin="12,2,12,12" IsVisible="False">
+                <TextBlock Classes="helpy-section helpy-row" Text="O crea algo nuevo" />
+                <Button Classes="helpy-option helpy-row" Command="{Binding ChooseRuleCommand}">
+                    <Grid ColumnDefinitions="Auto,*">
+                        <Panel Classes="helpy-icon">
+                            <Border Background="{DynamicResource Ansi5Brush}" />
+                            <controls:AnimatedIcon Kind="ShieldCheck" Stroke="{DynamicResource Ansi5Brush}" />
+                        </Panel>
+                        <StackPanel Grid.Column="1" Margin="10,0,0,0" VerticalAlignment="Center">
+                            <TextBlock Classes="helpy-option-title" Text="Regla de firewall" />
+                            <TextBlock Classes="helpy-hint" Text="Permite o bloquea tráfico" />
+                        </StackPanel>
+                    </Grid>
+                </Button>
+                <Button Classes="helpy-option helpy-row" Command="{Binding ChooseVariableCommand}">
+                    <Grid ColumnDefinitions="Auto,*">
+                        <Panel Classes="helpy-icon">
+                            <Border Background="{DynamicResource Ansi4Brush}" />
+                            <controls:AnimatedIcon Kind="Variable" Stroke="{DynamicResource Ansi4Brush}" />
+                        </Panel>
+                        <StackPanel Grid.Column="1" Margin="10,0,0,0" VerticalAlignment="Center">
+                            <TextBlock Classes="helpy-option-title" Text="Variable" />
+                            <TextBlock Classes="helpy-hint" Text="Un número, un texto o una red" />
+                        </StackPanel>
+                    </Grid>
+                </Button>
+                <Button Classes="helpy-option helpy-row" Command="{Binding ChoosePacketCommand}">
+                    <Grid ColumnDefinitions="Auto,*">
+                        <Panel Classes="helpy-icon">
+                            <Border Background="{DynamicResource Ansi2Brush}" />
+                            <controls:AnimatedIcon Kind="Send" Stroke="{DynamicResource Ansi2Brush}" />
+                        </Panel>
+                        <StackPanel Grid.Column="1" Margin="10,0,0,0" VerticalAlignment="Center">
+                            <TextBlock Classes="helpy-option-title" Text="Paquete para simular" />
+                            <TextBlock Classes="helpy-hint" Text="Prueba tus reglas (va dentro de principal)" />
+                        </StackPanel>
+                    </Grid>
+                </Button>
+                <Button Classes="helpy-option helpy-row" Command="{Binding ChooseImportCommand}">
+                    <Grid ColumnDefinitions="Auto,*">
+                        <Panel Classes="helpy-icon">
+                            <Border Background="{DynamicResource Ansi3Brush}" />
+                            <controls:AnimatedIcon Kind="FileInput" Stroke="{DynamicResource Ansi3Brush}" />
+                        </Panel>
+                        <StackPanel Grid.Column="1" Margin="10,0,0,0" VerticalAlignment="Center">
+                            <TextBlock Classes="helpy-option-title" Text="Importación" />
+                            <TextBlock Classes="helpy-hint" Text="Usa las variables y reglas de otro archivo" />
+                        </StackPanel>
+                    </Grid>
+                </Button>
+                <Button Classes="helpy-option helpy-row" Command="{Binding ChooseMainCommand}" Margin="0">
+                    <Grid ColumnDefinitions="Auto,*">
+                        <Panel Classes="helpy-icon">
+                            <Border Background="{DynamicResource Ansi1Brush}" />
+                            <controls:AnimatedIcon Kind="Flag" Stroke="{DynamicResource Ansi1Brush}" />
+                        </Panel>
+                        <StackPanel Grid.Column="1" Margin="10,0,0,0" VerticalAlignment="Center">
+                            <TextBlock Classes="helpy-option-title" Text="Bloque principal" />
+                            <TextBlock Classes="helpy-hint" Text="El punto de entrada y su política" />
+                        </StackPanel>
+                    </Grid>
+                </Button>
+            </StackPanel>
+
+            <!-- Step 2: the form of the chosen kind, with the code preview below. -->
+            <StackPanel Name="FormView" Classes="helpy-view" Margin="16,0,16,16" IsVisible="False">
+                <Button Classes="helpy-back helpy-row" Command="{Binding BackCommand}" HorizontalAlignment="Left">
+                    <StackPanel Orientation="Horizontal" Spacing="6">
+                        <TextBlock Text="‹" FontSize="15" VerticalAlignment="Center" />
+                        <TextBlock Text="{Binding FormTitle}" FontSize="12" FontWeight="SemiBold" VerticalAlignment="Center" />
                     </StackPanel>
-                    <TextBox Text="{Binding Port}" Watermark="80" IsVisible="{Binding HasSinglePort}" />
-                    <Grid ColumnDefinitions="*,Auto,*" IsVisible="{Binding HasPortRange}">
-                        <TextBox Grid.Column="0" Text="{Binding PortFrom}" Watermark="1000" />
-                        <TextBlock Grid.Column="1" Classes="assistant-hint" Text="hasta" VerticalAlignment="Center" Margin="8,0" />
-                        <TextBox Grid.Column="2" Text="{Binding PortTo}" Watermark="2000" />
+                </Button>
+
+                <StackPanel IsVisible="{Binding IsRuleForm}">
+                    <StackPanel Classes="helpy-row">
+                        <TextBlock Classes="helpy-label" Text="Nombre" />
+                        <TextBox Text="{Binding RuleName}" Watermark="web_oficina" />
+                    </StackPanel>
+                    <Grid Classes="helpy-row" ColumnDefinitions="Auto,16,Auto">
+                        <StackPanel>
+                            <TextBlock Classes="helpy-label" Text="Acción" />
+                            <ListBox Classes="segmented" ItemsSource="{x:Static vm:CodeAssistantViewModel.Actions}"
+                                     SelectedItem="{Binding Action}" />
+                        </StackPanel>
+                        <StackPanel Grid.Column="2">
+                            <TextBlock Classes="helpy-label" Text="Protocolo" />
+                            <ListBox Classes="segmented" ItemsSource="{x:Static vm:CodeAssistantViewModel.Protocols}"
+                                     SelectedItem="{Binding Protocol}" />
+                        </StackPanel>
+                    </Grid>
+                    <StackPanel Classes="helpy-row">
+                        <TextBlock Classes="helpy-label" Text="Puerto" />
+                        <Grid ColumnDefinitions="Auto,10,*">
+                            <ListBox Classes="segmented" ItemsSource="{x:Static vm:CodeAssistantViewModel.PortModes}"
+                                     SelectedItem="{Binding PortMode}" />
+                            <TextBox Grid.Column="2" Text="{Binding Port}" Watermark="80" IsVisible="{Binding HasSinglePort}" />
+                            <Grid Grid.Column="2" ColumnDefinitions="*,Auto,*" IsVisible="{Binding HasPortRange}">
+                                <TextBox Text="{Binding PortFrom}" Watermark="1000" />
+                                <TextBlock Grid.Column="1" Classes="helpy-hint" Text="a" Margin="6,0" VerticalAlignment="Center" />
+                                <TextBox Grid.Column="2" Text="{Binding PortTo}" Watermark="2000" />
+                            </Grid>
+                        </Grid>
+                    </StackPanel>
+                    <Grid Classes="helpy-row" ColumnDefinitions="*,10,*">
+                        <StackPanel>
+                            <TextBlock Classes="helpy-label" Text="Origen" />
+                            <AutoCompleteBox Text="{Binding Source, Mode=TwoWay}" ItemsSource="{Binding NetworkVariables}"
+                                             FilterMode="StartsWith" Watermark="cualquiera" />
+                        </StackPanel>
+                        <StackPanel Grid.Column="2">
+                            <TextBlock Classes="helpy-label" Text="Destino" />
+                            <AutoCompleteBox Text="{Binding Destination, Mode=TwoWay}" ItemsSource="{Binding NetworkVariables}"
+                                             FilterMode="StartsWith" Watermark="cualquiera" />
+                        </StackPanel>
+                    </Grid>
+                    <StackPanel Classes="helpy-row">
+                        <TextBlock Classes="helpy-label" Text="Comentario" />
+                        <TextBox Text="{Binding Comment}" Watermark="opcional" />
+                    </StackPanel>
+                </StackPanel>
+
+                <StackPanel IsVisible="{Binding IsVariableForm}">
+                    <StackPanel Classes="helpy-row">
+                        <TextBlock Classes="helpy-label" Text="Nombre" />
+                        <TextBox Text="{Binding VariableName}" Watermark="lan" />
+                    </StackPanel>
+                    <StackPanel Classes="helpy-row">
+                        <TextBlock Classes="helpy-label" Text="Tipo" />
+                        <ListBox Classes="segmented" ItemsSource="{x:Static vm:CodeAssistantViewModel.Types}"
+                                 SelectedItem="{Binding VariableType}" />
+                    </StackPanel>
+                    <StackPanel Classes="helpy-row">
+                        <TextBlock Classes="helpy-label" Text="Valor" />
+                        <TextBox Text="{Binding VariableValue}" Watermark="80, 2.5, servidor web o 192.168.1.0/24" />
+                    </StackPanel>
+                </StackPanel>
+
+                <StackPanel IsVisible="{Binding IsPacketForm}">
+                    <Grid Classes="helpy-row" ColumnDefinitions="Auto,16,*">
+                        <StackPanel>
+                            <TextBlock Classes="helpy-label" Text="Protocolo" />
+                            <ListBox Classes="segmented" ItemsSource="{x:Static vm:CodeAssistantViewModel.PacketProtocols}"
+                                     SelectedItem="{Binding PacketProtocol}" />
+                        </StackPanel>
+                        <StackPanel Grid.Column="2">
+                            <TextBlock Classes="helpy-label" Text="Puerto" />
+                            <TextBox Text="{Binding PacketPort}" Watermark="80" />
+                        </StackPanel>
+                    </Grid>
+                    <Grid Classes="helpy-row" ColumnDefinitions="*,10,*">
+                        <StackPanel>
+                            <TextBlock Classes="helpy-label" Text="Origen" />
+                            <AutoCompleteBox Text="{Binding PacketSource, Mode=TwoWay}" ItemsSource="{Binding HostVariables}"
+                                             FilterMode="StartsWith" Watermark="10.0.0.5" />
+                        </StackPanel>
+                        <StackPanel Grid.Column="2">
+                            <TextBlock Classes="helpy-label" Text="Destino" />
+                            <AutoCompleteBox Text="{Binding PacketDestination, Mode=TwoWay}" ItemsSource="{Binding HostVariables}"
+                                             FilterMode="StartsWith" Watermark="192.168.1.10" />
+                        </StackPanel>
                     </Grid>
                 </StackPanel>
 
-                <TextBlock Grid.Row="4" Classes="assistant-label" Text="Origen" />
-                <AutoCompleteBox Grid.Row="4" Grid.Column="1" Text="{Binding Source, Mode=TwoWay}"
-                                 ItemsSource="{Binding NetworkVariables}" FilterMode="StartsWith"
-                                 Watermark="vacío = cualquiera · ej. lan o 10.0.0.0/8" />
+                <StackPanel IsVisible="{Binding IsImportForm}">
+                    <StackPanel Classes="helpy-row">
+                        <TextBlock Classes="helpy-label" Text="Archivo" />
+                        <ListBox Classes="segmented" ItemsSource="{Binding ImportFiles}" SelectedItem="{Binding SelectedImport}"
+                                 HorizontalAlignment="Stretch">
+                            <ListBox.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <StackPanel Spacing="2" />
+                                </ItemsPanelTemplate>
+                            </ListBox.ItemsPanel>
+                        </ListBox>
+                        <TextBlock Classes="helpy-hint" Margin="2,6,0,0"
+                                   Text="La ruta se escribe relativa a la carpeta del archivo abierto." />
+                    </StackPanel>
+                </StackPanel>
 
-                <TextBlock Grid.Row="5" Classes="assistant-label" Text="Destino" />
-                <AutoCompleteBox Grid.Row="5" Grid.Column="1" Text="{Binding Destination, Mode=TwoWay}"
-                                 ItemsSource="{Binding NetworkVariables}" FilterMode="StartsWith"
-                                 Watermark="vacío = cualquiera · ej. servidor o 10.0.0.5" />
+                <StackPanel IsVisible="{Binding IsMainForm}">
+                    <StackPanel Classes="helpy-row">
+                        <TextBlock Classes="helpy-label" Text="Política por defecto" />
+                        <ListBox Classes="segmented" ItemsSource="{x:Static vm:CodeAssistantViewModel.Policies}"
+                                 SelectedItem="{Binding MainPolicy}" />
+                    </StackPanel>
+                </StackPanel>
 
-                <TextBlock Grid.Row="6" Classes="assistant-label" Text="Comentario" />
-                <TextBox Grid.Row="6" Grid.Column="1" Text="{Binding Comment}" Watermark="opcional" />
-            </Grid>
-        </StackPanel>
+                <StackPanel Classes="helpy-row">
+                    <TextBlock Classes="helpy-label" Text="Vista previa" />
+                    <Border Background="{DynamicResource EditorBackgroundBrush}" CornerRadius="8" Padding="12,10"
+                            BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1">
+                        <controls:CodePreview Code="{Binding PreviewCode}" FontSize="12" TextWrapping="Wrap"
+                                              FontFamily="Cascadia Code,Consolas,DejaVu Sans Mono,monospace"
+                                              Foreground="{DynamicResource TextPrimaryBrush}" />
+                    </Border>
+                </StackPanel>
 
-        <StackPanel Spacing="10" IsVisible="{Binding IsVariableForm}">
-            <TextBlock Classes="assistant-title" Text="Nueva variable" />
-            <Grid ColumnDefinitions="96,*" RowDefinitions="Auto,Auto,Auto" RowSpacing="8">
-                <TextBlock Grid.Row="0" Classes="assistant-label" Text="Nombre" />
-                <TextBox Grid.Row="0" Grid.Column="1" Text="{Binding VariableName}" Watermark="lan" />
-
-                <TextBlock Grid.Row="1" Classes="assistant-label" Text="Tipo" />
-                <ComboBox Grid.Row="1" Grid.Column="1" ItemsSource="{x:Static vm:CodeAssistantViewModel.Types}"
-                          SelectedItem="{Binding VariableType}" HorizontalAlignment="Stretch" />
-
-                <TextBlock Grid.Row="2" Classes="assistant-label" Text="Valor" />
-                <TextBox Grid.Row="2" Grid.Column="1" Text="{Binding VariableValue}"
-                         Watermark="ej. 80, 2.5, servidor web o 192.168.1.0/24" />
-            </Grid>
-        </StackPanel>
-
-        <StackPanel Spacing="10" IsVisible="{Binding IsPacketForm}">
-            <TextBlock Classes="assistant-title" Text="Nuevo paquete para simular" />
-            <Grid ColumnDefinitions="96,*" RowDefinitions="Auto,Auto,Auto,Auto" RowSpacing="8">
-                <TextBlock Grid.Row="0" Classes="assistant-label" Text="Protocolo" />
-                <ComboBox Grid.Row="0" Grid.Column="1" ItemsSource="{x:Static vm:CodeAssistantViewModel.PacketProtocols}"
-                          SelectedItem="{Binding PacketProtocol}" HorizontalAlignment="Stretch" />
-
-                <TextBlock Grid.Row="1" Classes="assistant-label" Text="Puerto" />
-                <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding PacketPort}" Watermark="80" />
-
-                <TextBlock Grid.Row="2" Classes="assistant-label" Text="Origen" />
-                <AutoCompleteBox Grid.Row="2" Grid.Column="1" Text="{Binding PacketSource, Mode=TwoWay}"
-                                 ItemsSource="{Binding HostVariables}" FilterMode="StartsWith" Watermark="ej. 10.0.0.5" />
-
-                <TextBlock Grid.Row="3" Classes="assistant-label" Text="Destino" />
-                <AutoCompleteBox Grid.Row="3" Grid.Column="1" Text="{Binding PacketDestination, Mode=TwoWay}"
-                                 ItemsSource="{Binding HostVariables}" FilterMode="StartsWith"
-                                 Watermark="ej. servidor o 192.168.1.10" />
-            </Grid>
-        </StackPanel>
-
-        <StackPanel Spacing="10" IsVisible="{Binding IsImportForm}">
-            <TextBlock Classes="assistant-title" Text="Nueva importación" />
-            <Grid ColumnDefinitions="96,*">
-                <TextBlock Classes="assistant-label" Text="Archivo" />
-                <ComboBox Grid.Column="1" ItemsSource="{Binding ImportFiles}" SelectedItem="{Binding SelectedImport}"
-                          PlaceholderText="elige un archivo .nw" HorizontalAlignment="Stretch" />
-            </Grid>
-            <TextBlock Classes="assistant-hint" Text="La ruta se escribe relativa a la carpeta del archivo abierto." />
-        </StackPanel>
-
-        <StackPanel Spacing="10" IsVisible="{Binding IsMainForm}">
-            <TextBlock Classes="assistant-title" Text="Nuevo bloque principal" />
-            <Grid ColumnDefinitions="96,*">
-                <TextBlock Classes="assistant-label" Text="Política" />
-                <ComboBox Grid.Column="1" ItemsSource="{x:Static vm:CodeAssistantViewModel.Policies}"
-                          SelectedItem="{Binding MainPolicy}" HorizontalAlignment="Stretch" />
-            </Grid>
-            <TextBlock Classes="assistant-hint" Text="Qué hacer con los paquetes que no coinciden con ninguna regla. Va al final del archivo." />
-        </StackPanel>
-
-        <TextBlock Classes="assistant-errors" Text="{Binding Errors}" IsVisible="{Binding HasErrors}" />
-
-        <Grid ColumnDefinitions="Auto,*,Auto">
-            <Button Grid.Column="0" Content="Atrás" Command="{Binding BackCommand}" IsVisible="{Binding !IsChoosing}" />
-            <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="8">
-                <Button Content="Cancelar" Click="OnCancelClick" />
-                <Button Content="Insertar" Click="OnInsertClick" IsEnabled="{Binding CanInsert}"
-                        IsVisible="{Binding !IsChoosing}"
-                        Background="{DynamicResource AccentBrush}" Foreground="White" />
+                <StackPanel Classes="helpy-row" Orientation="Horizontal" Spacing="8" HorizontalAlignment="Right" Margin="0,14,0,0">
+                    <Button Classes="helpy-button" Content="Cancelar" Click="OnCancelClick" />
+                    <Button Classes="helpy-button primary" Content="Insertar" Click="OnInsertClick" IsEnabled="{Binding CanInsert}" />
+                </StackPanel>
             </StackPanel>
-        </Grid>
-    </StackPanel>
+        </StackPanel>
+        </Canvas>
+    </Border>
 </Window>

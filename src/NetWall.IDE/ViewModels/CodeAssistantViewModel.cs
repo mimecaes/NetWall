@@ -28,9 +28,11 @@ public enum AssistantKind
 /// </summary>
 public partial class CodeAssistantViewModel : ViewModelBase
 {
-    public const string AnyProtocol = "(cualquiera)";
+    public const string AnyProtocol = "todos";
 
-    public const string NoPolicy = "(sin política)";
+    public const string NoPolicy = "ninguna";
+
+    private const string Greeting = "¡Soy Helpy! ¿Qué quieres crear?";
 
     public static IReadOnlyList<string> Actions { get; } = ["permitir", "bloquear"];
 
@@ -41,6 +43,18 @@ public partial class CodeAssistantViewModel : ViewModelBase
     public static IReadOnlyList<string> Types { get; } = ["Int", "Float", "String", "Red"];
 
     public static IReadOnlyList<string> Policies { get; } = ["bloquear", "permitir", NoPolicy];
+
+    public static IReadOnlyList<string> PortModes { get; } = ["ninguno", "número", "rango"];
+
+    private static readonly HashSet<string> FormFields =
+    [
+        nameof(RuleName), nameof(Action), nameof(Protocol), nameof(PortMode), nameof(Port), nameof(PortFrom),
+        nameof(PortTo), nameof(Source), nameof(Destination), nameof(Comment), nameof(VariableName),
+        nameof(VariableType), nameof(VariableValue), nameof(PacketProtocol), nameof(PacketPort),
+        nameof(PacketSource), nameof(PacketDestination), nameof(SelectedImport), nameof(MainPolicy),
+    ];
+
+    private bool _touched;
 
     private readonly HashSet<string> _importedPaths = [];
     private readonly bool _hasMainBlock;
@@ -82,8 +96,18 @@ public partial class CodeAssistantViewModel : ViewModelBase
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(IsChoosing), nameof(IsRuleForm), nameof(IsVariableForm), nameof(IsPacketForm),
-        nameof(IsImportForm), nameof(IsMainForm))]
+        nameof(IsImportForm), nameof(IsMainForm), nameof(FormTitle))]
     public partial AssistantKind Kind { get; set; }
+
+    public string FormTitle => Kind switch
+    {
+        AssistantKind.Rule => "Regla de firewall",
+        AssistantKind.Variable => "Variable",
+        AssistantKind.Packet => "Paquete para simular",
+        AssistantKind.Import => "Importación",
+        AssistantKind.Main => "Bloque principal",
+        _ => string.Empty,
+    };
 
     public bool IsChoosing => Kind == AssistantKind.None;
 
@@ -115,13 +139,12 @@ public partial class CodeAssistantViewModel : ViewModelBase
     public partial string Protocol { get; set; } = AnyProtocol;
 
     [ObservableProperty]
-    public partial bool HasNoPort { get; set; } = true;
+    [NotifyPropertyChangedFor(nameof(HasSinglePort), nameof(HasPortRange))]
+    public partial string PortMode { get; set; } = "ninguno";
 
-    [ObservableProperty]
-    public partial bool HasSinglePort { get; set; }
+    public bool HasSinglePort => PortMode == "número";
 
-    [ObservableProperty]
-    public partial bool HasPortRange { get; set; }
+    public bool HasPortRange => PortMode == "rango";
 
     [ObservableProperty]
     public partial string Port { get; set; } = string.Empty;
@@ -162,11 +185,18 @@ public partial class CodeAssistantViewModel : ViewModelBase
     [ObservableProperty]
     public partial string PacketDestination { get; set; } = string.Empty;
 
+    /// <summary>What Helpy says in its bubble: a greeting, a hint, the first problem, or that all is ready.</summary>
     [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(HasErrors))]
-    public partial string Errors { get; set; } = string.Empty;
+    public partial string HelpyMessage { get; set; } = Greeting;
 
-    public bool HasErrors => Errors.Length > 0;
+    [ObservableProperty]
+    public partial bool HelpyIsWarning { get; set; }
+
+    [ObservableProperty]
+    public partial bool HelpyIsHappy { get; set; }
+
+    [ObservableProperty]
+    public partial string PreviewCode { get; set; } = string.Empty;
 
     [ObservableProperty]
     public partial bool CanInsert { get; set; }
@@ -192,8 +222,14 @@ public partial class CodeAssistantViewModel : ViewModelBase
     protected override void OnPropertyChanged(PropertyChangedEventArgs e)
     {
         base.OnPropertyChanged(e);
-        if (e.PropertyName is not (nameof(Errors) or nameof(HasErrors) or nameof(CanInsert)))
+        if (e.PropertyName == nameof(Kind))
         {
+            _touched = false;
+            Validate();
+        }
+        else if (e.PropertyName is { } name && FormFields.Contains(name))
+        {
+            _touched = true;
             Validate();
         }
     }
@@ -220,9 +256,24 @@ public partial class CodeAssistantViewModel : ViewModelBase
                 break;
         }
 
-        Errors = string.Join("\n", errors.Select(error => $"⚠ {error}"));
         CanInsert = Kind != AssistantKind.None && errors.Count == 0;
+        PreviewCode = GenerateCode();
+        HelpyIsWarning = _touched && errors.Count > 0;
+        HelpyIsHappy = _touched && CanInsert;
+        HelpyMessage = Kind == AssistantKind.None ? Greeting
+            : !_touched ? Hint
+            : HelpyIsWarning ? $"{char.ToUpper(errors[0][0])}{errors[0][1..]}."
+            : "¡Todo en orden! Ya puedes insertarlo.";
     }
+
+    private string Hint => Kind switch
+    {
+        AssistantKind.Rule => "Cuéntame cómo será tu regla.",
+        AssistantKind.Variable => "¿Qué quieres guardar en la variable?",
+        AssistantKind.Packet => "Describe el paquete que quieres probar.",
+        AssistantKind.Import => "Elige el archivo que quieres usar.",
+        _ => "¿Qué hago con lo que no coincida con ninguna regla?",
+    };
 
     private void ValidateRule(List<string> errors)
     {
