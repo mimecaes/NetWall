@@ -192,6 +192,7 @@ public partial class MainViewModel : ViewModelBase
     public partial string TerminalInput { get; set; } = string.Empty;
 
     [ObservableProperty]
+    [NotifyCanExecuteChangedFor(nameof(OpenCodeAssistantCommand))]
     public partial EditorTabViewModel? SelectedTab { get; set; }
 
     partial void OnSelectedTabChanged(EditorTabViewModel? value)
@@ -266,6 +267,8 @@ public partial class MainViewModel : ViewModelBase
     public event Action<EditorTabViewModel>? RequestSaveAs;
 
     public event Action? RequestOpenFolder;
+
+    public event Action? RequestCodeAssistant;
 
     public event Func<FileTreeNode, Task<bool>>? RequestDeleteConfirmation;
 
@@ -840,6 +843,11 @@ public partial class MainViewModel : ViewModelBase
 
     [RelayCommand]
     private void ToggleTerminal() => IsTerminalVisible = !IsTerminalVisible;
+
+    [RelayCommand(CanExecute = nameof(CanOpenCodeAssistant))]
+    private void OpenCodeAssistant() => RequestCodeAssistant?.Invoke();
+
+    private bool CanOpenCodeAssistant() => SelectedTab?.Language == "NetWall";
 
     [RelayCommand]
     private async Task RunActiveFileAsync()

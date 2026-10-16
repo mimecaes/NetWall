@@ -9,10 +9,12 @@ using Avalonia.Interactivity;
 using Avalonia.Platform.Storage;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
+using AvaloniaEdit.Document;
 using NetWall.IDE.Controls;
 using NetWall.IDE.Models;
 using NetWall.IDE.Themes;
 using NetWall.IDE.ViewModels;
+using NetWall.IDE.Views.Dialogs;
 
 namespace NetWall.IDE.Views;
 
@@ -76,6 +78,7 @@ public partial class MainWindow : Window
         if (ViewModel is { } vm)
         {
             vm.RequestOpenFolder += OnRequestOpenFolder;
+            vm.RequestCodeAssistant += OnRequestCodeAssistant;
             vm.RequestSaveAs += OnRequestSaveAs;
             vm.RequestDeleteConfirmation += OnRequestDeleteConfirmation;
             vm.PropertyChanged += OnViewModelPropertyChanged;
@@ -191,6 +194,44 @@ public partial class MainWindow : Window
         {
             ViewModel?.LoadFolder(path);
         }
+    }
+
+    private async void OnRequestCodeAssistant()
+    {
+        var code = await CodeAssistantDialog.ShowAsync(this, Pet.Color, ViewModel?.SelectedTab?.FilePath, ViewModel?.RootPath,
+            CodeEditor.Text);
+        if (code is not null)
+        {
+            InsertAtCaret(code);
+        }
+    }
+
+    private void InsertAtCaret(string code)
+    {
+        var document = CodeEditor.Document;
+        var caret = CodeEditor.TextArea.Caret;
+        var line = document.GetLineByNumber(caret.Line);
+        var newLine = TextUtilities.GetNewLineFromDocument(document, caret.Line);
+        var indent = document.GetText(TextUtilities.GetLeadingWhitespace(document, line));
+        var beforeCaret = document.GetText(line.Offset, CodeEditor.CaretOffset - line.Offset);
+        var afterCaret = document.GetText(CodeEditor.CaretOffset, line.EndOffset - CodeEditor.CaretOffset);
+
+        var text = string.Join(newLine + indent, code.TrimEnd('\n').Split('\n'));
+        if (!string.IsNullOrWhiteSpace(afterCaret))
+        {
+            text += newLine;
+        }
+        if (!string.IsNullOrWhiteSpace(beforeCaret))
+        {
+            text = newLine + indent + text;
+        }
+        else if (beforeCaret.Length < indent.Length)
+        {
+            text = indent[beforeCaret.Length..] + text;
+        }
+
+        document.Insert(CodeEditor.CaretOffset, text);
+        CodeEditor.TextArea.Focus();
     }
 
     private async void OnRequestSaveAs(EditorTabViewModel tab)

@@ -1,0 +1,582 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:NetWall.IDE.ViewModels"
+        xmlns:controls="using:NetWall.IDE.Controls"
+        x:Class="NetWall.IDE.Views.Dialogs.CodeAssistantDialog"
+        x:DataType="vm:CodeAssistantViewModel"
+        x:CompileBindings="True"
+        Title="Helpy"
+        Width="472" Height="720"
+        CanResize="False"
+        ShowInTaskbar="False"
+        SystemDecorations="None"
+        Background="Transparent"
+        TransparencyLevelHint="Transparent"
+        WindowStartupLocation="CenterOwner">
+
+    <Window.Styles>
+        <Style Selector="Border#Card">
+            <Setter Property="Transitions">
+                <Transitions>
+                    <DoubleTransition Property="Width" Duration="0:0:0.45" Easing="CubicEaseOut" />
+                    <DoubleTransition Property="Height" Duration="0:0:0.32" Easing="CubicEaseOut" />
+                    <CornerRadiusTransition Property="CornerRadius" Duration="0:0:0.45" Easing="CubicEaseOut" />
+                    <DoubleTransition Property="Opacity" Duration="0:0:0.22" />
+                    <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.22" />
+                </Transitions>
+            </Setter>
+        </Style>
+        <Style Selector="Border#Card.closing">
+            <Setter Property="Opacity" Value="0" />
+            <Setter Property="RenderTransform" Value="scale(0.96)" />
+        </Style>
+
+        <Style Selector="Border.helpy-avatar">
+            <Setter Property="RenderTransform" Value="scale(0)" />
+            <Setter Property="Transitions">
+                <Transitions>
+                    <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.45" Easing="BackEaseOut" />
+                </Transitions>
+            </Setter>
+        </Style>
+        <Style Selector="Border.helpy-avatar.shown">
+            <Setter Property="RenderTransform" Value="scale(1)" />
+        </Style>
+
+        <Style Selector="controls|HelpySprite.floating">
+            <Style.Animations>
+                <Animation Duration="0:0:2.4" IterationCount="Infinite">
+                    <KeyFrame Cue="0%"><Setter Property="TranslateTransform.Y" Value="0" /></KeyFrame>
+                    <KeyFrame Cue="50%"><Setter Property="TranslateTransform.Y" Value="-3" /></KeyFrame>
+                    <KeyFrame Cue="100%"><Setter Property="TranslateTransform.Y" Value="0" /></KeyFrame>
+                </Animation>
+            </Style.Animations>
+        </Style>
+
+        <Style Selector="Border.helpy-bubble">
+            <Setter Property="Opacity" Value="0" />
+            <Setter Property="RenderTransform" Value="translateX(-8px) scale(0.9)" />
+            <Setter Property="Background" Value="{DynamicResource SurfaceBackgroundBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+            <Setter Property="Transitions">
+                <Transitions>
+                    <DoubleTransition Property="Opacity" Duration="0:0:0.25" />
+                    <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.35" Easing="BackEaseOut" />
+                    <BrushTransition Property="BorderBrush" Duration="0:0:0.2" />
+                </Transitions>
+            </Setter>
+        </Style>
+        <Style Selector="Border.helpy-bubble.shown">
+            <Setter Property="Opacity" Value="1" />
+            <Setter Property="RenderTransform" Value="translateX(0px) scale(1)" />
+        </Style>
+        <Style Selector="Border.helpy-bubble.warning">
+            <Setter Property="BorderBrush" Value="{DynamicResource StopRedBrush}" />
+        </Style>
+        <Style Selector="Border.helpy-bubble.happy">
+            <Setter Property="BorderBrush" Value="{DynamicResource RunGreenBrush}" />
+        </Style>
+
+        <Style Selector=":is(Control).helpy-row">
+            <Setter Property="Opacity" Value="0" />
+            <Setter Property="RenderTransform" Value="translateY(-6px)" />
+            <Setter Property="Transitions">
+                <Transitions>
+                    <DoubleTransition Property="Opacity" Duration="0:0:0.28" />
+                    <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.28" Easing="CubicEaseOut" />
+                </Transitions>
+            </Setter>
+        </Style>
+        <Style Selector=":is(Control).helpy-row.shown">
+            <Setter Property="Opacity" Value="1" />
+            <Setter Property="RenderTransform" Value="translateY(0px)" />
+        </Style>
+
+        <Style Selector="StackPanel.helpy-view">
+            <Setter Property="Transitions">
+                <Transitions>
+                    <DoubleTransition Property="Opacity" Duration="0:0:0.2" />
+                    <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.2" />
+                </Transitions>
+            </Setter>
+        </Style>
+        <Style Selector="StackPanel.helpy-view.leaving">
+            <Setter Property="Opacity" Value="0" />
+            <Setter Property="RenderTransform" Value="translateX(-14px)" />
+        </Style>
+
+        <Style Selector="TextBlock.helpy-section">
+            <Setter Property="FontSize" Value="11" />
+            <Setter Property="Margin" Value="4,6,0,6" />
+            <Setter Property="Foreground" Value="{DynamicResource TextMutedBrush}" />
+        </Style>
+        <Style Selector="TextBlock.helpy-label">
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="Margin" Value="2,10,0,4" />
+            <Setter Property="Foreground" Value="{DynamicResource TextMutedBrush}" />
+        </Style>
+        <Style Selector="TextBlock.helpy-hint">
+            <Setter Property="FontSize" Value="11" />
+            <Setter Property="Foreground" Value="{DynamicResource TextMutedBrush}" />
+        </Style>
+
+        <Style Selector="Button.helpy-option">
+            <Setter Property="HorizontalAlignment" Value="Stretch" />
+            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+            <Setter Property="Margin" Value="0,0,0,6" />
+            <Setter Property="Background" Value="{DynamicResource SurfaceBackgroundBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="Template">
+                <ControlTemplate>
+                    <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="1" CornerRadius="10" Padding="10,8">
+                        <ContentPresenter Content="{TemplateBinding Content}" />
+                    </Border>
+                </ControlTemplate>
+            </Setter>
+            <Setter Property="Transitions">
+                <Transitions>
+                    <DoubleTransition Property="Opacity" Duration="0:0:0.28" />
+                    <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.2" Easing="CubicEaseOut" />
+                    <BrushTransition Property="Background" Duration="0:0:0.2" />
+                    <BrushTransition Property="BorderBrush" Duration="0:0:0.2" />
+                </Transitions>
+            </Setter>
+        </Style>
+        <Style Selector="Button.helpy-option.shown:pointerover">
+            <Setter Property="RenderTransform" Value="translateX(4px)" />
+            <Setter Property="Background" Value="{DynamicResource HoverBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}" />
+        </Style>
+        <Style Selector="Button.helpy-option.shown:pressed">
+            <Setter Property="RenderTransform" Value="translateX(4px) scale(0.98)" />
+        </Style>
+        <Style Selector="Button.helpy-option Panel.helpy-icon">
+            <Setter Property="Width" Value="30" />
+            <Setter Property="Height" Value="30" />
+            <Setter Property="Transitions">
+                <Transitions>
+                    <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.25" Easing="BackEaseOut" />
+                </Transitions>
+            </Setter>
+        </Style>
+        <Style Selector="Button.helpy-option:pointerover Panel.helpy-icon">
+            <Setter Property="RenderTransform" Value="rotate(-8deg) scale(1.1)" />
+        </Style>
+        <Style Selector="Panel.helpy-icon Border">
+            <Setter Property="CornerRadius" Value="8" />
+            <Setter Property="Opacity" Value="0.18" />
+        </Style>
+        <Style Selector="Panel.helpy-icon controls|AnimatedIcon">
+            <Setter Property="Width" Value="16" />
+            <Setter Property="Height" Value="16" />
+            <Setter Property="Stretch" Value="Uniform" />
+            <Setter Property="StrokeThickness" Value="2" />
+        </Style>
+        <Style Selector="Button.helpy-suggestion">
+            <Setter Property="BorderBrush" Value="{DynamicResource Ansi3Brush}" />
+        </Style>
+        <Style Selector="Button.helpy-suggestion.shown:pointerover">
+            <Setter Property="BorderBrush" Value="{DynamicResource Ansi3Brush}" />
+        </Style>
+        <Style Selector="Button.helpy-suggestion controls|AnimatedIcon">
+            <Setter Property="Transitions">
+                <Transitions>
+                    <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.3" Easing="BackEaseOut" />
+                </Transitions>
+            </Setter>
+        </Style>
+        <Style Selector="Button.helpy-suggestion:pointerover controls|AnimatedIcon">
+            <Setter Property="RenderTransform" Value="rotate(12deg) scale(1.15)" />
+        </Style>
+        <Style Selector="TextBlock.helpy-option-title">
+            <Setter Property="FontSize" Value="13" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
+        </Style>
+
+        <Style Selector="TextBox">
+            <Setter Property="Background" Value="{DynamicResource SurfaceBackgroundBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+            <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
+            <Setter Property="CornerRadius" Value="8" />
+            <Setter Property="FontSize" Value="13" />
+        </Style>
+        <Style Selector="TextBox:pointerover /template/ Border#PART_BorderElement">
+            <Setter Property="Background" Value="{DynamicResource SurfaceBackgroundBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}" />
+        </Style>
+        <Style Selector="TextBox:focus /template/ Border#PART_BorderElement">
+            <Setter Property="Background" Value="{DynamicResource SurfaceBackgroundBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}" />
+            <Setter Property="BorderThickness" Value="1.5" />
+        </Style>
+        <Style Selector="TextBox /template/ TextBlock#PART_Watermark">
+            <Setter Property="Foreground" Value="{DynamicResource TextDisabledBrush}" />
+        </Style>
+        <Style Selector="AutoCompleteBox">
+            <Setter Property="Background" Value="{DynamicResource SurfaceBackgroundBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+            <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
+            <Setter Property="CornerRadius" Value="8" />
+            <Setter Property="FontSize" Value="13" />
+        </Style>
+
+        <Style Selector="ListBox.segmented">
+            <Setter Property="Background" Value="{DynamicResource SurfaceBackgroundBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="9" />
+            <Setter Property="Padding" Value="3" />
+            <Setter Property="HorizontalAlignment" Value="Left" />
+            <Setter Property="ScrollViewer.HorizontalScrollBarVisibility" Value="Disabled" />
+            <Setter Property="ItemsPanel">
+                <ItemsPanelTemplate>
+                    <StackPanel Orientation="Horizontal" Spacing="2" />
+                </ItemsPanelTemplate>
+            </Setter>
+        </Style>
+        <Style Selector="ListBox.segmented ListBoxItem">
+            <Setter Property="Padding" Value="12,4" />
+            <Setter Property="MinHeight" Value="0" />
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="CornerRadius" Value="6" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="Foreground" Value="{DynamicResource TextMutedBrush}" />
+        </Style>
+        <Style Selector="ListBox.segmented ListBoxItem /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Transitions">
+                <Transitions>
+                    <BrushTransition Property="Background" Duration="0:0:0.18" />
+                </Transitions>
+            </Setter>
+        </Style>
+        <Style Selector="ListBox.segmented ListBoxItem:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource HoverBrush}" />
+            <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
+        </Style>
+        <Style Selector="ListBox.segmented ListBoxItem:selected /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource ActiveBrush}" />
+            <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
+        </Style>
+        <Style Selector="ListBox.segmented ListBoxItem:selected:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource ActiveBrush}" />
+        </Style>
+        <Style Selector="ListBox.segmented ListBoxItem:pressed">
+            <Setter Property="RenderTransform" Value="scale(0.96)" />
+        </Style>
+
+        <Style Selector="Button.helpy-button">
+            <Setter Property="Padding" Value="14,7" />
+            <Setter Property="FontSize" Value="13" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+            <Setter Property="Template">
+                <ControlTemplate>
+                    <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="1" CornerRadius="8" Padding="{TemplateBinding Padding}">
+                        <ContentPresenter Content="{TemplateBinding Content}" Foreground="{TemplateBinding Foreground}" />
+                    </Border>
+                </ControlTemplate>
+            </Setter>
+            <Setter Property="Transitions">
+                <Transitions>
+                    <BrushTransition Property="Background" Duration="0:0:0.18" />
+                    <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.12" />
+                    <DoubleTransition Property="Opacity" Duration="0:0:0.2" />
+                </Transitions>
+            </Setter>
+        </Style>
+        <Style Selector="Button.helpy-button:pointerover">
+            <Setter Property="Background" Value="{DynamicResource HoverBrush}" />
+        </Style>
+        <Style Selector="Button.helpy-button:pressed">
+            <Setter Property="RenderTransform" Value="scale(0.96)" />
+        </Style>
+        <Style Selector="Button.helpy-button.primary">
+            <Setter Property="Background" Value="{DynamicResource AccentBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}" />
+            <Setter Property="Foreground" Value="White" />
+        </Style>
+        <Style Selector="Button.helpy-button.primary:pointerover">
+            <Setter Property="Background" Value="{DynamicResource AccentBrush}" />
+            <Setter Property="Opacity" Value="0.88" />
+        </Style>
+        <Style Selector="Button.helpy-button:disabled">
+            <Setter Property="Opacity" Value="0.4" />
+        </Style>
+        <Style Selector="Button.helpy-back">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="Padding" Value="4,2" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="Foreground" Value="{DynamicResource TextMutedBrush}" />
+            <Setter Property="Template">
+                <ControlTemplate>
+                    <Border Background="{TemplateBinding Background}" CornerRadius="6" Padding="{TemplateBinding Padding}">
+                        <ContentPresenter Content="{TemplateBinding Content}" Foreground="{TemplateBinding Foreground}" />
+                    </Border>
+                </ControlTemplate>
+            </Setter>
+        </Style>
+        <Style Selector="Button.helpy-back:pointerover">
+            <Setter Property="Background" Value="{DynamicResource HoverBrush}" />
+            <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
+        </Style>
+    </Window.Styles>
+
+    <Border Name="Card" Margin="20" Width="64" Height="64" CornerRadius="32"
+            HorizontalAlignment="Left" VerticalAlignment="Top" ClipToBounds="True"
+            Background="{DynamicResource PanelBackgroundBrush}"
+            BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1"
+            BoxShadow="0 12 32 0 #70000000">
+        <Canvas>
+        <StackPanel Name="CardContent" Width="430">
+
+            <Grid Name="Header" ColumnDefinitions="Auto,*,Auto" Height="62" Background="Transparent">
+                <Border Name="Avatar" Classes="helpy-avatar" Width="44" Height="44" CornerRadius="22" Margin="9,0,0,0"
+                        Background="{DynamicResource ActiveBrush}">
+                    <controls:HelpySprite Name="Helpy" Width="38" Height="38">
+                        <controls:HelpySprite.RenderTransform>
+                            <TranslateTransform />
+                        </controls:HelpySprite.RenderTransform>
+                    </controls:HelpySprite>
+                </Border>
+                <Border Name="Bubble" Grid.Column="1" Classes="helpy-bubble" Margin="10,0,12,0"
+                        Classes.warning="{Binding HelpyIsWarning}"
+                        Classes.happy="{Binding HelpyIsHappy}"
+                        HorizontalAlignment="Left" VerticalAlignment="Center"
+                        BorderThickness="1" CornerRadius="12" Padding="11,7">
+                    <TextBlock Name="BubbleText" FontSize="13" TextWrapping="Wrap" MaxWidth="300"
+                               Foreground="{DynamicResource TextPrimaryBrush}" />
+                </Border>
+                <Button Grid.Column="2" Classes="helpy-back" Content="✕" Margin="0,0,10,0" VerticalAlignment="Center"
+                        ToolTip.Tip="Cerrar (Esc)" Click="OnCancelClick" />
+            </Grid>
+
+            <StackPanel Name="MenuView" Classes="helpy-view" Margin="12,2,12,12" IsVisible="False">
+                <StackPanel IsVisible="{Binding HasSuggestions}">
+                    <TextBlock Classes="helpy-section helpy-row" Text="Para tu archivo te sugiero" />
+                    <ItemsControl ItemsSource="{Binding Suggestions}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate x:DataType="vm:HelpySuggestion">
+                                <Button Classes="helpy-option helpy-suggestion helpy-row"
+                                        Command="{Binding $parent[ItemsControl].((vm:CodeAssistantViewModel)DataContext).ApplySuggestionCommand}"
+                                        CommandParameter="{Binding}">
+                                    <Grid ColumnDefinitions="Auto,*">
+                                        <controls:AnimatedIcon Kind="Lightbulb" Width="15" Height="15" Stretch="Uniform"
+                                                               StrokeThickness="2" Stroke="{DynamicResource Ansi3Brush}" />
+                                        <TextBlock Grid.Column="1" Classes="helpy-option-title" Margin="10,0,0,0"
+                                                   VerticalAlignment="Center" Text="{Binding Text}" />
+                                    </Grid>
+                                </Button>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+                <TextBlock Classes="helpy-section helpy-row" Text="O crea algo nuevo" />
+                <Button Classes="helpy-option helpy-row" Command="{Binding ChooseRuleCommand}">
+                    <Grid ColumnDefinitions="Auto,*">
+                        <Panel Classes="helpy-icon">
+                            <Border Background="{DynamicResource Ansi5Brush}" />
+                            <controls:AnimatedIcon Kind="ShieldCheck" Stroke="{DynamicResource Ansi5Brush}" />
+                        </Panel>
+                        <StackPanel Grid.Column="1" Margin="10,0,0,0" VerticalAlignment="Center">
+                            <TextBlock Classes="helpy-option-title" Text="Regla de firewall" />
+                            <TextBlock Classes="helpy-hint" Text="Permite o bloquea tráfico" />
+                        </StackPanel>
+                    </Grid>
+                </Button>
+                <Button Classes="helpy-option helpy-row" Command="{Binding ChooseVariableCommand}">
+                    <Grid ColumnDefinitions="Auto,*">
+                        <Panel Classes="helpy-icon">
+                            <Border Background="{DynamicResource Ansi4Brush}" />
+                            <controls:AnimatedIcon Kind="Variable" Stroke="{DynamicResource Ansi4Brush}" />
+                        </Panel>
+                        <StackPanel Grid.Column="1" Margin="10,0,0,0" VerticalAlignment="Center">
+                            <TextBlock Classes="helpy-option-title" Text="Variable" />
+                            <TextBlock Classes="helpy-hint" Text="Un número, un texto o una red" />
+                        </StackPanel>
+                    </Grid>
+                </Button>
+                <Button Classes="helpy-option helpy-row" Command="{Binding ChoosePacketCommand}">
+                    <Grid ColumnDefinitions="Auto,*">
+                        <Panel Classes="helpy-icon">
+                            <Border Background="{DynamicResource Ansi2Brush}" />
+                            <controls:AnimatedIcon Kind="Send" Stroke="{DynamicResource Ansi2Brush}" />
+                        </Panel>
+                        <StackPanel Grid.Column="1" Margin="10,0,0,0" VerticalAlignment="Center">
+                            <TextBlock Classes="helpy-option-title" Text="Paquete para simular" />
+                            <TextBlock Classes="helpy-hint" Text="Prueba tus reglas (va dentro de principal)" />
+                        </StackPanel>
+                    </Grid>
+                </Button>
+                <Button Classes="helpy-option helpy-row" Command="{Binding ChooseImportCommand}">
+                    <Grid ColumnDefinitions="Auto,*">
+                        <Panel Classes="helpy-icon">
+                            <Border Background="{DynamicResource Ansi3Brush}" />
+                            <controls:AnimatedIcon Kind="FileInput" Stroke="{DynamicResource Ansi3Brush}" />
+                        </Panel>
+                        <StackPanel Grid.Column="1" Margin="10,0,0,0" VerticalAlignment="Center">
+                            <TextBlock Classes="helpy-option-title" Text="Importación" />
+                            <TextBlock Classes="helpy-hint" Text="Usa las variables y reglas de otro archivo" />
+                        </StackPanel>
+                    </Grid>
+                </Button>
+                <Button Classes="helpy-option helpy-row" Command="{Binding ChooseMainCommand}" Margin="0">
+                    <Grid ColumnDefinitions="Auto,*">
+                        <Panel Classes="helpy-icon">
+                            <Border Background="{DynamicResource Ansi1Brush}" />
+                            <controls:AnimatedIcon Kind="Flag" Stroke="{DynamicResource Ansi1Brush}" />
+                        </Panel>
+                        <StackPanel Grid.Column="1" Margin="10,0,0,0" VerticalAlignment="Center">
+                            <TextBlock Classes="helpy-option-title" Text="Bloque principal" />
+                            <TextBlock Classes="helpy-hint" Text="El punto de entrada y su política" />
+                        </StackPanel>
+                    </Grid>
+                </Button>
+            </StackPanel>
+
+            <StackPanel Name="FormView" Classes="helpy-view" Margin="16,0,16,16" IsVisible="False">
+                <Button Classes="helpy-back helpy-row" Command="{Binding BackCommand}" HorizontalAlignment="Left">
+                    <StackPanel Orientation="Horizontal" Spacing="6">
+                        <TextBlock Text="‹" FontSize="15" VerticalAlignment="Center" />
+                        <TextBlock Text="{Binding FormTitle}" FontSize="12" FontWeight="SemiBold" VerticalAlignment="Center" />
+                    </StackPanel>
+                </Button>
+
+                <StackPanel IsVisible="{Binding IsRuleForm}">
+                    <StackPanel Classes="helpy-row">
+                        <TextBlock Classes="helpy-label" Text="Nombre" />
+                        <TextBox Text="{Binding RuleName}" Watermark="web_oficina" />
+                    </StackPanel>
+                    <Grid Classes="helpy-row" ColumnDefinitions="Auto,16,Auto">
+                        <StackPanel>
+                            <TextBlock Classes="helpy-label" Text="Acción" />
+                            <ListBox Classes="segmented" ItemsSource="{x:Static vm:CodeAssistantViewModel.Actions}"
+                                     SelectedItem="{Binding Action}" />
+                        </StackPanel>
+                        <StackPanel Grid.Column="2">
+                            <TextBlock Classes="helpy-label" Text="Protocolo" />
+                            <ListBox Classes="segmented" ItemsSource="{x:Static vm:CodeAssistantViewModel.Protocols}"
+                                     SelectedItem="{Binding Protocol}" />
+                        </StackPanel>
+                    </Grid>
+                    <StackPanel Classes="helpy-row">
+                        <TextBlock Classes="helpy-label" Text="Puerto" />
+                        <Grid ColumnDefinitions="Auto,10,*">
+                            <ListBox Classes="segmented" ItemsSource="{x:Static vm:CodeAssistantViewModel.PortModes}"
+                                     SelectedItem="{Binding PortMode}" />
+                            <TextBox Grid.Column="2" Text="{Binding Port}" Watermark="80" IsVisible="{Binding HasSinglePort}" />
+                            <Grid Grid.Column="2" ColumnDefinitions="*,Auto,*" IsVisible="{Binding HasPortRange}">
+                                <TextBox Text="{Binding PortFrom}" Watermark="1000" />
+                                <TextBlock Grid.Column="1" Classes="helpy-hint" Text="a" Margin="6,0" VerticalAlignment="Center" />
+                                <TextBox Grid.Column="2" Text="{Binding PortTo}" Watermark="2000" />
+                            </Grid>
+                        </Grid>
+                    </StackPanel>
+                    <Grid Classes="helpy-row" ColumnDefinitions="*,10,*">
+                        <StackPanel>
+                            <TextBlock Classes="helpy-label" Text="Origen" />
+                            <AutoCompleteBox Text="{Binding Source, Mode=TwoWay}" ItemsSource="{Binding NetworkVariables}"
+                                             FilterMode="StartsWith" Watermark="cualquiera" />
+                        </StackPanel>
+                        <StackPanel Grid.Column="2">
+                            <TextBlock Classes="helpy-label" Text="Destino" />
+                            <AutoCompleteBox Text="{Binding Destination, Mode=TwoWay}" ItemsSource="{Binding NetworkVariables}"
+                                             FilterMode="StartsWith" Watermark="cualquiera" />
+                        </StackPanel>
+                    </Grid>
+                    <StackPanel Classes="helpy-row">
+                        <TextBlock Classes="helpy-label" Text="Comentario" />
+                        <TextBox Text="{Binding Comment}" Watermark="opcional" />
+                    </StackPanel>
+                </StackPanel>
+
+                <StackPanel IsVisible="{Binding IsVariableForm}">
+                    <StackPanel Classes="helpy-row">
+                        <TextBlock Classes="helpy-label" Text="Nombre" />
+                        <TextBox Text="{Binding VariableName}" Watermark="lan" />
+                    </StackPanel>
+                    <StackPanel Classes="helpy-row">
+                        <TextBlock Classes="helpy-label" Text="Tipo" />
+                        <ListBox Classes="segmented" ItemsSource="{x:Static vm:CodeAssistantViewModel.Types}"
+                                 SelectedItem="{Binding VariableType}" />
+                    </StackPanel>
+                    <StackPanel Classes="helpy-row">
+                        <TextBlock Classes="helpy-label" Text="Valor" />
+                        <TextBox Text="{Binding VariableValue}" Watermark="80, 2.5, servidor web o 192.168.1.0/24" />
+                    </StackPanel>
+                </StackPanel>
+
+                <StackPanel IsVisible="{Binding IsPacketForm}">
+                    <Grid Classes="helpy-row" ColumnDefinitions="Auto,16,*">
+                        <StackPanel>
+                            <TextBlock Classes="helpy-label" Text="Protocolo" />
+                            <ListBox Classes="segmented" ItemsSource="{x:Static vm:CodeAssistantViewModel.PacketProtocols}"
+                                     SelectedItem="{Binding PacketProtocol}" />
+                        </StackPanel>
+                        <StackPanel Grid.Column="2">
+                            <TextBlock Classes="helpy-label" Text="Puerto" />
+                            <TextBox Text="{Binding PacketPort}" Watermark="80" />
+                        </StackPanel>
+                    </Grid>
+                    <Grid Classes="helpy-row" ColumnDefinitions="*,10,*">
+                        <StackPanel>
+                            <TextBlock Classes="helpy-label" Text="Origen" />
+                            <AutoCompleteBox Text="{Binding PacketSource, Mode=TwoWay}" ItemsSource="{Binding HostVariables}"
+                                             FilterMode="StartsWith" Watermark="10.0.0.5" />
+                        </StackPanel>
+                        <StackPanel Grid.Column="2">
+                            <TextBlock Classes="helpy-label" Text="Destino" />
+                            <AutoCompleteBox Text="{Binding PacketDestination, Mode=TwoWay}" ItemsSource="{Binding HostVariables}"
+                                             FilterMode="StartsWith" Watermark="192.168.1.10" />
+                        </StackPanel>
+                    </Grid>
+                </StackPanel>
+
+                <StackPanel IsVisible="{Binding IsImportForm}">
+                    <StackPanel Classes="helpy-row">
+                        <TextBlock Classes="helpy-label" Text="Archivo" />
+                        <ListBox Classes="segmented" ItemsSource="{Binding ImportFiles}" SelectedItem="{Binding SelectedImport}"
+                                 HorizontalAlignment="Stretch">
+                            <ListBox.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <StackPanel Spacing="2" />
+                                </ItemsPanelTemplate>
+                            </ListBox.ItemsPanel>
+                        </ListBox>
+                        <TextBlock Classes="helpy-hint" Margin="2,6,0,0"
+                                   Text="La ruta se escribe relativa a la carpeta del archivo abierto." />
+                    </StackPanel>
+                </StackPanel>
+
+                <StackPanel IsVisible="{Binding IsMainForm}">
+                    <StackPanel Classes="helpy-row">
+                        <TextBlock Classes="helpy-label" Text="Política por defecto" />
+                        <ListBox Classes="segmented" ItemsSource="{x:Static vm:CodeAssistantViewModel.Policies}"
+                                 SelectedItem="{Binding MainPolicy}" />
+                    </StackPanel>
+                </StackPanel>
+
+                <StackPanel Classes="helpy-row">
+                    <TextBlock Classes="helpy-label" Text="Vista previa" />
+                    <Border Background="{DynamicResource EditorBackgroundBrush}" CornerRadius="8" Padding="12,10"
+                            BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1">
+                        <controls:CodePreview Code="{Binding PreviewCode}" FontSize="12" TextWrapping="Wrap"
+                                              FontFamily="Cascadia Code,Consolas,DejaVu Sans Mono,monospace"
+                                              Foreground="{DynamicResource TextPrimaryBrush}" />
+                    </Border>
+                </StackPanel>
+
+                <StackPanel Classes="helpy-row" Orientation="Horizontal" Spacing="8" HorizontalAlignment="Right" Margin="0,14,0,0">
+                    <Button Classes="helpy-button" Content="Cancelar" Click="OnCancelClick" />
+                    <Button Classes="helpy-button primary" Content="Insertar" Click="OnInsertClick" IsEnabled="{Binding CanInsert}" />
+                </StackPanel>
+            </StackPanel>
+        </StackPanel>
+        </Canvas>
+    </Border>
+</Window>

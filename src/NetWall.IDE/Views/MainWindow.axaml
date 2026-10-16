@@ -62,6 +62,7 @@
         <KeyBinding Gesture="Ctrl+B" Command="{Binding ToggleSidebarCommand}" />
         <KeyBinding Gesture="Ctrl+W" Command="{Binding CloseTabCommand}" CommandParameter="{Binding SelectedTab}" />
         <KeyBinding Gesture="F5" Command="{Binding RunActiveFileCommand}" />
+        <KeyBinding Gesture="Ctrl+Shift+A" Command="{Binding OpenCodeAssistantCommand}" />
     </Window.KeyBindings>
 
     <DockPanel>
@@ -144,6 +145,15 @@
                             <TextBlock Text="Run Active File (F5)" />
                         </ToolTip.Tip>
                         <controls:AnimatedIcon Classes="icon" Kind="Play" Stroke="#2FBF9E" />
+                    </Button>
+                </Border>
+
+                <Border Classes="toolbar-pill">
+                    <Button Classes="icon toolbar-icon" Command="{Binding OpenCodeAssistantCommand}">
+                        <ToolTip.Tip>
+                            <TextBlock Text="Code Assistant (Ctrl+Shift+A)" />
+                        </ToolTip.Tip>
+                        <controls:AnimatedIcon Classes="icon" Kind="WandSparkles" />
                     </Button>
                 </Border>
 
