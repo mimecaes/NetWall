@@ -24,6 +24,9 @@ public partial class MainViewModel : ViewModelBase
         _recentProjectsService = new RecentProjectsService();
         LoadRecentProjects();
         OpenTabs.CollectionChanged += OnOpenTabsChanged;
+        Simulation.RulesChanged += OnSimulationRulesChanged;
+        Simulation.PacketRequested += OnSimulationPacketRequested;
+        Simulation.ReplayRequested += OnSimulationReplayRequested;
 
         Extensions.Add(new ExtensionInfo
         {
@@ -178,6 +181,111 @@ public partial class MainViewModel : ViewModelBase
 
     [ObservableProperty]
     public partial bool IsTerminalVisible { get; set; } = true;
+
+    public SimulationViewModel Simulation { get; } = new();
+
+    private string? _simulationFile;
+    private int _simulationRun;
+
+    [ObservableProperty]
+    public partial bool IsSimulationMode { get; set; }
+
+    public string? SimulationProblem => CanSimulateProgram ? null
+        : SelectedTab is null ? "No tienes ningún archivo abierto."
+        : $"«{SelectedTab.Title}» no es un archivo de NetWall.";
+
+    public bool CanSimulateProgram => SelectedTab?.FilePath is { } path
+        && string.Equals(Path.GetExtension(path), ".nw", StringComparison.OrdinalIgnoreCase);
+
+    public async Task<SimulationResult?> RunProgramSimulationAsync()
+    {
+        if (SelectedTab is not { FilePath: { } path } tab || FindNetWallCliPath() is not { } cliPath)
+        {
+            return null;
+        }
+
+        if (tab.IsDirty)
+        {
+            SaveTab(tab);
+        }
+
+        _simulationFile = path;
+        return await SimulationRunner.RunAsync(cliPath, path);
+    }
+
+    private async void OnSimulationPacketRequested(SimulatedPacket request)
+    {
+        if (_simulationFile is { } path && FindNetWallCliPath() is { } cliPath)
+        {
+            Simulation.Deliver(await SimulationRunner.RunCustomAsync(cliPath, path, Simulation.ActiveRules.ToList(),
+                [request]));
+        }
+    }
+
+    private async void OnSimulationReplayRequested()
+    {
+        if (_simulationFile is { } path && FindNetWallCliPath() is { } cliPath)
+        {
+            Simulation.Replay(await SimulationRunner.RunCustomAsync(cliPath, path, Simulation.ActiveRules.ToList(),
+                Simulation.SentPackets));
+        }
+    }
+
+    private async void OnSimulationRulesChanged()
+    {
+        if (Simulation.IsBuilder || _simulationFile is not { } path || FindNetWallCliPath() is not { } cliPath)
+        {
+            return;
+        }
+
+        var run = ++_simulationRun;
+        var result = await SimulationRunner.RunCustomAsync(cliPath, path, Simulation.ActiveRules.ToList(),
+            Simulation.ProgramPackets);
+        if (run == _simulationRun && IsSimulationMode)
+        {
+            Simulation.Reload(result);
+        }
+    }
+
+    public void ShowProgramSimulation(SimulationResult? result)
+    {
+        Simulation.ModeTitle = "Programa completo";
+        Simulation.Load(result, SelectedTab?.Title ?? string.Empty);
+    }
+
+    public void ShowNetworkBuilder(SimulationResult? result)
+    {
+        Simulation.ModeTitle = "Red propia";
+        Simulation.LoadBuilder(result, SelectedTab?.Title ?? string.Empty);
+    }
+
+    public void ExitSimulationMode()
+    {
+        IsSimulationMode = false;
+        Simulation.Unload();
+    }
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(PanelHeight))]
+    public partial double AvailableHeight { get; set; } = 800;
+
+    private double? _terminalHeight;
+
+    private double MaxPanelHeight => Math.Max(120, AvailableHeight - 200);
+
+    public double PanelHeight => Math.Min(MaxPanelHeight, _terminalHeight ?? 220);
+
+    public void ResizePanel(double height)
+    {
+        _terminalHeight = Math.Clamp(height, 120, MaxPanelHeight);
+        OnPropertyChanged(nameof(PanelHeight));
+    }
+
+    public void ResetPanelHeight()
+    {
+        _terminalHeight = null;
+        OnPropertyChanged(nameof(PanelHeight));
+    }
 
     public ObservableCollection<TerminalEntry> TerminalEntries { get; } =
         [new TerminalLine(TerminalLineKind.Info, "NetWall.IDE terminal ready.")];

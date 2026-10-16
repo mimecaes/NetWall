@@ -4,6 +4,7 @@
         xmlns:models="using:NetWall.IDE.Models"
         xmlns:conv="using:NetWall.IDE.Converters"
         xmlns:controls="using:NetWall.IDE.Controls"
+        xmlns:views="using:NetWall.IDE.Views"
         xmlns:ae="https://github.com/avaloniaui/avaloniaedit"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
@@ -101,7 +102,9 @@
                 Background="{DynamicResource SurfaceBackgroundBrush}"
                 BorderBrush="{DynamicResource BorderBrush}"
                 BorderThickness="0,0,0,1"
-                Padding="6,4">
+                Padding="6,4"
+                IsVisible="{Binding !IsSimulationMode}">
+            <Grid ColumnDefinitions="*,Auto">
             <StackPanel Orientation="Horizontal" Spacing="6">
 
                 <Border Classes="toolbar-pill">
@@ -243,6 +246,16 @@
                     </StackPanel>
                 </Border>
             </StackPanel>
+
+                <Border Grid.Column="1" Classes="toolbar-pill">
+                    <Button Classes="icon toolbar-icon" Click="OnSimulationModeClick">
+                        <ToolTip.Tip>
+                            <TextBlock Text="Modo simulación" />
+                        </ToolTip.Tip>
+                        <controls:AnimatedIcon Classes="icon" Kind="BrickWall" />
+                    </Button>
+                </Border>
+            </Grid>
         </Border>
 
         <Border DockPanel.Dock="Bottom" Background="{DynamicResource PanelBackgroundBrush}" Height="24">
@@ -259,6 +272,7 @@
             </Grid>
         </Border>
 
+        <Panel>
         <Grid ColumnDefinitions="Auto,Auto,*">
 
             <Border Grid.Column="0" Width="260"
@@ -544,10 +558,15 @@
                     </Grid>
                 </Grid>
 
-                <GridSplitter Grid.Row="1" Height="4" Background="Transparent"
-                              IsVisible="{Binding IsTerminalVisible}" ResizeDirection="Rows" />
+                <Border Grid.Row="1" Name="PanelGrip" Classes="panel-grip"
+                        IsVisible="{Binding IsTerminalVisible}"
+                        ToolTip.Tip="Arrastra para cambiar el tamaño · doble clic para restaurarlo"
+                        PointerPressed="OnPanelGripPressed" PointerMoved="OnPanelGripMoved"
+                        PointerReleased="OnPanelGripReleased" DoubleTapped="OnPanelGripDoubleTapped">
+                    <Border Classes="panel-grip-handle" />
+                </Border>
 
-                <Border Grid.Row="2" Height="220"
+                <Border Grid.Row="2" Height="{Binding PanelHeight}"
                         Background="{DynamicResource TerminalBackgroundBrush}"
                         BorderBrush="{DynamicResource BorderBrush}"
                         BorderThickness="0,1,0,0"
@@ -639,6 +658,31 @@
                 </Border>
             </Grid>
         </Grid>
+
+        <DockPanel Name="SimulationLayer" IsVisible="{Binding IsSimulationMode}"
+                   Background="{DynamicResource BackgroundBrush}">
+            <Border DockPanel.Dock="Top" Classes="simulation-header">
+                <Grid ColumnDefinitions="Auto,Auto,Auto,*,Auto">
+                    <controls:AnimatedIcon Classes="icon" Kind="BrickWall" Stroke="{DynamicResource AccentBrush}"
+                                           VerticalAlignment="Center" />
+                    <TextBlock Grid.Column="1" Classes="sidebar-header" Text="MODO SIMULACIÓN" Margin="10,0"
+                               VerticalAlignment="Center" />
+                    <Border Grid.Column="2" Classes="simulation-chip">
+                        <TextBlock Text="{Binding Simulation.ModeTitle}" />
+                    </Border>
+                    <Button Grid.Column="4" Classes="simulation-exit" Click="OnExitSimulationClick">
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <controls:AnimatedIcon Classes="icon-sm" Kind="LogOut" />
+                            <TextBlock Text="Salir" VerticalAlignment="Center" />
+                        </StackPanel>
+                    </Button>
+                </Grid>
+            </Border>
+            <views:SimulationPanel Name="SimulationView" DataContext="{Binding Simulation}" />
+        </DockPanel>
+
+        <controls:SimulationIntro Name="Intro" />
+        </Panel>
     </DockPanel>
 
 </Window>

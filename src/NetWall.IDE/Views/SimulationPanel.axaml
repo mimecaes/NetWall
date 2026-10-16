@@ -1,0 +1,839 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:NetWall.IDE.ViewModels"
+             xmlns:controls="using:NetWall.IDE.Controls"
+             xmlns:models="using:NetWall.IDE.Models"
+             x:Class="NetWall.IDE.Views.SimulationPanel"
+             x:DataType="vm:SimulationViewModel"
+             x:CompileBindings="True">
+
+    <UserControl.Styles>
+        <Style Selector="TextBlock.sim-label">
+            <Setter Property="FontSize" Value="11" />
+            <Setter Property="Foreground" Value="{DynamicResource TextMutedBrush}" />
+            <Setter Property="Margin" Value="0,0,0,6" />
+        </Style>
+        <Style Selector="TextBlock.sim-mono">
+            <Setter Property="FontFamily" Value="Cascadia Code,Consolas,DejaVu Sans Mono,monospace" />
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
+        </Style>
+
+        <Style Selector="Border.sim-entry">
+            <Setter Property="Background" Value="{DynamicResource SurfaceBackgroundBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="8" />
+            <Setter Property="Padding" Value="10,7" />
+            <Setter Property="Margin" Value="0,0,8,6" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="Transitions">
+                <Transitions>
+                    <BrushTransition Property="BorderBrush" Duration="0:0:0.2" />
+                    <BrushTransition Property="Background" Duration="0:0:0.2" />
+                </Transitions>
+            </Setter>
+        </Style>
+        <Style Selector="Border.sim-entry:pointerover">
+            <Setter Property="Background" Value="{DynamicResource HoverBrush}" />
+        </Style>
+        <Style Selector="Border.sim-entry.selected">
+            <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}" />
+        </Style>
+        <Style Selector="TextBlock.allowed">
+            <Setter Property="Foreground" Value="{DynamicResource RunGreenBrush}" />
+        </Style>
+        <Style Selector="TextBlock.blocked">
+            <Setter Property="Foreground" Value="{DynamicResource StopRedBrush}" />
+        </Style>
+
+        <Style Selector="Border.sim-step">
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="6" />
+            <Setter Property="Padding" Value="8,4" />
+            <Setter Property="Margin" Value="0,0,6,5" />
+            <Setter Property="Transitions">
+                <Transitions>
+                    <BrushTransition Property="BorderBrush" Duration="0:0:0.2" />
+                </Transitions>
+            </Setter>
+        </Style>
+        <Style Selector="Border.sim-step TextBlock">
+            <Setter Property="FontFamily" Value="Cascadia Code,Consolas,DejaVu Sans Mono,monospace" />
+            <Setter Property="FontSize" Value="11" />
+            <Setter Property="Foreground" Value="{DynamicResource TextDisabledBrush}" />
+        </Style>
+        <Style Selector="Border.sim-step.skipped TextBlock">
+            <Setter Property="Foreground" Value="{DynamicResource TextMutedBrush}" />
+        </Style>
+        <Style Selector="Border.sim-step.evaluating">
+            <Setter Property="BorderBrush" Value="{DynamicResource Ansi3Brush}" />
+        </Style>
+        <Style Selector="Border.sim-step.evaluating TextBlock">
+            <Setter Property="Foreground" Value="{DynamicResource Ansi3Brush}" />
+        </Style>
+        <Style Selector="Border.sim-step.allowed">
+            <Setter Property="BorderBrush" Value="{DynamicResource RunGreenBrush}" />
+        </Style>
+        <Style Selector="Border.sim-step.allowed TextBlock">
+            <Setter Property="Foreground" Value="{DynamicResource RunGreenBrush}" />
+        </Style>
+        <Style Selector="Border.sim-step.blocked">
+            <Setter Property="BorderBrush" Value="{DynamicResource StopRedBrush}" />
+        </Style>
+        <Style Selector="Border.sim-step.blocked TextBlock">
+            <Setter Property="Foreground" Value="{DynamicResource StopRedBrush}" />
+        </Style>
+
+        <Style Selector="Button.sim-control">
+            <Setter Property="Width" Value="28" />
+            <Setter Property="Height" Value="26" />
+        </Style>
+        <Style Selector="Button.sim-control.off">
+            <Setter Property="Opacity" Value="0.45" />
+        </Style>
+        <Style Selector="Button.sim-speed">
+            <Setter Property="Height" Value="26" />
+            <Setter Property="MinWidth" Value="40" />
+            <Setter Property="Padding" Value="8,0" />
+            <Setter Property="Background" Value="{DynamicResource SurfaceBackgroundBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="6" />
+            <Setter Property="FontFamily" Value="Cascadia Code,Consolas,DejaVu Sans Mono,monospace" />
+            <Setter Property="FontSize" Value="11" />
+            <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
+            <Setter Property="HorizontalContentAlignment" Value="Center" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+        </Style>
+        <Style Selector="Border.sim-chip">
+            <Setter Property="Background" Value="{DynamicResource SurfaceBackgroundBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="10" />
+            <Setter Property="Padding" Value="8,2" />
+            <Setter Property="Margin" Value="6,0,0,0" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+        </Style>
+        <Style Selector="GridSplitter.sim-split">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="Template">
+                <ControlTemplate>
+                    <Border Background="Transparent">
+                        <Border Name="PART_Pill" CornerRadius="2" HorizontalAlignment="Center"
+                                VerticalAlignment="Center" Background="{DynamicResource BorderBrush}">
+                            <Border.Transitions>
+                                <Transitions>
+                                    <BrushTransition Property="Background" Duration="0:0:0.18" />
+                                </Transitions>
+                            </Border.Transitions>
+                        </Border>
+                    </Border>
+                </ControlTemplate>
+            </Setter>
+        </Style>
+        <Style Selector="GridSplitter.sim-split.rows">
+            <Setter Property="Height" Value="10" />
+        </Style>
+        <Style Selector="GridSplitter.sim-split.rows /template/ Border#PART_Pill">
+            <Setter Property="Width" Value="44" />
+            <Setter Property="Height" Value="4" />
+        </Style>
+        <Style Selector="GridSplitter.sim-split.columns">
+            <Setter Property="Width" Value="10" />
+        </Style>
+        <Style Selector="GridSplitter.sim-split.columns /template/ Border#PART_Pill">
+            <Setter Property="Width" Value="4" />
+            <Setter Property="Height" Value="44" />
+        </Style>
+        <Style Selector="GridSplitter.sim-split:pointerover /template/ Border#PART_Pill">
+            <Setter Property="Background" Value="{DynamicResource TextMutedBrush}" />
+        </Style>
+        <Style Selector="GridSplitter.sim-split:pressed /template/ Border#PART_Pill">
+            <Setter Property="Background" Value="{DynamicResource AccentBrush}" />
+        </Style>
+        <Style Selector="Border.rule-card">
+            <Setter Property="Background" Value="{DynamicResource SurfaceBackgroundBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="10" />
+            <Setter Property="Padding" Value="10,8" />
+            <Setter Property="Margin" Value="0,0,8,6" />
+            <Setter Property="Transitions">
+                <Transitions>
+                    <BrushTransition Property="BorderBrush" Duration="0:0:0.25" />
+                    <BrushTransition Property="Background" Duration="0:0:0.25" />
+                    <DoubleTransition Property="Opacity" Duration="0:0:0.2" />
+                    <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.3" Easing="BackEaseOut" />
+                </Transitions>
+            </Setter>
+        </Style>
+        <Style Selector="Border.rule-card.inactive">
+            <Setter Property="Opacity" Value="0.45" />
+        </Style>
+        <Style Selector="Border.rule-card.decisive">
+            <Setter Property="RenderTransform" Value="scale(1.03)" />
+        </Style>
+        <Style Selector="Border.rule-card.decisive.allows">
+            <Setter Property="BorderBrush" Value="{DynamicResource RunGreenBrush}" />
+        </Style>
+        <Style Selector="Border.rule-card.decisive.blocks">
+            <Setter Property="BorderBrush" Value="{DynamicResource StopRedBrush}" />
+        </Style>
+        <Style Selector="Border.rule-card.policy">
+            <Setter Property="Background" Value="Transparent" />
+        </Style>
+        <Style Selector="Ellipse.rule-dot">
+            <Setter Property="Width" Value="8" />
+            <Setter Property="Height" Value="8" />
+            <Setter Property="Margin" Value="0,0,8,0" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+        </Style>
+        <Style Selector="Ellipse.rule-dot.allows">
+            <Setter Property="Fill" Value="{DynamicResource RunGreenBrush}" />
+        </Style>
+        <Style Selector="Ellipse.rule-dot.blocks">
+            <Setter Property="Fill" Value="{DynamicResource StopRedBrush}" />
+        </Style>
+        <Style Selector="ToggleSwitch.rule-switch">
+            <Setter Property="OnContent" Value="" />
+            <Setter Property="OffContent" Value="" />
+            <Setter Property="MinWidth" Value="0" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+        </Style>
+        <Style Selector="ToggleSwitch.rule-switch:checked /template/ Border#SwitchKnobBounds">
+            <Setter Property="Background" Value="{DynamicResource AccentBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}" />
+        </Style>
+        <Style Selector="ToggleSwitch.rule-switch:checked:pointerover /template/ Border#SwitchKnobBounds">
+            <Setter Property="Background" Value="{DynamicResource AccentBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}" />
+        </Style>
+        <Style Selector="Button.catalog-action">
+            <Setter Property="Padding" Value="8,2" />
+            <Setter Property="FontSize" Value="11" />
+            <Setter Property="CornerRadius" Value="6" />
+            <Setter Property="Background" Value="{DynamicResource SurfaceBackgroundBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
+        </Style>
+        <Style Selector="Border.palette">
+            <Setter Property="Background" Value="{DynamicResource PanelBackgroundBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="12" />
+            <Setter Property="Padding" Value="10" />
+            <Setter Property="Margin" Value="14" />
+            <Setter Property="HorizontalAlignment" Value="Left" />
+            <Setter Property="VerticalAlignment" Value="Top" />
+            <Setter Property="BoxShadow" Value="0 6 18 0 #50000000" />
+        </Style>
+        <Style Selector="Border.palette-item">
+            <Setter Property="Background" Value="{DynamicResource SurfaceBackgroundBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="9" />
+            <Setter Property="Padding" Value="10,8" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="Transitions">
+                <Transitions>
+                    <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.2" Easing="CubicEaseOut" />
+                    <BrushTransition Property="BorderBrush" Duration="0:0:0.2" />
+                </Transitions>
+            </Setter>
+        </Style>
+        <Style Selector="Border.palette-item:pointerover">
+            <Setter Property="RenderTransform" Value="scale(1.06)" />
+            <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}" />
+        </Style>
+        <Style Selector="Border.palette-item controls|AnimatedIcon">
+            <Setter Property="Width" Value="18" />
+            <Setter Property="Height" Value="18" />
+            <Setter Property="Stretch" Value="Uniform" />
+            <Setter Property="StrokeThickness" Value="2" />
+        </Style>
+        <Style Selector="Border.device-editor">
+            <Setter Property="Width" Value="280" />
+            <Setter Property="Padding" Value="14" />
+            <Setter Property="CornerRadius" Value="12" />
+            <Setter Property="Background" Value="{DynamicResource PanelBackgroundBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+        </Style>
+        <Style Selector="Border.helpy-editor">
+            <Setter Property="Width" Value="310" />
+            <Setter Property="Padding" Value="14" />
+            <Setter Property="CornerRadius" Value="16" />
+            <Setter Property="Background" Value="{DynamicResource PanelBackgroundBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="BoxShadow" Value="0 12 32 0 #70000000" />
+            <Setter Property="Opacity" Value="0" />
+            <Setter Property="RenderTransform" Value="scale(0.94) translateY(8px)" />
+            <Setter Property="Transitions">
+                <Transitions>
+                    <DoubleTransition Property="Opacity" Duration="0:0:0.22" />
+                    <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.32" Easing="BackEaseOut" />
+                </Transitions>
+            </Setter>
+        </Style>
+        <Style Selector="Border.helpy-editor.shown">
+            <Setter Property="Opacity" Value="1" />
+            <Setter Property="RenderTransform" Value="scale(1) translateY(0px)" />
+        </Style>
+        <Style Selector=":is(Control).editor-row">
+            <Setter Property="Opacity" Value="0" />
+            <Setter Property="RenderTransform" Value="translateY(-6px)" />
+            <Setter Property="Transitions">
+                <Transitions>
+                    <DoubleTransition Property="Opacity" Duration="0:0:0.25" />
+                    <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.25" Easing="CubicEaseOut" />
+                </Transitions>
+            </Setter>
+        </Style>
+        <Style Selector=":is(Control).editor-row.shown">
+            <Setter Property="Opacity" Value="1" />
+            <Setter Property="RenderTransform" Value="translateY(0px)" />
+        </Style>
+        <Style Selector="Grid.editor-header">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="Cursor" Value="Hand" />
+        </Style>
+        <Style Selector="Grid.editor-header.dragging">
+            <Setter Property="Cursor" Value="SizeAll" />
+        </Style>
+        <Style Selector="Border.editor-avatar">
+            <Setter Property="Width" Value="46" />
+            <Setter Property="Height" Value="46" />
+            <Setter Property="CornerRadius" Value="23" />
+            <Setter Property="VerticalAlignment" Value="Top" />
+            <Setter Property="Background" Value="{DynamicResource SurfaceBackgroundBrush}" />
+        </Style>
+        <Style Selector="Border.editor-bubble">
+            <Setter Property="Margin" Value="10,0,0,0" />
+            <Setter Property="Padding" Value="10,7" />
+            <Setter Property="CornerRadius" Value="12" />
+            <Setter Property="MinHeight" Value="42" />
+            <Setter Property="Background" Value="{DynamicResource SurfaceBackgroundBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="Transitions">
+                <Transitions>
+                    <BrushTransition Property="BorderBrush" Duration="0:0:0.25" />
+                </Transitions>
+            </Setter>
+        </Style>
+        <Style Selector="Border.editor-bubble.ok">
+            <Setter Property="BorderBrush" Value="{DynamicResource RunGreenBrush}" />
+        </Style>
+        <Style Selector="Border.editor-bubble.no">
+            <Setter Property="BorderBrush" Value="{DynamicResource StopRedBrush}" />
+        </Style>
+        <Style Selector="Border.editor-bubble TextBlock">
+            <Setter Property="FontSize" Value="12.5" />
+            <Setter Property="TextWrapping" Value="Wrap" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
+        </Style>
+        <Style Selector="TextBlock.editor-label">
+            <Setter Property="FontSize" Value="11" />
+            <Setter Property="Margin" Value="2,10,0,5" />
+            <Setter Property="Foreground" Value="{DynamicResource TextMutedBrush}" />
+        </Style>
+        <Style Selector="Border.net-well">
+            <Setter Property="Background" Value="{DynamicResource TerminalBackgroundBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="12" />
+            <Setter Property="Padding" Value="6,6,4,0" />
+            <Setter Property="ClipToBounds" Value="True" />
+        </Style>
+        <Style Selector="ListBox.net-list">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="MaxHeight" Value="150" />
+        </Style>
+        <Style Selector="ListBox.net-list ListBoxItem">
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="Margin" Value="0,0,12,6" />
+            <Setter Property="Cursor" Value="Hand" />
+        </Style>
+        <Style Selector="ListBox.net-list ListBoxItem /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="Transparent" />
+        </Style>
+        <Style Selector="ListBox.net-list ListBoxItem:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="Transparent" />
+        </Style>
+        <Style Selector="ListBox.net-list ListBoxItem:selected /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="Transparent" />
+        </Style>
+        <Style Selector="ListBox.net-list ListBoxItem:selected:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="Transparent" />
+        </Style>
+        <Style Selector="ListBox.net-list ListBoxItem:pressed /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="Transparent" />
+        </Style>
+        <Style Selector="Border.net-option">
+            <Setter Property="Background" Value="{DynamicResource SurfaceBackgroundBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="10" />
+            <Setter Property="Padding" Value="9,5" />
+            <Setter Property="Transitions">
+                <Transitions>
+                    <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.2" Easing="CubicEaseOut" />
+                    <BrushTransition Property="Background" Duration="0:0:0.2" />
+                    <BrushTransition Property="BorderBrush" Duration="0:0:0.2" />
+                </Transitions>
+            </Setter>
+        </Style>
+        <Style Selector="ListBoxItem:pointerover Border.net-option">
+            <Setter Property="RenderTransform" Value="translateX(4px)" />
+            <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}" />
+        </Style>
+        <Style Selector="ListBoxItem:selected Border.net-option">
+            <Setter Property="Background" Value="{DynamicResource ActiveBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}" />
+        </Style>
+        <Style Selector="Panel.option-tile">
+            <Setter Property="Width" Value="28" />
+            <Setter Property="Height" Value="28" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="Transitions">
+                <Transitions>
+                    <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.25" Easing="BackEaseOut" />
+                </Transitions>
+            </Setter>
+        </Style>
+        <Style Selector="ListBoxItem:pointerover Panel.option-tile">
+            <Setter Property="RenderTransform" Value="rotate(-8deg) scale(1.1)" />
+        </Style>
+        <Style Selector="Button.editor-option:pointerover Panel.option-tile">
+            <Setter Property="RenderTransform" Value="rotate(-8deg) scale(1.1)" />
+        </Style>
+        <Style Selector="Panel.option-tile Border">
+            <Setter Property="CornerRadius" Value="8" />
+            <Setter Property="Opacity" Value="0.2" />
+        </Style>
+        <Style Selector="Panel.option-tile controls|AnimatedIcon">
+            <Setter Property="Width" Value="15" />
+            <Setter Property="Height" Value="15" />
+            <Setter Property="Stretch" Value="Uniform" />
+            <Setter Property="StrokeThickness" Value="2" />
+        </Style>
+        <Style Selector="TextBlock.option-title">
+            <Setter Property="FontSize" Value="13" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
+        </Style>
+        <Style Selector="TextBlock.option-hint">
+            <Setter Property="FontSize" Value="11" />
+            <Setter Property="FontFamily" Value="Cascadia Code,Consolas,DejaVu Sans Mono,monospace" />
+            <Setter Property="Foreground" Value="{DynamicResource TextMutedBrush}" />
+        </Style>
+        <Style Selector="TextBox.editor-field">
+            <Setter Property="Background" Value="{DynamicResource SurfaceBackgroundBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+            <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
+            <Setter Property="CornerRadius" Value="8" />
+            <Setter Property="FontFamily" Value="Cascadia Code,Consolas,DejaVu Sans Mono,monospace" />
+            <Setter Property="FontSize" Value="13" />
+        </Style>
+        <Style Selector="TextBox.editor-field:pointerover /template/ Border#PART_BorderElement">
+            <Setter Property="Background" Value="{DynamicResource SurfaceBackgroundBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}" />
+        </Style>
+        <Style Selector="TextBox.editor-field:focus /template/ Border#PART_BorderElement">
+            <Setter Property="Background" Value="{DynamicResource SurfaceBackgroundBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}" />
+        </Style>
+        <Style Selector="Button.editor-option">
+            <Setter Property="HorizontalAlignment" Value="Stretch" />
+            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+            <Setter Property="Margin" Value="0,0,0,6" />
+            <Setter Property="Background" Value="{DynamicResource SurfaceBackgroundBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="Template">
+                <ControlTemplate>
+                    <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="1" CornerRadius="10" Padding="9,5">
+                        <ContentPresenter Content="{TemplateBinding Content}" />
+                    </Border>
+                </ControlTemplate>
+            </Setter>
+            <Setter Property="Transitions">
+                <Transitions>
+                    <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.2" Easing="CubicEaseOut" />
+                    <BrushTransition Property="Background" Duration="0:0:0.2" />
+                    <BrushTransition Property="BorderBrush" Duration="0:0:0.2" />
+                </Transitions>
+            </Setter>
+        </Style>
+        <Style Selector="Button.editor-option:pointerover">
+            <Setter Property="RenderTransform" Value="translateX(4px)" />
+            <Setter Property="Background" Value="{DynamicResource HoverBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}" />
+        </Style>
+        <Style Selector="Button.editor-option:pressed">
+            <Setter Property="RenderTransform" Value="translateX(4px) scale(0.98)" />
+        </Style>
+        <Style Selector="Button.editor-option.danger:pointerover">
+            <Setter Property="BorderBrush" Value="{DynamicResource StopRedBrush}" />
+        </Style>
+        <Style Selector="FlyoutPresenter.device-flyout">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Padding" Value="0" />
+        </Style>
+        <Style Selector="Button.editor-button">
+            <Setter Property="HorizontalAlignment" Value="Stretch" />
+            <Setter Property="HorizontalContentAlignment" Value="Center" />
+            <Setter Property="Padding" Value="10,6" />
+            <Setter Property="CornerRadius" Value="8" />
+            <Setter Property="Background" Value="{DynamicResource SurfaceBackgroundBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
+            <Setter Property="FontSize" Value="12" />
+        </Style>
+        <Style Selector="Button.editor-button.primary">
+            <Setter Property="Background" Value="{DynamicResource AccentBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}" />
+            <Setter Property="Foreground" Value="White" />
+        </Style>
+        <Style Selector="Button.editor-button.primary:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource Accent2Brush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource Accent2Brush}" />
+            <Setter Property="Foreground" Value="White" />
+        </Style>
+        <Style Selector="Button.editor-button.danger:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="BorderBrush" Value="{DynamicResource StopRedBrush}" />
+        </Style>
+    </UserControl.Styles>
+
+    <UserControl.Resources>
+        <Flyout x:Key="PacketFlyout" Placement="RightEdgeAlignedTop" ShowMode="Transient"
+                FlyoutPresenterClasses="device-flyout">
+            <Border Classes="device-editor" x:DataType="models:PacketDraft">
+                <StackPanel Spacing="6">
+                    <TextBlock Classes="sim-mono" FontWeight="SemiBold" FontSize="13" TextWrapping="Wrap"
+                               Text="{Binding Title}" />
+                    <TextBlock Classes="sim-label" Margin="0,4,0,0" Text="Destino" />
+                    <ComboBox HorizontalAlignment="Stretch" ItemsSource="{Binding Destinations}"
+                              SelectedItem="{Binding Destination}" PlaceholderText="Elige un equipo" />
+                    <Grid ColumnDefinitions="*,10,*">
+                        <StackPanel Spacing="6">
+                            <TextBlock Classes="sim-label" Margin="0,4,0,0" Text="Protocolo" />
+                            <ComboBox HorizontalAlignment="Stretch" ItemsSource="{Binding Protocols}"
+                                      SelectedItem="{Binding Protocol}" />
+                        </StackPanel>
+                        <StackPanel Grid.Column="2" Spacing="6">
+                            <TextBlock Classes="sim-label" Margin="0,4,0,0" Text="Puerto" />
+                            <TextBox Classes="sim-mono" Text="{Binding Port}" />
+                        </StackPanel>
+                    </Grid>
+                    <TextBlock Classes="sim-mono" FontSize="11" TextWrapping="Wrap"
+                               Foreground="{DynamicResource StopRedBrush}"
+                               IsVisible="{Binding HasError}" Text="{Binding Error}" />
+                    <Button Classes="editor-button primary" Margin="0,6,0,0" Click="OnSendPacketClick">
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <controls:AnimatedIcon Classes="icon-sm" Kind="Send" />
+                            <TextBlock Text="Enviar" VerticalAlignment="Center" />
+                        </StackPanel>
+                    </Button>
+                </StackPanel>
+            </Border>
+        </Flyout>
+    </UserControl.Resources>
+
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="300" MinWidth="230" MaxWidth="460" />
+            <ColumnDefinition Width="Auto" />
+            <ColumnDefinition Width="*" MinWidth="520" />
+        </Grid.ColumnDefinitions>
+
+        <Border Grid.Column="0" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,1,0"
+                Padding="12,10,4,10">
+            <DockPanel>
+                <Grid DockPanel.Dock="Top" ColumnDefinitions="*,Auto,Auto" Margin="0,0,8,4">
+                    <TextBlock Classes="sidebar-header" Text="REGLAS" VerticalAlignment="Center" />
+                    <Button Grid.Column="1" Classes="catalog-action" Content="Todas" Margin="0,0,6,0"
+                            Click="OnAllRulesClick" />
+                    <Button Grid.Column="2" Classes="catalog-action" Content="Ninguna" Click="OnNoRulesClick" />
+                </Grid>
+                <TextBlock DockPanel.Dock="Top" Classes="sim-label" Margin="0,0,0,10" Text="{Binding ActiveRulesText}" />
+                <ScrollViewer>
+                    <ItemsControl ItemsSource="{Binding Catalog}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate x:DataType="vm:RuleToggle">
+                                <Border Classes="rule-card" Classes.inactive="{Binding !IsActive}"
+                                        Classes.decisive="{Binding IsDecisive}" Classes.allows="{Binding Allows}"
+                                        Classes.blocks="{Binding Blocks}" Classes.policy="{Binding IsPolicy}">
+                                    <Grid ColumnDefinitions="Auto,*,Auto,Auto">
+                                        <Ellipse Classes="rule-dot" Classes.allows="{Binding Allows}"
+                                                 Classes.blocks="{Binding Blocks}" />
+                                        <StackPanel Grid.Column="1" Spacing="2">
+                                            <TextBlock Classes="sim-mono" FontWeight="SemiBold" Text="{Binding Name}"
+                                                       TextTrimming="CharacterEllipsis" />
+                                            <TextBlock Classes="sim-mono" FontSize="11" TextWrapping="Wrap"
+                                                       Foreground="{DynamicResource TextMutedBrush}"
+                                                       Text="{Binding Summary}" />
+                                        </StackPanel>
+                                        <TextBlock Grid.Column="2" Classes="sim-mono" Margin="6,0"
+                                                   VerticalAlignment="Center" Foreground="{DynamicResource TextMutedBrush}"
+                                                   IsVisible="{Binding HasHits}" Text="{Binding HitsText}" />
+                                        <ToggleSwitch Grid.Column="3" Classes="rule-switch" IsVisible="{Binding IsRule}"
+                                                      IsChecked="{Binding IsActive}" />
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </ScrollViewer>
+            </DockPanel>
+        </Border>
+
+        <GridSplitter Grid.Column="1" Classes="sim-split columns" ResizeDirection="Columns" />
+
+        <Grid Grid.Column="2">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="3*" MinHeight="240" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="2*" MinHeight="130" />
+            </Grid.RowDefinitions>
+
+            <Grid Grid.Row="0" ColumnDefinitions="Auto,Auto,*,Auto,Auto,Auto,Auto,Auto" Margin="12,6,10,6">
+                <TextBlock Grid.Column="0" Classes="sim-mono" Foreground="{DynamicResource TextMutedBrush}"
+                           VerticalAlignment="Center" Text="{Binding FileName}" />
+                <StackPanel Grid.Column="1" Orientation="Horizontal" Margin="6,0,0,0" IsVisible="{Binding !HasMessage}">
+                    <Border Classes="sim-chip">
+                        <TextBlock Classes="sim-mono allowed" Text="{Binding AllowedText}" />
+                    </Border>
+                    <Border Classes="sim-chip">
+                        <TextBlock Classes="sim-mono blocked" Text="{Binding BlockedText}" />
+                    </Border>
+                    <Border Classes="sim-chip">
+                        <TextBlock Classes="sim-mono" Foreground="{DynamicResource TextMutedBrush}"
+                                   Text="{Binding ProgressText}" />
+                    </Border>
+                </StackPanel>
+                <Button Grid.Column="3" Name="HelpyButton" Classes="icon sim-control" Margin="0,0,10,0"
+                        Classes.off="{Binding !IsHelpyEnabled}" ToolTip.Tip="Mostrar u ocultar a Helpy"
+                        Click="OnHelpyClick">
+                    <controls:AnimatedIcon Classes="icon-sm" Kind="Cat" />
+                </Button>
+                <Button Grid.Column="4" Name="PlayButton" Classes="icon sim-control" ToolTip.Tip="Reproducir"
+                        IsVisible="{Binding !IsBuilder}"
+                        Click="OnPlayClick">
+                    <controls:AnimatedIcon Name="PlayIcon" Classes="icon-sm" Kind="Play" />
+                </Button>
+                <Button Grid.Column="5" Classes="icon sim-control" ToolTip.Tip="Siguiente paquete" Click="OnStepClick"
+                        IsVisible="{Binding !IsBuilder}">
+                    <controls:AnimatedIcon Classes="icon-sm" Kind="SkipForward" />
+                </Button>
+                <Button Grid.Column="6" Classes="icon sim-control" ToolTip.Tip="{Binding ResetTip}"
+                        Click="OnResetClick">
+                    <controls:AnimatedIcon Classes="icon-sm" Kind="RotateCcw" />
+                </Button>
+                <Button Grid.Column="7" Name="SpeedButton" Classes="sim-speed" Margin="8,0,0,0" Content="x1"
+                        ToolTip.Tip="Velocidad" Click="OnSpeedClick" />
+            </Grid>
+
+            <GridSplitter Grid.Row="2" Classes="sim-split rows" ResizeDirection="Rows"
+                          ToolTip.Tip="Arrastra para repartir el espacio entre el mapa y los detalles" />
+
+            <Grid Grid.Row="3">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="1.3*" MinWidth="240" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" MinWidth="220" />
+                </Grid.ColumnDefinitions>
+
+                <Border Grid.Column="0" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,1,0,0"
+                        Padding="12,8,6,8">
+                    <DockPanel>
+                        <TextBlock DockPanel.Dock="Top" Classes="sim-label" Text="Registro" />
+                        <ScrollViewer Name="LogScroll">
+                            <ItemsControl ItemsSource="{Binding Entries}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate x:DataType="vm:SimulationEntry">
+                                        <Border Classes="sim-entry" Classes.selected="{Binding IsSelected}"
+                                                Tapped="OnEntryTapped">
+                                            <Grid ColumnDefinitions="Auto,*">
+                                                <TextBlock Classes="sim-mono" Foreground="{DynamicResource TextMutedBrush}"
+                                                           Margin="0,0,10,0" Text="{Binding Number}" />
+                                                <StackPanel Grid.Column="1" Spacing="2">
+                                                    <TextBlock Classes="sim-mono" Text="{Binding Header}" />
+                                                    <TextBlock Classes="sim-mono" FontWeight="SemiBold"
+                                                               Classes.allowed="{Binding IsAllowed}"
+                                                               Classes.blocked="{Binding !IsAllowed}"
+                                                               Text="{Binding Result}" />
+                                                    <TextBlock Classes="sim-mono" TextWrapping="Wrap"
+                                                               Foreground="{DynamicResource TextMutedBrush}"
+                                                               Text="{Binding Explanation}" />
+                                                </StackPanel>
+                                            </Grid>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </ScrollViewer>
+                    </DockPanel>
+                </Border>
+
+                <GridSplitter Grid.Column="1" Classes="sim-split columns" ResizeDirection="Columns" />
+
+                <Border Grid.Column="2" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,1,0,0"
+                        Padding="12,8,6,8">
+                    <DockPanel>
+                        <TextBlock DockPanel.Dock="Top" Classes="sim-label" Text="Inspector" />
+                        <TextBlock DockPanel.Dock="Top" Classes="sim-mono" Margin="0,0,0,8"
+                                   Foreground="{DynamicResource TextMutedBrush}" Text="{Binding PacketFields}" />
+                        <TextBlock DockPanel.Dock="Top" Classes="sim-label" Text="Recorrido por las reglas" />
+                        <ScrollViewer>
+                            <ItemsControl Name="StepList" ItemsSource="{Binding Steps}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate x:DataType="vm:RuleStep">
+                                        <Border Classes="sim-step"
+                                                Classes.evaluating="{Binding IsEvaluating}"
+                                                Classes.skipped="{Binding IsSkipped}"
+                                                Classes.allowed="{Binding IsAllowed}"
+                                                Classes.blocked="{Binding IsBlocked}">
+                                            <Grid ColumnDefinitions="Auto,*">
+                                                <TextBlock Text="{Binding Name}" />
+                                                <TextBlock Grid.Column="1" HorizontalAlignment="Right" Margin="12,0,0,0"
+                                                           TextTrimming="CharacterEllipsis" Text="{Binding Reason}" />
+                                            </Grid>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </ScrollViewer>
+                    </DockPanel>
+                </Border>
+            </Grid>
+
+            <Panel Grid.Row="1">
+                <controls:SimulationCanvas Name="Canvas" IsVisible="{Binding !HasMessage}" />
+                <Border Classes="palette" IsVisible="{Binding IsBuilder}">
+                    <StackPanel Spacing="6">
+                        <TextBlock Classes="sidebar-header" Text="AGREGAR" Margin="2,0,0,2" />
+                        <Border Classes="palette-item" Tag="Computer" PointerPressed="OnPaletteItemPressed"
+                                ToolTip.Tip="Arrastra al lienzo">
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <controls:AnimatedIcon Kind="Monitor" Stroke="{DynamicResource Ansi5Brush}" />
+                                <TextBlock Classes="sim-mono" VerticalAlignment="Center" Text="Computadora" />
+                            </StackPanel>
+                        </Border>
+                        <Border Classes="palette-item" Tag="Server" PointerPressed="OnPaletteItemPressed"
+                                ToolTip.Tip="Arrastra al lienzo">
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <controls:AnimatedIcon Kind="Server" Stroke="{DynamicResource Ansi3Brush}" />
+                                <TextBlock Classes="sim-mono" VerticalAlignment="Center" Text="Servidor" />
+                            </StackPanel>
+                        </Border>
+                        <Border Classes="palette-item" Tag="Internet" PointerPressed="OnPaletteItemPressed"
+                                ToolTip.Tip="Arrastra al lienzo">
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <controls:AnimatedIcon Kind="Globe" Stroke="{DynamicResource AccentBrush}" />
+                                <TextBlock Classes="sim-mono" VerticalAlignment="Center" Text="Internet" />
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+                </Border>
+                <TextBlock Classes="sim-mono" Foreground="{DynamicResource TextMutedBrush}"
+                           HorizontalAlignment="Center" VerticalAlignment="Center"
+                           IsVisible="{Binding HasMessage}" Text="{Binding Message}" />
+            </Panel>
+        </Grid>
+
+        <Canvas Name="EditorLayer" Grid.ColumnSpan="3">
+                <Border Name="DeviceEditor" Classes="helpy-editor" x:DataType="models:BuilderDevice"
+                    IsVisible="False">
+                    <StackPanel Name="EditorRows">
+                        <Grid Name="EditorHeader" Classes="editor-row editor-header" ColumnDefinitions="Auto,*"
+                              ToolTip.Tip="Arrastra para mover · doble clic para regresarla junto al equipo"
+                              PointerPressed="OnEditorHeaderPressed" PointerMoved="OnEditorHeaderMoved"
+                              PointerReleased="OnEditorHeaderReleased" DoubleTapped="OnEditorHeaderDoubleTapped">
+                            <Border Classes="editor-avatar">
+                                <controls:HelpySprite Name="EditorHelpy" Width="42" Height="42" />
+                            </Border>
+                            <Border Grid.Column="1" Name="EditorBubble" Classes="editor-bubble">
+                                <TextBlock Name="EditorBubbleText" />
+                            </Border>
+                        </Grid>
+
+                        <TextBlock Classes="editor-label editor-row" Text="{Binding NetworkTitle}" />
+                        <Border Classes="net-well editor-row">
+                            <ListBox Classes="net-list" ItemsSource="{Binding Options}"
+                                     SelectedItem="{Binding Network}">
+                                <ListBox.ItemTemplate>
+                                    <DataTemplate x:DataType="models:NetworkOption">
+                                        <Border Classes="net-option">
+                                            <Grid ColumnDefinitions="Auto,*">
+                                                <Panel Classes="option-tile">
+                                                    <Border Background="{Binding Brush}" />
+                                                    <controls:AnimatedIcon Kind="Network" Stroke="{Binding Brush}" />
+                                                </Panel>
+                                                <StackPanel Grid.Column="1" Margin="10,0,0,0" VerticalAlignment="Center">
+                                                    <TextBlock Classes="option-title" Text="{Binding Name}" />
+                                                    <TextBlock Classes="option-hint" Text="{Binding Detail}" />
+                                                </StackPanel>
+                                            </Grid>
+                                        </Border>
+                                    </DataTemplate>
+                                </ListBox.ItemTemplate>
+                            </ListBox>
+                        </Border>
+
+                        <TextBlock Classes="editor-label editor-row" Text="Dirección" />
+                        <TextBox Classes="editor-field editor-row" Text="{Binding Address}" />
+
+                        <TextBlock Classes="editor-label editor-row" Text="Acciones" />
+                        <Button Classes="editor-option editor-row" Click="OnSendFromEditorClick">
+                            <Grid ColumnDefinitions="Auto,*">
+                                <Panel Classes="option-tile">
+                                    <Border Background="{DynamicResource RunGreenBrush}" />
+                                    <controls:AnimatedIcon Kind="Send" Stroke="{DynamicResource RunGreenBrush}" />
+                                </Panel>
+                                <StackPanel Grid.Column="1" Margin="10,0,0,0" VerticalAlignment="Center">
+                                    <TextBlock Classes="option-title" Text="Enviar paquete" />
+                                    <TextBlock Classes="option-hint" Text="elige destino y servicio" />
+                                </StackPanel>
+                            </Grid>
+                        </Button>
+                        <Button Classes="editor-option editor-row" Click="OnToggleConnectClick">
+                            <Grid ColumnDefinitions="Auto,*">
+                                <Panel Classes="option-tile">
+                                    <Border Background="{DynamicResource AccentBrush}" />
+                                    <controls:AnimatedIcon Kind="Cable" Stroke="{DynamicResource AccentBrush}" />
+                                </Panel>
+                                <StackPanel Grid.Column="1" Margin="10,0,0,0" VerticalAlignment="Center">
+                                    <TextBlock Classes="option-title" Text="{Binding ConnectText}" />
+                                    <TextBlock Classes="option-hint" Text="{Binding ConnectHint}" />
+                                </StackPanel>
+                            </Grid>
+                        </Button>
+                        <Button Classes="editor-option danger editor-row" Margin="0" Click="OnRemoveDeviceClick">
+                            <Grid ColumnDefinitions="Auto,*">
+                                <Panel Classes="option-tile">
+                                    <Border Background="{DynamicResource StopRedBrush}" />
+                                    <controls:AnimatedIcon Kind="Trash2" Stroke="{DynamicResource StopRedBrush}" />
+                                </Panel>
+                                <StackPanel Grid.Column="1" Margin="10,0,0,0" VerticalAlignment="Center">
+                                    <TextBlock Classes="option-title" Text="Eliminar" />
+                                    <TextBlock Classes="option-hint" Text="quitarlo de la red" />
+                                </StackPanel>
+                            </Grid>
+                        </Button>
+                    </StackPanel>
+                </Border>
+        </Canvas>
+    </Grid>
+</UserControl>
