@@ -190,6 +190,10 @@ public partial class MainViewModel : ViewModelBase
     [ObservableProperty]
     public partial bool IsSimulationMode { get; set; }
 
+    public string? SimulationProblem => CanSimulateProgram ? null
+        : SelectedTab is null ? "No tienes ningún archivo abierto."
+        : $"«{SelectedTab.Title}» no es un archivo de NetWall.";
+
     public bool CanSimulateProgram => SelectedTab?.FilePath is { } path
         && string.Equals(Path.GetExtension(path), ".nw", StringComparison.OrdinalIgnoreCase);
 

@@ -62,7 +62,7 @@ public sealed class SimulationCanvas : Control
     private const double GrowMilliseconds = 90;
 
     private static readonly FontFamily Font = new("Cascadia Code,Consolas,DejaVu Sans Mono,monospace");
-    private static readonly string[] ZoneBrushes = ["Ansi5Brush", "Ansi6Brush", "Ansi3Brush", "Ansi4Brush"];
+    internal static readonly string[] ZoneBrushes = ["Ansi5Brush", "Ansi6Brush", "Ansi3Brush", "Ansi4Brush"];
     private static readonly double[] Shifts = [0, 0.5, -0.5, 0.25, -0.25];
 
     private readonly List<Host> _left = [];
@@ -72,6 +72,7 @@ public sealed class SimulationCanvas : Control
     private readonly List<(Func<Point> Center, string Brush, long Start)> _pulses = [];
     private readonly Dictionary<string, double> _grow = [];
     private readonly Stopwatch _clock = Stopwatch.StartNew();
+    private readonly Stopwatch _realClock = Stopwatch.StartNew();
     private readonly DispatcherTimer _timer = new() { Interval = TimeSpan.FromMilliseconds(16) };
 
     private SimulationResult? _result;
@@ -186,6 +187,31 @@ public sealed class SimulationCanvas : Control
         e.Pointer.Capture(this);
     }
 
+    public bool Paused
+    {
+        get => !_clock.IsRunning;
+        set
+        {
+            if (value)
+            {
+                _clock.Stop();
+            }
+            else
+            {
+                _clock.Start();
+            }
+        }
+    }
+
+    public async Task WaitAsync(double milliseconds, CancellationToken token)
+    {
+        var started = _clock.ElapsedMilliseconds;
+        while (_clock.ElapsedMilliseconds - started < milliseconds)
+        {
+            await Task.Delay(15, token);
+        }
+    }
+
     public bool HelpyEnabled
     {
         get => _helpyEnabled;
@@ -234,7 +260,7 @@ public sealed class SimulationCanvas : Control
         _mood = Mood.Talking;
         var typing = TypingMilliseconds(text);
         _ = RestAfterTypingAsync(_bubbleStart, typing);
-        return Task.Delay(typing);
+        return WaitAsync(typing, CancellationToken.None);
     }
 
     public void Begin(SimulatedPacket packet)
@@ -499,6 +525,7 @@ public sealed class SimulationCanvas : Control
 
     public override void Render(DrawingContext context)
     {
+        context.FillRectangle(Brushes.Transparent, new Rect(Bounds.Size));
         if (_result is null)
         {
             return;
@@ -534,16 +561,17 @@ public sealed class SimulationCanvas : Control
     private void OnTick(object? sender, EventArgs e)
     {
         var now = _clock.ElapsedMilliseconds;
-        var growing = UpdateGrow(now - _lastTick);
-        _lastTick = now;
+        var real = _realClock.ElapsedMilliseconds;
+        var growing = UpdateGrow(real - _lastTick);
+        _lastTick = real;
         _pulses.RemoveAll(pulse => now - pulse.Start > 700);
         var busy = _motion is not null || _route is not null || _inspectStart is not null || _pulses.Count > 0
                    || _shakeStart is { } shake && now - shake < 600
                    || _doorOpened is not null
                    || now - _bubbleStart < TypingMilliseconds(_bubble) + 100;
-        if (busy || growing || now - _lastIdleFrame > 140)
+        if (busy || growing || real - _lastIdleFrame > 140)
         {
-            _lastIdleFrame = now;
+            _lastIdleFrame = real;
             InvalidateVisual();
         }
     }
@@ -652,7 +680,7 @@ public sealed class SimulationCanvas : Control
 
     private async Task RestAfterTypingAsync(long started, int typing)
     {
-        await Task.Delay(typing + 200);
+        await WaitAsync(typing + 200, CancellationToken.None);
         if (_bubbleStart == started && _mood == Mood.Talking)
         {
             _mood = _bubbleTone == BubbleTone.Allowed ? Mood.Happy : Mood.Idle;
