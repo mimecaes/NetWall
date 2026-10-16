@@ -13,6 +13,7 @@ public enum SimulationChoice
     None,
     Program,
     Rules,
+    OpenFolder,
 }
 
 public partial class SimulationModeDialog : Window
@@ -20,6 +21,7 @@ public partial class SimulationModeDialog : Window
     private const string Question = "¿Quieres entrar al modo simulación? Elige cómo quieres simular.";
 
     private bool _closing;
+    private string _message = Question;
 
     public SimulationModeDialog()
     {
@@ -28,16 +30,18 @@ public partial class SimulationModeDialog : Window
         KeyDown += OnKeyDown;
     }
 
-    public static Task<SimulationChoice> ShowAsync(Window owner, PetColor helpyColor, bool canSimulateProgram)
+    public static Task<SimulationChoice> ShowAsync(Window owner, PetColor helpyColor, string? problem, bool folderOpen)
     {
         var dialog = new SimulationModeDialog();
         dialog.Helpy.SetColor(helpyColor);
-        dialog.ProgramOption.IsEnabled = canSimulateProgram;
-        dialog.RulesOption.IsEnabled = canSimulateProgram;
-        if (!canSimulateProgram)
+        if (problem is not null)
         {
-            dialog.ProgramHint.Text = "Abre un archivo .nw para simularlo.";
-            dialog.RulesHint.Text = "Abre un archivo .nw para usar sus reglas y redes.";
+            dialog._message = $"{problem} Para simular necesito un archivo .nw abierto. Te explico cómo:";
+            dialog.Bubble.Classes.Add("bubble-warning");
+            dialog.Options.IsVisible = false;
+            dialog.NeedFile.IsVisible = true;
+            dialog.FolderStep.Classes.Set("done", folderOpen);
+            dialog.OpenFolderButton.IsVisible = !folderOpen;
         }
 
         return dialog.ShowDialog<SimulationChoice>(owner);
@@ -49,9 +53,9 @@ public partial class SimulationModeDialog : Window
         await Task.Delay(30);
         Card.Classes.Add("shown");
         Helpy.Mood = HelpyMood.Talking;
-        for (var i = 1; i <= Question.Length; i++)
+        for (var i = 1; i <= _message.Length; i++)
         {
-            BubbleText.Text = Question[..i];
+            BubbleText.Text = _message[..i];
             await Task.Delay(18);
         }
 
@@ -77,6 +81,9 @@ public partial class SimulationModeDialog : Window
         Helpy.Mood = HelpyMood.Happy;
         _ = CloseAnimatedAsync(SimulationChoice.Rules);
     }
+
+    private void OnOpenFolderClick(object? sender, RoutedEventArgs e) =>
+        _ = CloseAnimatedAsync(SimulationChoice.OpenFolder);
 
     private void OnCancelClick(object? sender, RoutedEventArgs e) => _ = CloseAnimatedAsync(SimulationChoice.None);
 

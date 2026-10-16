@@ -4,7 +4,11 @@ using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Avalonia;
+using Avalonia.Controls;
+using Avalonia.Media;
 using CommunityToolkit.Mvvm.ComponentModel;
+using NetWall.IDE.Controls;
 using NetWall.IDE.Models;
 using NetWall.IDE.Services;
 
@@ -289,11 +293,13 @@ public partial class SimulationViewModel : ViewModelBase
 
             if (!IsRerun)
             {
-                return $"¡Hola! Voy a vigilar {Packets.Count} {(Packets.Count == 1 ? "paquete" : "paquetes")}.";
+                return $"¡Hola! Tengo {Packets.Count} {(Packets.Count == 1 ? "paquete listo" : "paquetes listos")}. "
+                       + "Pulsa ▶ para empezar o ⏭ para verlos uno por uno.";
             }
 
             var active = ActiveRules.Count();
-            return $"Probemos otra vez con {active} {(active == 1 ? "regla activa" : "reglas activas")}.";
+            return $"Probemos otra vez con {active} {(active == 1 ? "regla activa" : "reglas activas")}. "
+                   + "Pulsa ▶ cuando quieras.";
         }
     }
 
@@ -373,11 +379,18 @@ public partial class SimulationViewModel : ViewModelBase
     private IReadOnlyList<NetworkOption> NetworkOptions(DeviceKind kind)
     {
         var networks = Result?.Networks ?? [];
+        var colored = networks.Where(network => Ipv4.Parse(network.Cidr) is { Mask: < 32 and > 0 })
+            .OrderByDescending(network => Ipv4.Parse(network.Cidr)!.Value.Mask)
+            .ToList();
+        var accent = Resource("AccentBrush");
         var zones = networks.Where(network => Ipv4.Parse(network.Cidr) is { Mask: < 32 })
-            .Select(network => new NetworkOption($"{network.Name} · {network.Cidr}", network));
+            .Select(network => new NetworkOption($"{network.Name} · {network.Cidr}", network,
+                colored.IndexOf(network) is var index and >= 0
+                    ? Resource(SimulationCanvas.ZoneBrushes[index % SimulationCanvas.ZoneBrushes.Length])
+                    : accent));
         var hosts = networks.Where(network => Ipv4.IsHost(network.Cidr))
-            .Select(network => new NetworkOption($"{network.Name} · {network.Cidr}", network));
-        NetworkOption[] internet = [new("internet · fuera de las redes", null)];
+            .Select(network => new NetworkOption($"{network.Name} · {network.Cidr}", network, accent));
+        NetworkOption[] internet = [new("internet · fuera de las redes", null, accent)];
         return kind switch
         {
             DeviceKind.Computer => [.. zones, .. internet],
@@ -385,6 +398,9 @@ public partial class SimulationViewModel : ViewModelBase
             _ => internet,
         };
     }
+
+    private static IBrush? Resource(string key) =>
+        Application.Current?.TryFindResource(key, out var resource) == true ? resource as IBrush : null;
 
     private void OnDevicePropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
     {
@@ -604,14 +620,14 @@ public partial class SimulationViewModel : ViewModelBase
         }
     }
 
-    public async Task EvaluateAsync(SimulatedPacket packet, int millisecondsPerRule, CancellationToken token)
+    public async Task EvaluateAsync(SimulatedPacket packet, Func<Task> waitStep)
     {
         ShowPacket(packet);
         var decisive = DecisiveIndex(packet);
         for (var i = 0; i <= decisive; i++)
         {
             Steps[i].State = RuleStepState.Evaluating;
-            await Task.Delay(millisecondsPerRule, token);
+            await waitStep();
             Resolve(packet, i, decisive);
         }
     }

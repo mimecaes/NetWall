@@ -505,9 +505,6 @@
         <Setter Property="Width" Value="96" />
         <Setter Property="Background" Value="{DynamicResource AccentBrush}" />
     </Style>
-    <Style Selector="Button.toolbar-simulate.active /template/ ContentPresenter#PART_ContentPresenter">
-        <Setter Property="Background" Value="{DynamicResource ActiveBrush}" />
-    </Style>
     <Style Selector="Border.simulation-header">
         <Setter Property="Height" Value="40" />
         <Setter Property="Padding" Value="14,0,8,0" />

@@ -26,6 +26,7 @@ public partial class MainWindow : Window
     private DispatcherTimer? _indentFadeTimer;
     private double? _gripStartY;
     private double _gripStartHeight;
+    private bool _exitingSimulation;
 
     public MainWindow()
     {
@@ -90,13 +91,14 @@ public partial class MainWindow : Window
             return;
         }
 
-        if (viewModel.IsSimulationMode)
+        var choice = await SimulationModeDialog.ShowAsync(this, Pet.Color, viewModel.SimulationProblem,
+            viewModel.IsFolderOpen);
+        if (choice == SimulationChoice.OpenFolder)
         {
-            viewModel.ExitSimulationMode();
+            viewModel.OpenFolderCommand.Execute(null);
             return;
         }
 
-        var choice = await SimulationModeDialog.ShowAsync(this, Pet.Color, viewModel.CanSimulateProgram);
         if (choice == SimulationChoice.None)
         {
             return;
@@ -118,15 +120,27 @@ public partial class MainWindow : Window
             });
     }
 
-    private void OnExitSimulationClick(object? sender, RoutedEventArgs e) => ViewModel?.ExitSimulationMode();
+    private void OnExitSimulationClick(object? sender, RoutedEventArgs e) => _ = ExitSimulationAsync();
 
     private void OnWindowKeyDown(object? sender, KeyEventArgs e)
     {
-        if (e.Key == Key.Escape && ViewModel is { IsSimulationMode: true } viewModel)
+        if (e.Key == Key.Escape && ViewModel is { IsSimulationMode: true })
         {
-            viewModel.ExitSimulationMode();
+            _ = ExitSimulationAsync();
             e.Handled = true;
         }
+    }
+
+    private async Task ExitSimulationAsync()
+    {
+        if (_exitingSimulation || ViewModel is not { IsSimulationMode: true } viewModel)
+        {
+            return;
+        }
+
+        _exitingSimulation = true;
+        await Intro.PlayExitAsync(Pet.Color, viewModel.ExitSimulationMode);
+        _exitingSimulation = false;
     }
 
     private void OnWindowSizeChanged(object? sender, SizeChangedEventArgs e)

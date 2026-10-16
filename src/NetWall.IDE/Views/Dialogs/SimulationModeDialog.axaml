@@ -98,6 +98,46 @@
             <Setter Property="TextWrapping" Value="Wrap" />
             <Setter Property="Foreground" Value="{DynamicResource TextMutedBrush}" />
         </Style>
+        <Style Selector="Border.bubble">
+            <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}" />
+        </Style>
+        <Style Selector="Border.bubble-warning">
+            <Setter Property="BorderBrush" Value="{DynamicResource Ansi3Brush}" />
+        </Style>
+        <Style Selector="Border.step-row">
+            <Setter Property="Background" Value="{DynamicResource SurfaceBackgroundBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="12" />
+            <Setter Property="Padding" Value="14,10" />
+            <Setter Property="Margin" Value="0,0,0,8" />
+        </Style>
+        <Style Selector="Border.step-row.done">
+            <Setter Property="Opacity" Value="0.55" />
+        </Style>
+        <Style Selector="Border.step-number">
+            <Setter Property="Width" Value="30" />
+            <Setter Property="Height" Value="30" />
+            <Setter Property="CornerRadius" Value="15" />
+            <Setter Property="Background" Value="{DynamicResource ActiveBrush}" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+        </Style>
+        <Style Selector="Border.step-number TextBlock">
+            <Setter Property="HorizontalAlignment" Value="Center" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
+        </Style>
+        <Style Selector="Button.mode-primary">
+            <Setter Property="Padding" Value="16,7" />
+            <Setter Property="CornerRadius" Value="8" />
+            <Setter Property="Background" Value="{DynamicResource AccentBrush}" />
+            <Setter Property="Foreground" Value="White" />
+        </Style>
+        <Style Selector="Button.mode-primary:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource Accent2Brush}" />
+            <Setter Property="Foreground" Value="White" />
+        </Style>
         <Style Selector="Button.mode-cancel">
             <Setter Property="HorizontalAlignment" Value="Right" />
             <Setter Property="Padding" Value="16,7" />
@@ -118,44 +158,87 @@
                 <Border Width="56" Height="56" CornerRadius="28" Background="{DynamicResource SurfaceBackgroundBrush}">
                     <controls:HelpySprite Name="Helpy" Width="48" Height="48" />
                 </Border>
-                <Border Grid.Column="1" Margin="12,0,0,0" Padding="12,9" CornerRadius="12"
+                <Border Name="Bubble" Classes="bubble" Grid.Column="1" Margin="12,0,0,0" Padding="12,9" CornerRadius="12"
                         VerticalAlignment="Center"
                         Background="{DynamicResource SurfaceBackgroundBrush}"
-                        BorderBrush="{DynamicResource AccentBrush}" BorderThickness="1">
+                        BorderThickness="1">
                     <TextBlock Name="BubbleText" FontSize="13" TextWrapping="Wrap"
                                Foreground="{DynamicResource TextPrimaryBrush}" />
                 </Border>
             </Grid>
 
-            <Button Name="ProgramOption" Classes="mode-option" Click="OnProgramClick">
-                <Grid ColumnDefinitions="Auto,*">
-                    <Panel Classes="mode-icon">
-                        <Border Background="{DynamicResource Ansi2Brush}" />
-                        <controls:AnimatedIcon Kind="FileCode" Stroke="{DynamicResource Ansi2Brush}" />
-                    </Panel>
-                    <StackPanel Grid.Column="1" Margin="12,0,0,0" VerticalAlignment="Center" Spacing="2">
-                        <TextBlock Classes="mode-title" Text="Simular el programa completo" />
-                        <TextBlock Name="ProgramHint" Classes="mode-hint"
-                                   Text="Usa las reglas y los paquetes de simular del archivo abierto." />
-                    </StackPanel>
-                </Grid>
-            </Button>
+            <StackPanel Name="NeedFile" IsVisible="False">
+                <Border Name="FolderStep" Classes="step-row">
+                    <Grid ColumnDefinitions="Auto,*">
+                        <Border Classes="step-number">
+                            <TextBlock Text="1" />
+                        </Border>
+                        <StackPanel Grid.Column="1" Margin="12,0,0,0" VerticalAlignment="Center" Spacing="2">
+                            <TextBlock Classes="mode-title" Text="Abre tu proyecto" />
+                            <TextBlock Classes="mode-hint" Text="Con Abrir carpeta (Ctrl+O) o un proyecto reciente." />
+                        </StackPanel>
+                    </Grid>
+                </Border>
+                <Border Classes="step-row">
+                    <Grid ColumnDefinitions="Auto,*">
+                        <Border Classes="step-number">
+                            <TextBlock Text="2" />
+                        </Border>
+                        <StackPanel Grid.Column="1" Margin="12,0,0,0" VerticalAlignment="Center" Spacing="2">
+                            <TextBlock Classes="mode-title" Text="Abre un archivo .nw" />
+                            <TextBlock Classes="mode-hint" Text="Haz clic en él en el explorador de la izquierda." />
+                        </StackPanel>
+                    </Grid>
+                </Border>
+                <Border Classes="step-row">
+                    <Grid ColumnDefinitions="Auto,*">
+                        <Border Classes="step-number">
+                            <TextBlock Text="3" />
+                        </Border>
+                        <StackPanel Grid.Column="1" Margin="12,0,0,0" VerticalAlignment="Center" Spacing="2">
+                            <TextBlock Classes="mode-title" Text="Vuelve a presionar el botón de simulación" />
+                            <TextBlock Classes="mode-hint" Text="Usaré las reglas, redes y paquetes de ese archivo." />
+                        </StackPanel>
+                    </Grid>
+                </Border>
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8" Margin="0,8,0,0">
+                    <Button Classes="mode-cancel" Content="Entendido" Click="OnCancelClick" />
+                    <Button Name="OpenFolderButton" Classes="mode-primary" Content="Abrir carpeta"
+                            Click="OnOpenFolderClick" />
+                </StackPanel>
+            </StackPanel>
 
-            <Button Name="RulesOption" Classes="mode-option" Click="OnRulesClick">
-                <Grid ColumnDefinitions="Auto,*">
-                    <Panel Classes="mode-icon">
-                        <Border Background="{DynamicResource Ansi5Brush}" />
-                        <controls:AnimatedIcon Kind="Network" Stroke="{DynamicResource Ansi5Brush}" />
-                    </Panel>
-                    <StackPanel Grid.Column="1" Margin="12,0,0,0" VerticalAlignment="Center" Spacing="2">
-                        <TextBlock Classes="mode-title" Text="Simular ciertas reglas" />
-                        <TextBlock Name="RulesHint" Classes="mode-hint"
-                                   Text="Elige reglas y arma tu propia red con las redes del archivo." />
-                    </StackPanel>
-                </Grid>
-            </Button>
+            <StackPanel Name="Options">
+                <Button Name="ProgramOption" Classes="mode-option" Click="OnProgramClick">
+                    <Grid ColumnDefinitions="Auto,*">
+                        <Panel Classes="mode-icon">
+                            <Border Background="{DynamicResource Ansi2Brush}" />
+                            <controls:AnimatedIcon Kind="FileCode" Stroke="{DynamicResource Ansi2Brush}" />
+                        </Panel>
+                        <StackPanel Grid.Column="1" Margin="12,0,0,0" VerticalAlignment="Center" Spacing="2">
+                            <TextBlock Classes="mode-title" Text="Simular el programa completo" />
+                            <TextBlock Name="ProgramHint" Classes="mode-hint"
+                                       Text="Usa las reglas y los paquetes de simular del archivo abierto." />
+                        </StackPanel>
+                    </Grid>
+                </Button>
 
-            <Button Classes="mode-cancel" Content="Cancelar" Margin="0,8,0,0" Click="OnCancelClick" />
+                <Button Name="RulesOption" Classes="mode-option" Click="OnRulesClick">
+                    <Grid ColumnDefinitions="Auto,*">
+                        <Panel Classes="mode-icon">
+                            <Border Background="{DynamicResource Ansi5Brush}" />
+                            <controls:AnimatedIcon Kind="Network" Stroke="{DynamicResource Ansi5Brush}" />
+                        </Panel>
+                        <StackPanel Grid.Column="1" Margin="12,0,0,0" VerticalAlignment="Center" Spacing="2">
+                            <TextBlock Classes="mode-title" Text="Simular ciertas reglas" />
+                            <TextBlock Name="RulesHint" Classes="mode-hint"
+                                       Text="Elige reglas y arma tu propia red con las redes del archivo." />
+                        </StackPanel>
+                    </Grid>
+                </Button>
+
+                <Button Classes="mode-cancel" Content="Cancelar" Margin="0,8,0,0" Click="OnCancelClick" />
+            </StackPanel>
         </StackPanel>
     </Border>
 </Window>

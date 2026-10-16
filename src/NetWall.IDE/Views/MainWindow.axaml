@@ -101,7 +101,8 @@
                 Background="{DynamicResource SurfaceBackgroundBrush}"
                 BorderBrush="{DynamicResource BorderBrush}"
                 BorderThickness="0,0,0,1"
-                Padding="6,4">
+                Padding="6,4"
+                IsVisible="{Binding !IsSimulationMode}">
             <Grid ColumnDefinitions="*,Auto">
             <StackPanel Orientation="Horizontal" Spacing="6">
 
@@ -237,8 +238,7 @@
             </StackPanel>
 
                 <Border Grid.Column="1" Classes="toolbar-pill">
-                    <Button Classes="icon toolbar-icon toolbar-simulate" Click="OnSimulationModeClick"
-                            Classes.active="{Binding IsSimulationMode}">
+                    <Button Classes="icon toolbar-icon" Click="OnSimulationModeClick">
                         <ToolTip.Tip>
                             <TextBlock Text="Modo simulación" />
                         </ToolTip.Tip>
