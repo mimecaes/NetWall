@@ -110,7 +110,7 @@ public partial class ChallengeViewModel : ViewModelBase
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(ChapterText), nameof(CanGoBack), nameof(CanGoForward),
         nameof(IsPredict), nameof(IsWriting), nameof(Question), nameof(TypeLabel),
-        nameof(TypeText), nameof(TypeBrush), nameof(Learn), nameof(HasLesson), nameof(SealText))]
+        nameof(TypeText), nameof(TypeBrush), nameof(Learn), nameof(HasLesson))]
     public partial ChallengeLevel? Current { get; set; }
 
     public bool IsPredict => Current?.Challenge.IsPredict == true;
@@ -146,13 +146,6 @@ public partial class ChallengeViewModel : ViewModelBase
         "fix" => "PastelLavenderBrush",
         _ => "PastelMintBrush",
     });
-
-    public string SealText => Current?.Seal switch
-    {
-        2 => "sello dorado: ¡perfecto!",
-        1 => "sello rosa · el dorado se gana sin pistas",
-        _ => string.Empty,
-    };
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(HasHint))]
@@ -463,7 +456,6 @@ public partial class ChallengeViewModel : ViewModelBase
         OnPropertyChanged(nameof(SealCount));
         OnPropertyChanged(nameof(ProgressText));
         OnPropertyChanged(nameof(CanGoForward));
-        OnPropertyChanged(nameof(SealText));
         SealAwarded?.Invoke(seal);
     }
 

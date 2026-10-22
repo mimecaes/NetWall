@@ -12,7 +12,7 @@
             <Setter Property="Background" Value="{DynamicResource NotebookCoverBrush}" />
             <Setter Property="CornerRadius" Value="18" />
             <Setter Property="Padding" Value="12" />
-            <Setter Property="BoxShadow" Value="0 14 36 0 #66000000" />
+            <Setter Property="BoxShadow" Value="0 22 48 0 #88000000" />
         </Style>
         <Style Selector="Border.page">
             <Setter Property="Background" Value="{DynamicResource NotebookPageBrush}" />
@@ -76,13 +76,13 @@
             <Setter Property="FontSize" Value="34" />
             <Setter Property="Margin" Value="0,6,0,10" />
             <Setter Property="TextWrapping" Value="Wrap" />
-            <Setter Property="Foreground" Value="#FDE8F1" />
+            <Setter Property="Foreground" Value="{DynamicResource NotebookTitleBrush}" />
         </Style>
         <Style Selector="TextBlock.section">
             <Setter Property="FontSize" Value="12.5" />
             <Setter Property="FontWeight" Value="SemiBold" />
             <Setter Property="Margin" Value="0,16,0,8" />
-            <Setter Property="Foreground" Value="{DynamicResource PastelPinkBrush}" />
+            <Setter Property="Foreground" Value="{DynamicResource InkPinkBrush}" />
         </Style>
         <Style Selector="Border.type-badge">
             <Setter Property="CornerRadius" Value="10" />
@@ -199,7 +199,7 @@
             <Setter Property="MinHeight" Value="46" />
             <Setter Property="CornerRadius" Value="12" />
             <Setter Property="Background" Value="{DynamicResource NotebookBoxBrush}" />
-            <Setter Property="BorderBrush" Value="{DynamicResource PastelLavenderBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource InkLavenderBrush}" />
             <Setter Property="BorderThickness" Value="1.5" />
             <Setter Property="Transitions">
                 <Transitions>
@@ -208,10 +208,10 @@
             </Setter>
         </Style>
         <Style Selector="Border.helpy-bubble.ok">
-            <Setter Property="BorderBrush" Value="{DynamicResource PastelMintBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource InkMintBrush}" />
         </Style>
         <Style Selector="Border.helpy-bubble.no">
-            <Setter Property="BorderBrush" Value="{DynamicResource PastelPinkBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource InkPinkBrush}" />
         </Style>
         <Style Selector="Border.helpy-bubble TextBlock">
             <Setter Property="FontSize" Value="13" />
@@ -220,10 +220,14 @@
             <Setter Property="Foreground" Value="{DynamicResource NotebookInkBrush}" />
         </Style>
         <Style Selector="Border.editor-box">
-            <Setter Property="Margin" Value="0,14,0,0" />
-            <Setter Property="CornerRadius" Value="10" />
+            <Setter Property="CornerRadius" Value="6" />
             <Setter Property="Background" Value="{DynamicResource NotebookCodeBrush}" />
-            <Setter Property="ClipToBounds" Value="True" />
+            <Setter Property="BoxShadow" Value="2 8 18 0 #45000000" />
+        </Style>
+        <Style Selector="controls|WashiTape.corner-tape">
+            <Setter Property="Width" Value="72" />
+            <Setter Property="Height" Value="20" />
+            <Setter Property="VerticalAlignment" Value="Top" />
         </Style>
         <Style Selector="Border.test-chip">
             <Setter Property="Margin" Value="0,0,6,6" />
@@ -239,10 +243,10 @@
             </Setter>
         </Style>
         <Style Selector="Border.test-chip.passed">
-            <Setter Property="BorderBrush" Value="{DynamicResource PastelMintBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource InkMintBrush}" />
         </Style>
         <Style Selector="Border.test-chip.failed">
-            <Setter Property="BorderBrush" Value="{DynamicResource PastelPinkBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource InkPinkBrush}" />
         </Style>
         <Style Selector="Border.test-chip TextBlock">
             <Setter Property="FontSize" Value="11.5" />
@@ -255,24 +259,24 @@
             <Setter Property="Foreground" Value="{DynamicResource NotebookMutedBrush}" />
         </Style>
         <Style Selector="Border.test-chip.passed TextBlock.state">
-            <Setter Property="Foreground" Value="{DynamicResource PastelMintBrush}" />
+            <Setter Property="Foreground" Value="{DynamicResource InkMintBrush}" />
         </Style>
         <Style Selector="Border.test-chip.failed TextBlock.state">
-            <Setter Property="Foreground" Value="{DynamicResource PastelPinkBrush}" />
+            <Setter Property="Foreground" Value="{DynamicResource InkPinkBrush}" />
         </Style>
         <Style Selector="Border.diagnostics">
             <Setter Property="Margin" Value="0,8,0,0" />
             <Setter Property="Padding" Value="10,6" />
             <Setter Property="CornerRadius" Value="0" />
             <Setter Property="Background" Value="{DynamicResource NotebookBoxBrush}" />
-            <Setter Property="BorderBrush" Value="{DynamicResource PastelMintBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource InkMintBrush}" />
             <Setter Property="BorderThickness" Value="2,0,0,0" />
         </Style>
         <Style Selector="Border.diagnostics.warning">
-            <Setter Property="BorderBrush" Value="{DynamicResource PastelButterBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource InkButterBrush}" />
         </Style>
         <Style Selector="Border.diagnostics.error">
-            <Setter Property="BorderBrush" Value="{DynamicResource PastelPinkBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource InkPinkBrush}" />
         </Style>
         <Style Selector="Border.diagnostics TextBlock">
             <Setter Property="FontFamily" Value="Cascadia Code,Consolas,DejaVu Sans Mono,monospace" />
@@ -301,7 +305,7 @@
             <Setter Property="RenderTransform" Value="translateY(-2px)" />
         </Style>
         <Style Selector="Button.notebook-action:pointerover /template/ ContentPresenter#PART_ContentPresenter">
-            <Setter Property="Background" Value="{DynamicResource NotebookCoverBrush}" />
+            <Setter Property="Background" Value="{DynamicResource NotebookBoxHoverBrush}" />
             <Setter Property="Foreground" Value="{DynamicResource NotebookInkBrush}" />
         </Style>
         <Style Selector="Button.notebook-action controls|AnimatedIcon">
@@ -344,7 +348,7 @@
             <Setter Property="Margin" Value="4,0,12,0" />
             <Setter Property="VerticalAlignment" Value="Center" />
             <Setter Property="TextTrimming" Value="CharacterEllipsis" />
-            <Setter Property="Foreground" Value="#FDE8F1" />
+            <Setter Property="Foreground" Value="{DynamicResource NotebookInkBrush}" />
         </Style>
     </UserControl.Styles>
 
@@ -359,15 +363,15 @@
                 <Grid ColumnDefinitions="*,28,1.3*">
                     <Border Grid.Column="0" Name="LeftPage" Classes="page">
                         <Panel>
-                            <controls:NotebookPaper />
-                            <DockPanel Margin="26,22,24,16">
+                            <controls:NotebookPaper IsLeft="True" />
+                            <DockPanel Margin="32,22,30,16">
                                 <StackPanel DockPanel.Dock="Top">
                                     <Panel HorizontalAlignment="Left">
-                                        <Border CornerRadius="10" Opacity="0.18"
+                                        <Border CornerRadius="10"
                                                 Background="{Binding Current.Brush, FallbackValue={x:Null}}" />
                                         <TextBlock Margin="11,3" FontSize="11.5" FontWeight="SemiBold"
                                                    Text="{Binding ChapterText}"
-                                                   Foreground="{Binding Current.Brush, FallbackValue={x:Null}}" />
+                                                   Foreground="{DynamicResource PastelInkBrush}" />
                                     </Panel>
                                     <TextBlock Classes="page-title" Text="{Binding Current.Challenge.Title, FallbackValue=''}" />
                                     <Border Classes="type-badge" Background="{Binding TypeBrush}">
@@ -389,9 +393,6 @@
                                 </StackPanel>
 
                                 <Grid DockPanel.Dock="Bottom" ColumnDefinitions="*,Auto,Auto" Margin="0,10,0,0">
-                                    <TextBlock Grid.Column="1" Classes="muted" VerticalAlignment="Center" Margin="0,0,8,0"
-                                               TextAlignment="Right" MaxWidth="170" TextWrapping="Wrap"
-                                               Text="{Binding SealText}" />
                                     <controls:WaxSeal Grid.Column="2" Name="Seal" Width="92" Height="92"
                                                       Level="{Binding Current.Seal, FallbackValue=0}" />
                                 </Grid>
@@ -401,7 +402,7 @@
                                         <StackPanel>
                                             <controls:WashiTape Classes="washi" Fill="{DynamicResource PastelLavenderBrush}" />
                                             <TextBlock FontSize="11" FontWeight="Bold" LetterSpacing="1"
-                                                       Foreground="{DynamicResource PastelLavenderBrush}" Text="MINI LECCIÓN" />
+                                                       Foreground="{DynamicResource InkLavenderBrush}" Text="MINI LECCIÓN" />
                                             <TextBlock Classes="ink" FontWeight="SemiBold" FontSize="14" Margin="0,6,0,6"
                                                        Text="{Binding Current.Challenge.Lesson.Title, FallbackValue=''}" />
                                             <TextBlock Classes="ink" LineHeight="19"
@@ -410,7 +411,7 @@
                                                     IsVisible="{Binding Current.Challenge.Lesson.Example, Converter={x:Static ObjectConverters.IsNotNull}, FallbackValue=False}">
                                                 <controls:CodePreview Code="{Binding Current.Challenge.Lesson.Example, FallbackValue=''}"
                                                                       FontFamily="Cascadia Code,Consolas,DejaVu Sans Mono,monospace"
-                                                                      FontSize="12.5" Foreground="{DynamicResource NotebookInkBrush}" />
+                                                                      FontSize="12.5" Foreground="{DynamicResource NotebookCodeInkBrush}" />
                                             </Border>
                                         </StackPanel>
                                     </Border>
@@ -446,100 +447,111 @@
                     <controls:NotebookSpine Grid.Column="1" />
 
                     <Border Grid.Column="2" Name="RightPage" Classes="page">
-                        <DockPanel Margin="22,20,22,16">
-                            <Grid DockPanel.Dock="Top" ColumnDefinitions="Auto,*">
-                                <Border Classes="helpy-avatar">
-                                    <controls:HelpySprite Name="Helpy" Width="40" Height="40" />
+                        <Panel>
+                            <controls:NotebookPaper />
+                            <DockPanel Margin="44,20,24,16">
+                                <Grid DockPanel.Dock="Top" ColumnDefinitions="Auto,*">
+                                    <Border Classes="helpy-avatar">
+                                        <controls:HelpySprite Name="Helpy" Width="40" Height="40" />
+                                    </Border>
+                                    <Border Grid.Column="1" Name="Bubble" Classes="helpy-bubble">
+                                        <TextBlock Name="BubbleText" />
+                                    </Border>
+                                </Grid>
+
+                                <Grid DockPanel.Dock="Bottom" ColumnDefinitions="Auto,*,Auto,Auto" Margin="0,12,0,0"
+                                      IsVisible="{Binding IsPredict}">
+                                    <Button Classes="notebook-action" Command="{Binding HintCommand}" ToolTip.Tip="Pídele una pista a Helpy">
+                                        <StackPanel Orientation="Horizontal" Spacing="7">
+                                            <controls:AnimatedIcon Kind="Lightbulb" />
+                                            <TextBlock Text="Pista" VerticalAlignment="Center" />
+                                        </StackPanel>
+                                    </Button>
+                                    <TextBlock Grid.Column="1" Classes="question" Text="{Binding Question}" />
+                                    <Button Grid.Column="2" Classes="notebook-action mint" Margin="0,0,8,0"
+                                            Command="{Binding AnswerCommand}" CommandParameter="permitir" Content="✓ Pasa" />
+                                    <Button Grid.Column="3" Classes="notebook-action pink" Command="{Binding AnswerCommand}"
+                                            CommandParameter="bloquear" Content="✕ Se bloquea" />
+                                </Grid>
+
+                                <Grid DockPanel.Dock="Bottom" ColumnDefinitions="Auto,Auto,*,Auto" Margin="0,12,0,0"
+                                      IsVisible="{Binding IsWriting}">
+                                    <Button Classes="notebook-action" Command="{Binding HintCommand}" ToolTip.Tip="Pídele una pista a Helpy">
+                                        <StackPanel Orientation="Horizontal" Spacing="7">
+                                            <controls:AnimatedIcon Kind="Lightbulb" />
+                                            <TextBlock Text="Pista" VerticalAlignment="Center" />
+                                        </StackPanel>
+                                    </Button>
+                                    <Button Grid.Column="1" Classes="notebook-action" Command="{Binding ResetCommand}"
+                                            ToolTip.Tip="Volver al código del inicio">
+                                        <StackPanel Orientation="Horizontal" Spacing="7">
+                                            <controls:AnimatedIcon Kind="RotateCcw" />
+                                            <TextBlock Text="Reiniciar" VerticalAlignment="Center" />
+                                        </StackPanel>
+                                    </Button>
+                                    <Button Grid.Column="3" Classes="notebook-action mint" Command="{Binding CheckCommand}"
+                                            ToolTip.Tip="Comprobar (Ctrl+Enter)">
+                                        <StackPanel Orientation="Horizontal" Spacing="7">
+                                            <controls:AnimatedIcon Kind="Play" />
+                                            <TextBlock Text="Comprobar" VerticalAlignment="Center" />
+                                        </StackPanel>
+                                    </Button>
+                                </Grid>
+
+                                <Border DockPanel.Dock="Bottom" Classes="diagnostics"
+                                        Classes.warning="{Binding HasWarnings}" Classes.error="{Binding HasCodeErrors}"
+                                        IsVisible="{Binding DiagnosticsText.Length}">
+                                    <StackPanel Spacing="2">
+                                        <TextBlock Text="{Binding DiagnosticsText}" />
+                                        <TextBlock Text="{Binding DiagnosticsDetail}" IsVisible="{Binding HasDiagnosticsDetail}" />
+                                    </StackPanel>
                                 </Border>
-                                <Border Grid.Column="1" Name="Bubble" Classes="helpy-bubble">
-                                    <TextBlock Name="BubbleText" />
-                                </Border>
-                            </Grid>
 
-                            <Grid DockPanel.Dock="Bottom" ColumnDefinitions="Auto,*,Auto,Auto" Margin="0,12,0,0"
-                                  IsVisible="{Binding IsPredict}">
-                                <Button Classes="notebook-action" Command="{Binding HintCommand}" ToolTip.Tip="Pídele una pista a Helpy">
-                                    <StackPanel Orientation="Horizontal" Spacing="7">
-                                        <controls:AnimatedIcon Kind="Lightbulb" />
-                                        <TextBlock Text="Pista" VerticalAlignment="Center" />
-                                    </StackPanel>
-                                </Button>
-                                <TextBlock Grid.Column="1" Classes="question" Text="{Binding Question}" />
-                                <Button Grid.Column="2" Classes="notebook-action mint" Margin="0,0,8,0"
-                                        Command="{Binding AnswerCommand}" CommandParameter="permitir" Content="✓ Pasa" />
-                                <Button Grid.Column="3" Classes="notebook-action pink" Command="{Binding AnswerCommand}"
-                                        CommandParameter="bloquear" Content="✕ Se bloquea" />
-                            </Grid>
-
-                            <Grid DockPanel.Dock="Bottom" ColumnDefinitions="Auto,Auto,*,Auto" Margin="0,12,0,0"
-                                  IsVisible="{Binding IsWriting}">
-                                <Button Classes="notebook-action" Command="{Binding HintCommand}" ToolTip.Tip="Pídele una pista a Helpy">
-                                    <StackPanel Orientation="Horizontal" Spacing="7">
-                                        <controls:AnimatedIcon Kind="Lightbulb" />
-                                        <TextBlock Text="Pista" VerticalAlignment="Center" />
-                                    </StackPanel>
-                                </Button>
-                                <Button Grid.Column="1" Classes="notebook-action" Command="{Binding ResetCommand}"
-                                        ToolTip.Tip="Volver al código del inicio">
-                                    <StackPanel Orientation="Horizontal" Spacing="7">
-                                        <controls:AnimatedIcon Kind="RotateCcw" />
-                                        <TextBlock Text="Reiniciar" VerticalAlignment="Center" />
-                                    </StackPanel>
-                                </Button>
-                                <Button Grid.Column="3" Classes="notebook-action mint" Command="{Binding CheckCommand}"
-                                        ToolTip.Tip="Comprobar (Ctrl+Enter)">
-                                    <StackPanel Orientation="Horizontal" Spacing="7">
-                                        <controls:AnimatedIcon Kind="Play" />
-                                        <TextBlock Text="Comprobar" VerticalAlignment="Center" />
-                                    </StackPanel>
-                                </Button>
-                            </Grid>
-
-                            <Border DockPanel.Dock="Bottom" Classes="diagnostics"
-                                    Classes.warning="{Binding HasWarnings}" Classes.error="{Binding HasCodeErrors}"
-                                    IsVisible="{Binding DiagnosticsText.Length}">
-                                <StackPanel Spacing="2">
-                                    <TextBlock Text="{Binding DiagnosticsText}" />
-                                    <TextBlock Text="{Binding DiagnosticsDetail}" IsVisible="{Binding HasDiagnosticsDetail}" />
+                                <StackPanel DockPanel.Dock="Bottom" Margin="0,12,0,0">
+                                    <TextBlock FontSize="11" FontWeight="Bold" LetterSpacing="1" Margin="0,0,0,6"
+                                               Foreground="{DynamicResource InkLavenderBrush}" Text="PRUEBAS" />
+                                    <ItemsControl Name="TestList" ItemsSource="{Binding Tests}">
+                                        <ItemsControl.ItemsPanel>
+                                            <ItemsPanelTemplate>
+                                                <WrapPanel />
+                                            </ItemsPanelTemplate>
+                                        </ItemsControl.ItemsPanel>
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate x:DataType="vm:ChallengeTestCard">
+                                                <Border Classes="test-chip" Classes.passed="{Binding IsPassed}"
+                                                        Classes.failed="{Binding IsFailed}">
+                                                    <StackPanel Orientation="Horizontal">
+                                                        <TextBlock Classes="state" Text="{Binding StateText}" />
+                                                        <TextBlock Text="{Binding Title}" MaxWidth="220"
+                                                                   TextTrimming="CharacterEllipsis" />
+                                                    </StackPanel>
+                                                </Border>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
                                 </StackPanel>
-                            </Border>
 
-                            <StackPanel DockPanel.Dock="Bottom" Margin="0,12,0,0">
-                                <TextBlock FontSize="11" FontWeight="Bold" LetterSpacing="1" Margin="0,0,0,6"
-                                           Foreground="{DynamicResource PastelLavenderBrush}" Text="PRUEBAS" />
-                                <ItemsControl Name="TestList" ItemsSource="{Binding Tests}">
-                                    <ItemsControl.ItemsPanel>
-                                        <ItemsPanelTemplate>
-                                            <WrapPanel />
-                                        </ItemsPanelTemplate>
-                                    </ItemsControl.ItemsPanel>
-                                    <ItemsControl.ItemTemplate>
-                                        <DataTemplate x:DataType="vm:ChallengeTestCard">
-                                            <Border Classes="test-chip" Classes.passed="{Binding IsPassed}"
-                                                    Classes.failed="{Binding IsFailed}">
-                                                <StackPanel Orientation="Horizontal">
-                                                    <TextBlock Classes="state" Text="{Binding StateText}" />
-                                                    <TextBlock Text="{Binding Title}" MaxWidth="220"
-                                                               TextTrimming="CharacterEllipsis" />
-                                                </StackPanel>
-                                            </Border>
-                                        </DataTemplate>
-                                    </ItemsControl.ItemTemplate>
-                                </ItemsControl>
-                            </StackPanel>
-
-                            <Border Classes="editor-box">
-                                <ae:TextEditor Name="Editor"
-                                               ShowLineNumbers="True"
-                                               WordWrap="False"
-                                               Background="{DynamicResource NotebookCodeBrush}"
-                                               Foreground="{DynamicResource NotebookInkBrush}"
-                                               LineNumbersForeground="{DynamicResource NotebookMutedBrush}"
-                                               FontFamily="Cascadia Code,Consolas,DejaVu Sans Mono,monospace"
-                                               FontSize="14"
-                                               Padding="8,8" />
-                            </Border>
-                        </DockPanel>
+                                <Panel Margin="0,16,0,0">
+                                    <Border Classes="editor-box">
+                                        <Border CornerRadius="6" ClipToBounds="True">
+                                            <ae:TextEditor Name="Editor"
+                                                           ShowLineNumbers="True"
+                                                           WordWrap="False"
+                                                           Background="{DynamicResource NotebookCodeBrush}"
+                                                           Foreground="{DynamicResource NotebookCodeInkBrush}"
+                                                           LineNumbersForeground="{DynamicResource NotebookCodeMutedBrush}"
+                                                           FontFamily="Cascadia Code,Consolas,DejaVu Sans Mono,monospace"
+                                                           FontSize="14"
+                                                           Padding="8,8" />
+                                        </Border>
+                                    </Border>
+                                    <controls:WashiTape Classes="corner-tape" HorizontalAlignment="Left" Margin="-22,-6,0,0"
+                                                        RenderTransform="rotate(-36deg)" Fill="{DynamicResource PastelPinkBrush}" />
+                                    <controls:WashiTape Classes="corner-tape" HorizontalAlignment="Right" Margin="0,-6,-22,0"
+                                                        RenderTransform="rotate(36deg)" Fill="{DynamicResource PastelSkyBrush}" />
+                                </Panel>
+                            </DockPanel>
+                        </Panel>
                     </Border>
                     <controls:CorrectionLayer Grid.Column="2" Name="Correction" />
                     <Path Grid.Column="0" Classes="page-corner" HorizontalAlignment="Left" VerticalAlignment="Bottom"

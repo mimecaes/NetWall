@@ -169,7 +169,7 @@ public sealed class CorrectionLayer : Control
                 new Point(chip.Right - 10, chip.Top + 1),
                 new Point(chip.Right + 3, chip.Top - 15),
             };
-            DrawPartial(context, points, k, new Pen(Brush("PastelMintBrush"), 3.4, lineCap: PenLineCap.Round,
+            DrawPartial(context, points, k, new Pen(Brush("InkMintBrush"), 3.4, lineCap: PenLineCap.Round,
                 lineJoin: PenLineJoin.Round));
             return;
         }
@@ -181,7 +181,7 @@ public sealed class CorrectionLayer : Control
             return chip.Center + new Vector(Math.Cos(angle) * (chip.Width / 2 + 7) * wobble,
                 Math.Sin(angle) * (chip.Height / 2 + 6) * wobble);
         }).ToArray();
-        var pen = new Pen(Brush("PastelPinkBrush"), 2.4, lineCap: PenLineCap.Round, lineJoin: PenLineJoin.Round);
+        var pen = new Pen(Brush("InkPinkBrush"), 2.4, lineCap: PenLineCap.Round, lineJoin: PenLineJoin.Round);
         DrawPartial(context, ring, Math.Clamp(k / 0.65, 0, 1), pen);
         var cross = new Point(chip.Right + 10, chip.Top - 6);
         DrawPartial(context, [cross + new Vector(-5, -5), cross + new Vector(5, 5)], Math.Clamp((k - 0.65) / 0.17, 0, 1), pen);
@@ -190,7 +190,7 @@ public sealed class CorrectionLayer : Control
 
     private void DrawNote(DrawingContext context, string text, bool success, Point anchor, double k)
     {
-        var brush = Brush(success ? "PastelMintBrush" : "PastelPinkBrush");
+        var brush = Brush(success ? "InkMintBrush" : "InkPinkBrush");
         var formatted = new FormattedText(text, CultureInfo.CurrentCulture, FlowDirection.LeftToRight,
             new Typeface(Handwriting, FontStyle.Normal, FontWeight.Bold), 28, brush);
         var origin = new Point(anchor.X - formatted.Width, anchor.Y - formatted.Height);
