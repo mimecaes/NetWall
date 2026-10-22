@@ -12,6 +12,7 @@ using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
+using Avalonia.VisualTree;
 using NetWall.IDE.Controls;
 using NetWall.IDE.Models;
 using NetWall.IDE.Themes;
@@ -36,6 +37,7 @@ public partial class ChallengePanel : UserControl
         Editor.TextArea.TextView.LineTransformers.Add(_colorizer);
         Editor.TextArea.TextView.BackgroundRenderers.Add(_highlighter);
         AddHandler(PointerPressedEvent, OnPanelPointerPressed, RoutingStrategies.Tunnel);
+        TestList.LayoutUpdated += (_, _) => Correction.InvalidateVisual();
         Editor.TextChanged += OnEditorTextChanged;
         AddHandler(KeyDownEvent, OnPanelKeyDown, RoutingStrategies.Tunnel);
     }
@@ -183,42 +185,47 @@ public partial class ChallengePanel : UserControl
             <= 5 => 0.75,
             _ => 0.55,
         };
-        var chips = Enumerable.Range(0, outcomes.Count).Select(ChipRect).ToList();
-        if (chips.Count > 0)
+        await Task.Delay(40);
+        if (outcomes.Count > 0)
         {
-            Correction.ShowHelpy(new Point(chips[0].Left - 26, chips[0].Top + 4));
+            var (_, first) = MarkTarget(0);
+            Correction.ShowHelpy(new Point(first.Left - 26, first.Top + 4));
         }
 
         for (var i = 0; i < outcomes.Count; i++)
         {
-            await Correction.WalkToAsync(new Point(chips[i].Center.X, chips[i].Top + 4), 340 * _pace);
+            var index = i;
+            var (box, row) = MarkTarget(index);
+            await Correction.WalkToAsync(new Point(box.Center.X + 14, row.Top + 4), 340 * _pace);
             if (outcomes[i] is { Allowed: { } allowed } outcome)
             {
                 await HighlightAsync(outcome.Rule, allowed);
             }
 
-            await Correction.MarkAsync(chips[i], outcomes[i].Passed, 420 * _pace);
+            await Correction.MarkAsync(() => MarkTarget(index), outcomes[i].Passed, 420 * _pace);
             await Task.Delay((int)(140 * _pace));
         }
 
         var success = outcomes.All(outcome => outcome.Passed);
-        var anchor = new Point(TestList.Bounds.Width, -6);
-        anchor = TestList.TranslatePoint(anchor, Correction) ?? anchor;
-        await Correction.NoteAsync(success ? "¡Muy bien!" : "Revisa esto", success, anchor, 650 * Math.Max(_pace, 0.6));
+        await Correction.NoteAsync(success ? "¡Muy bien!" : "Revisa esto", success, NoteAnchor, 650 * Math.Max(_pace, 0.6));
         await Task.Delay((int)(350 * _pace));
         await Correction.HideHelpyAsync();
         _correcting = false;
     }
 
-    private Rect ChipRect(int index)
+    private Point NoteAnchor() =>
+        TestList.TranslatePoint(new Point(TestList.Bounds.Width, -6), Correction) ?? default;
+
+    private (Rect Box, Rect Row) MarkTarget(int index)
     {
-        if (TestList.ContainerFromIndex(index) is not { } chip)
+        if (TestList.ContainerFromIndex(index) is not { } row
+            || row.GetVisualDescendants().OfType<Doodle>().FirstOrDefault() is not { } box)
         {
             return default;
         }
 
-        var origin = chip.TranslatePoint(default, Correction) ?? default;
-        return new Rect(origin, chip.Bounds.Size);
+        return (new Rect(box.TranslatePoint(default, Correction) ?? default, box.Bounds.Size),
+            new Rect(row.TranslatePoint(default, Correction) ?? default, row.Bounds.Size));
     }
 
     private async Task HighlightAsync(string? rule, bool allowed)

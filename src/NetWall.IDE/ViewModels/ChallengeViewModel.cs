@@ -110,7 +110,8 @@ public partial class ChallengeViewModel : ViewModelBase
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(ChapterText), nameof(CanGoBack), nameof(CanGoForward),
         nameof(IsPredict), nameof(IsWriting), nameof(Question), nameof(TypeLabel),
-        nameof(TypeText), nameof(TypeBrush), nameof(Learn), nameof(HasLesson))]
+        nameof(TypeText), nameof(TypeBrush), nameof(Learn), nameof(HasLesson), nameof(DoodleTop),
+        nameof(DoodleBottom))]
     public partial ChallengeLevel? Current { get; set; }
 
     public bool IsPredict => Current?.Challenge.IsPredict == true;
@@ -122,6 +123,10 @@ public partial class ChallengeViewModel : ViewModelBase
     public string Question => IsPredict ? Current!.Challenge.Tests[0].Label : string.Empty;
 
     public IReadOnlyList<string> Learn => Current?.Challenge.Learn ?? [];
+
+    public DoodleKind DoodleTop => (DoodleKind)((Current?.Number ?? 0) % 5);
+
+    public DoodleKind DoodleBottom => (DoodleKind)(((Current?.Number ?? 0) + 2) % 5);
 
     public string ChapterText => Current is null ? string.Empty
         : $"Reto {Current.Number} de {Levels.Count} · {Current.Module.Name}";

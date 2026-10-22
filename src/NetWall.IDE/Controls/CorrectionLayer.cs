@@ -27,8 +27,8 @@ public sealed class CorrectionLayer : Control
 
     private readonly DispatcherTimer _timer = new() { Interval = TimeSpan.FromMilliseconds(16) };
     private readonly Stopwatch _clock = Stopwatch.StartNew();
-    private readonly List<(Rect Chip, bool Passed, double Start, double Duration)> _marks = [];
-    private (string Text, bool Success, Point Anchor, double Start, double Duration)? _note;
+    private readonly List<(Func<(Rect Box, Rect Row)> Target, bool Passed, double Start, double Duration)> _marks = [];
+    private (string Text, bool Success, Func<Point> Anchor, double Start, double Duration)? _note;
     private Bitmap _sheet = PetWidget.LoadSheet(PetColor.Gray);
     private Point _from;
     private Point _to;
@@ -89,13 +89,13 @@ public sealed class CorrectionLayer : Control
         return Task.Delay((int)milliseconds);
     }
 
-    public Task MarkAsync(Rect chip, bool passed, double milliseconds)
+    public Task MarkAsync(Func<(Rect Box, Rect Row)> target, bool passed, double milliseconds)
     {
-        _marks.Add((chip, passed, Now, milliseconds));
+        _marks.Add((target, passed, Now, milliseconds));
         return Task.Delay((int)milliseconds);
     }
 
-    public Task NoteAsync(string text, bool success, Point anchor, double milliseconds)
+    public Task NoteAsync(string text, bool success, Func<Point> anchor, double milliseconds)
     {
         _happy = success;
         _note = (text, success, anchor, Now, milliseconds);
@@ -112,12 +112,13 @@ public sealed class CorrectionLayer : Control
     {
         foreach (var mark in _marks)
         {
-            DrawMark(context, mark.Chip, mark.Passed, Progress(mark.Start, mark.Duration));
+            var (box, row) = mark.Target();
+            DrawMark(context, box, row, mark.Passed, Progress(mark.Start, mark.Duration));
         }
 
         if (_note is { } note)
         {
-            DrawNote(context, note.Text, note.Success, note.Anchor, Progress(note.Start, note.Duration));
+            DrawNote(context, note.Text, note.Success, note.Anchor(), Progress(note.Start, note.Duration));
         }
 
         if (_helpyShown is not null)
@@ -159,18 +160,18 @@ public sealed class CorrectionLayer : Control
             tip - new Vector(side * 2.4, 2.9), tip);
     }
 
-    private void DrawMark(DrawingContext context, Rect chip, bool passed, double k)
+    private void DrawMark(DrawingContext context, Rect box, Rect row, bool passed, double k)
     {
+        var pen = new Pen(Brush(passed ? "InkMintBrush" : "InkPinkBrush"), passed ? 3.2 : 2.4,
+            lineCap: PenLineCap.Round, lineJoin: PenLineJoin.Round);
         if (passed)
         {
-            var points = new[]
-            {
-                new Point(chip.Right - 16, chip.Top - 6),
-                new Point(chip.Right - 10, chip.Top + 1),
-                new Point(chip.Right + 3, chip.Top - 15),
-            };
-            DrawPartial(context, points, k, new Pen(Brush("InkMintBrush"), 3.4, lineCap: PenLineCap.Round,
-                lineJoin: PenLineJoin.Round));
+            DrawPartial(context,
+            [
+                new Point(box.Left + 1, box.Center.Y),
+                new Point(box.Center.X, box.Bottom + 1),
+                new Point(box.Right + 9, box.Top - 9),
+            ], k, pen);
             return;
         }
 
@@ -178,14 +179,12 @@ public sealed class CorrectionLayer : Control
         {
             var angle = -1.9 + i / 48.0 * Math.PI * 2.15;
             var wobble = 1 + 0.04 * Math.Sin(i * 0.9);
-            return chip.Center + new Vector(Math.Cos(angle) * (chip.Width / 2 + 7) * wobble,
-                Math.Sin(angle) * (chip.Height / 2 + 6) * wobble);
+            return row.Center + new Vector(Math.Cos(angle) * (row.Width / 2 + 8) * wobble,
+                Math.Sin(angle) * (row.Height / 2 + 6) * wobble);
         }).ToArray();
-        var pen = new Pen(Brush("InkPinkBrush"), 2.4, lineCap: PenLineCap.Round, lineJoin: PenLineJoin.Round);
         DrawPartial(context, ring, Math.Clamp(k / 0.65, 0, 1), pen);
-        var cross = new Point(chip.Right + 10, chip.Top - 6);
-        DrawPartial(context, [cross + new Vector(-5, -5), cross + new Vector(5, 5)], Math.Clamp((k - 0.65) / 0.17, 0, 1), pen);
-        DrawPartial(context, [cross + new Vector(5, -5), cross + new Vector(-5, 5)], Math.Clamp((k - 0.82) / 0.18, 0, 1), pen);
+        DrawPartial(context, [box.TopLeft, box.BottomRight], Math.Clamp((k - 0.65) / 0.17, 0, 1), pen);
+        DrawPartial(context, [box.TopRight, box.BottomLeft], Math.Clamp((k - 0.82) / 0.18, 0, 1), pen);
     }
 
     private void DrawNote(DrawingContext context, string text, bool success, Point anchor, double k)
