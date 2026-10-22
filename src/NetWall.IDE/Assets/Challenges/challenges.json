@@ -15,7 +15,7 @@
           "concepts": ["declarar", "Int"],
           "lesson": {"title": "Variables", "text": "Una variable guarda un dato con un nombre. Se escribe declarar, el nombre, dos puntos, el tipo, = y el valor, y termina con punto y coma. Las declaraciones van antes de principal.", "example": "declarar intentos: Int = 3;"},
           "tests": [
-            { "kind": "variable", "label": "puerto_web es Int y vale 80", "visible": true, "name": "puerto_web", "type": "Int", "value": "80" }
+            { "kind": "variable", "label": "puerto_web es Int y vale 80", "name": "puerto_web", "type": "Int", "value": "80" }
           ]
         },
         {
@@ -29,8 +29,8 @@
           "concepts": ["Float", "String", "tipos"],
           "lesson": {"title": "Tipos de datos", "text": "Int guarda números enteros, Float números con decimales y String texto entre comillas. El valor tiene que coincidir con el tipo; si no, NetWall marca un error.", "example": "declarar precio: Float = 9.5;\ndeclarar ciudad: String = \"Heredia\";"},
           "tests": [
-            { "kind": "variable", "label": "version es Float y vale 2.5", "visible": true, "name": "version", "type": "Float", "value": "2.5" },
-            { "kind": "variable", "label": "empresa sigue siendo String", "visible": false, "name": "empresa", "type": "String", "failure": "No borres empresa: solo había que corregir version." }
+            { "kind": "variable", "label": "version es Float y vale 2.5", "name": "version", "type": "Float", "value": "2.5" },
+            { "kind": "variable", "label": "empresa sigue siendo String", "name": "empresa", "type": "String", "failure": "No borres empresa: solo había que corregir version." }
           ]
         },
         {
@@ -43,7 +43,7 @@
           "concepts": ["Red", "CIDR", "/24"],
           "lesson": {"title": "Redes y CIDR", "text": "Una Red se escribe como dirección/máscara. La máscara dice cuántos bits quedan fijos: /24 fija los tres primeros números, así que la red tiene 256 direcciones.", "example": "declarar oficina: Red = \"10.1.2.0/24\";"},
           "tests": [
-            { "kind": "variable", "label": "lan es la red 192.168.1.0/24", "visible": true, "name": "lan", "type": "Red", "value": "192.168.1.0/24" }
+            { "kind": "variable", "label": "lan es la red 192.168.1.0/24", "name": "lan", "type": "Red", "value": "192.168.1.0/24" }
           ]
         },
         {
@@ -56,8 +56,8 @@
           "concepts": ["/32", "host"],
           "lesson": {"title": "Un equipo es una red /32", "text": "Con /32 los 32 bits quedan fijos, así que la red tiene una sola dirección. Así se representa un servidor, una impresora o cualquier equipo.", "example": "declarar impresora: Red = \"192.168.1.50/32\";"},
           "tests": [
-            { "kind": "variable", "label": "web es el equipo 10.0.0.5", "visible": true, "name": "web", "type": "Red", "value": "10.0.0.5/32" },
-            { "kind": "variable", "label": "lan sigue declarada", "visible": false, "name": "lan", "type": "Red", "value": "192.168.1.0/24", "failure": "No borres lan: la vas a necesitar en los próximos retos." }
+            { "kind": "variable", "label": "web es el equipo 10.0.0.5", "name": "web", "type": "Red", "value": "10.0.0.5/32" },
+            { "kind": "variable", "label": "lan sigue declarada", "name": "lan", "type": "Red", "value": "192.168.1.0/24", "failure": "No borres lan: la vas a necesitar en los próximos retos." }
           ]
         }
       ]
@@ -78,8 +78,8 @@
           "concepts": ["regla", "accion", "puerto"],
           "lesson": {"title": "Reglas", "text": "Una regla describe qué tráfico permitir o bloquear. Sus campos van separados por comas y termina con };. Un campo que no escribes coincide con todo.", "example": "regla correo {\n    accion = permitir,\n    protocolo = tcp,\n    puerto = 25\n};"},
           "tests": [
-            { "kind": "packet", "label": "Pasa tcp 80 hacia web", "visible": true, "protocol": "tcp", "port": 80, "source": "203.0.113.4", "destination": "10.0.0.5", "expect": "permitir" },
-            { "kind": "packet", "label": "No pasa tcp 22", "visible": false, "protocol": "tcp", "port": 22, "source": "203.0.113.4", "destination": "10.0.0.5", "expect": "bloquear", "failure": "Tu regla deja pasar más que la web: limita el puerto." }
+            { "kind": "packet", "label": "Pasa tcp 80 hacia web", "protocol": "tcp", "port": 80, "source": "203.0.113.4", "destination": "10.0.0.5", "expect": "permitir" },
+            { "kind": "packet", "label": "No pasa tcp 22", "protocol": "tcp", "port": 22, "source": "203.0.113.4", "destination": "10.0.0.5", "expect": "bloquear", "failure": "Tu regla deja pasar más que la web: limita el puerto." }
           ]
         },
         {
@@ -93,10 +93,10 @@
           "concepts": ["origen", "destino"],
           "lesson": {"title": "Origen y destino", "text": "origen es de dónde viene el paquete y destino hacia dónde va. Si usas una variable Red, la regla solo coincide cuando la dirección del paquete está dentro de esa red.", "example": "regla ssh_oficina {\n    accion = permitir,\n    protocolo = tcp,\n    puerto = 22,\n    origen = oficina,\n    destino = servidor\n};"},
           "tests": [
-            { "kind": "packet", "label": "Pasa desde la lan", "visible": true, "protocol": "tcp", "port": 80, "source": "192.168.1.10", "destination": "10.0.0.5", "expect": "permitir" },
-            { "kind": "packet", "label": "No pasa desde internet", "visible": true, "protocol": "tcp", "port": 80, "source": "203.0.113.4", "destination": "10.0.0.5", "expect": "bloquear" },
-            { "kind": "packet", "label": "Pasa desde otro equipo de la lan", "visible": false, "protocol": "tcp", "port": 80, "source": "192.168.1.77", "destination": "10.0.0.5", "expect": "permitir", "failure": "Toda la lan debe poder entrar, no solo un equipo." },
-            { "kind": "packet", "label": "No pasa tcp 443 desde la lan", "visible": false, "protocol": "tcp", "port": 443, "source": "192.168.1.10", "destination": "10.0.0.5", "expect": "bloquear", "failure": "Solo el puerto 80 debe pasar." }
+            { "kind": "packet", "label": "Pasa desde la lan", "protocol": "tcp", "port": 80, "source": "192.168.1.10", "destination": "10.0.0.5", "expect": "permitir" },
+            { "kind": "packet", "label": "No pasa desde internet", "protocol": "tcp", "port": 80, "source": "203.0.113.4", "destination": "10.0.0.5", "expect": "bloquear" },
+            { "kind": "packet", "label": "Pasa desde otro equipo de la lan", "protocol": "tcp", "port": 80, "source": "192.168.1.77", "destination": "10.0.0.5", "expect": "permitir", "failure": "Toda la lan debe poder entrar, no solo un equipo." },
+            { "kind": "packet", "label": "No pasa tcp 443 desde la lan", "protocol": "tcp", "port": 443, "source": "192.168.1.10", "destination": "10.0.0.5", "expect": "bloquear", "failure": "Solo el puerto 80 debe pasar." }
           ]
         },
         {
@@ -110,7 +110,7 @@
           "concepts": ["leer reglas", "política"],
           "lesson": {"title": "Cómo decide el firewall", "text": "El firewall revisa las reglas de arriba hacia abajo. Si una regla coincide con el paquete, aplica su acción. Si ninguna coincide, usa politica_defecto."},
           "tests": [
-            { "kind": "packet", "label": "tcp 80 desde internet hacia web", "visible": true, "protocol": "tcp", "port": 80, "source": "203.0.113.4", "destination": "10.0.0.5" }
+            { "kind": "packet", "label": "tcp 80 desde internet hacia web", "protocol": "tcp", "port": 80, "source": "203.0.113.4", "destination": "10.0.0.5" }
           ]
         },
         {
@@ -124,9 +124,9 @@
           "concepts": ["principal", "politica_defecto", "udp"],
           "lesson": {"title": "La política por defecto", "text": "politica_defecto va dentro de principal y decide qué pasa con el tráfico que ninguna regla menciona. Lo más seguro es bloquear todo y abrir solo lo necesario: eso se llama lista blanca.", "example": "principal {\n    politica_defecto = bloquear;\n}"},
           "tests": [
-            { "kind": "policy", "label": "politica_defecto = bloquear", "visible": true, "expect": "bloquear" },
-            { "kind": "packet", "label": "Pasa DNS por udp 53", "visible": true, "protocol": "udp", "port": 53, "source": "192.168.1.10", "destination": "10.0.0.53", "expect": "permitir" },
-            { "kind": "packet", "label": "No pasa tcp 53", "visible": false, "protocol": "tcp", "port": 53, "source": "192.168.1.10", "destination": "10.0.0.53", "expect": "bloquear", "failure": "DNS usa udp: revisa el protocolo de tu regla." }
+            { "kind": "policy", "label": "politica_defecto = bloquear", "expect": "bloquear" },
+            { "kind": "packet", "label": "Pasa DNS por udp 53", "protocol": "udp", "port": 53, "source": "192.168.1.10", "destination": "10.0.0.53", "expect": "permitir" },
+            { "kind": "packet", "label": "No pasa tcp 53", "protocol": "tcp", "port": 53, "source": "192.168.1.10", "destination": "10.0.0.53", "expect": "bloquear", "failure": "DNS usa udp: revisa el protocolo de tu regla." }
           ]
         },
         {
@@ -140,10 +140,10 @@
           "concepts": ["bloquear", "SSH", "lista negra"],
           "lesson": {"title": "Lista negra", "text": "Con politica_defecto = permitir todo pasa, salvo lo que bloquees con reglas. Es cómodo, pero menos seguro que la lista blanca porque lo que olvides queda abierto.", "example": "regla sin_telnet {\n    accion = bloquear,\n    protocolo = tcp,\n    puerto = 23\n};"},
           "tests": [
-            { "kind": "policy", "label": "politica_defecto = permitir", "visible": true, "expect": "permitir" },
-            { "kind": "packet", "label": "No pasa SSH desde internet", "visible": true, "protocol": "tcp", "port": 22, "source": "203.0.113.4", "destination": "10.0.0.7", "expect": "bloquear" },
-            { "kind": "packet", "label": "Pasa la web", "visible": true, "protocol": "tcp", "port": 80, "source": "203.0.113.4", "destination": "10.0.0.7", "expect": "permitir" },
-            { "kind": "packet", "label": "No pasa SSH desde la lan", "visible": false, "protocol": "tcp", "port": 22, "source": "192.168.1.10", "destination": "10.0.0.7", "expect": "bloquear", "failure": "SSH debe bloquearse venga de donde venga." }
+            { "kind": "policy", "label": "politica_defecto = permitir", "expect": "permitir" },
+            { "kind": "packet", "label": "No pasa SSH desde internet", "protocol": "tcp", "port": 22, "source": "203.0.113.4", "destination": "10.0.0.7", "expect": "bloquear" },
+            { "kind": "packet", "label": "Pasa la web", "protocol": "tcp", "port": 80, "source": "203.0.113.4", "destination": "10.0.0.7", "expect": "permitir" },
+            { "kind": "packet", "label": "No pasa SSH desde la lan", "protocol": "tcp", "port": 22, "source": "192.168.1.10", "destination": "10.0.0.7", "expect": "bloquear", "failure": "SSH debe bloquearse venga de donde venga." }
           ]
         }
       ]
@@ -164,10 +164,10 @@
           "concepts": ["rango", "puertos"],
           "lesson": {"title": "Rangos de puertos", "text": "rango(a, b) coincide con todos los puertos desde a hasta b, incluidos los dos extremos.", "example": "puerto = rango(5000, 5100)"},
           "tests": [
-            { "kind": "packet", "label": "Pasa el puerto 1500", "visible": true, "protocol": "tcp", "port": 1500, "source": "203.0.113.4", "destination": "10.0.0.8", "expect": "permitir" },
-            { "kind": "packet", "label": "No pasa el puerto 2500", "visible": true, "protocol": "tcp", "port": 2500, "source": "203.0.113.4", "destination": "10.0.0.8", "expect": "bloquear" },
-            { "kind": "packet", "label": "Pasa el puerto 1000", "visible": false, "protocol": "tcp", "port": 1000, "source": "203.0.113.4", "destination": "10.0.0.8", "expect": "permitir", "failure": "El rango incluye sus extremos: el 1000 también debe pasar." },
-            { "kind": "packet", "label": "Pasa el puerto 2000", "visible": false, "protocol": "tcp", "port": 2000, "source": "203.0.113.4", "destination": "10.0.0.8", "expect": "permitir", "failure": "El rango incluye sus extremos: el 2000 también debe pasar." }
+            { "kind": "packet", "label": "Pasa el puerto 1500", "protocol": "tcp", "port": 1500, "source": "203.0.113.4", "destination": "10.0.0.8", "expect": "permitir" },
+            { "kind": "packet", "label": "No pasa el puerto 2500", "protocol": "tcp", "port": 2500, "source": "203.0.113.4", "destination": "10.0.0.8", "expect": "bloquear" },
+            { "kind": "packet", "label": "Pasa el puerto 1000", "protocol": "tcp", "port": 1000, "source": "203.0.113.4", "destination": "10.0.0.8", "expect": "permitir", "failure": "El rango incluye sus extremos: el 1000 también debe pasar." },
+            { "kind": "packet", "label": "Pasa el puerto 2000", "protocol": "tcp", "port": 2000, "source": "203.0.113.4", "destination": "10.0.0.8", "expect": "permitir", "failure": "El rango incluye sus extremos: el 2000 también debe pasar." }
           ]
         },
         {
@@ -182,9 +182,9 @@
           "concepts": ["orden", "primera coincidencia"],
           "lesson": {"title": "El orden importa", "text": "Gana la primera regla que coincide. Si una regla general va antes que una específica, la específica nunca se usa. Pon primero las reglas más específicas."},
           "tests": [
-            { "kind": "packet", "label": "Pasa la web", "visible": true, "protocol": "tcp", "port": 80, "source": "203.0.113.4", "destination": "10.0.0.5", "expect": "permitir" },
-            { "kind": "packet", "label": "No pasa otro tcp", "visible": true, "protocol": "tcp", "port": 22, "source": "203.0.113.4", "destination": "10.0.0.5", "expect": "bloquear" },
-            { "kind": "packet", "label": "Pasa udp", "visible": false, "protocol": "udp", "port": 53, "source": "203.0.113.4", "destination": "10.0.0.5", "expect": "permitir", "failure": "No bloquees udp: solo había que reordenar." }
+            { "kind": "packet", "label": "Pasa la web", "protocol": "tcp", "port": 80, "source": "203.0.113.4", "destination": "10.0.0.5", "expect": "permitir" },
+            { "kind": "packet", "label": "No pasa otro tcp", "protocol": "tcp", "port": 22, "source": "203.0.113.4", "destination": "10.0.0.5", "expect": "bloquear" },
+            { "kind": "packet", "label": "Pasa udp", "protocol": "udp", "port": 53, "source": "203.0.113.4", "destination": "10.0.0.5", "expect": "permitir", "failure": "No bloquees udp: solo había que reordenar." }
           ]
         },
         {
@@ -198,7 +198,7 @@
           "concepts": ["orden", "primera coincidencia"],
           "lesson": {"title": "Primera coincidencia", "text": "Aunque varias reglas coincidan con un paquete, solo se aplica la primera de la lista. Las demás ni se miran."},
           "tests": [
-            { "kind": "packet", "label": "tcp 22 desde internet hacia web", "visible": true, "protocol": "tcp", "port": 22, "source": "203.0.113.4", "destination": "10.0.0.5" }
+            { "kind": "packet", "label": "tcp 22 desde internet hacia web", "protocol": "tcp", "port": 22, "source": "203.0.113.4", "destination": "10.0.0.5" }
           ]
         },
         {
@@ -213,10 +213,10 @@
           "concepts": ["redundancia", "buenas prácticas"],
           "lesson": {"title": "Reglas redundantes", "text": "Una regla es redundante si otra anterior ya cubre todo lo que ella cubre con la misma acción. No cambia nada y hace que el firewall sea más difícil de leer."},
           "tests": [
-            { "kind": "clean", "label": "Sin reglas redundantes", "visible": true },
-            { "kind": "packet", "label": "Pasa la web desde internet", "visible": true, "protocol": "tcp", "port": 80, "source": "203.0.113.4", "destination": "10.0.0.5", "expect": "permitir" },
-            { "kind": "packet", "label": "Pasa SSH desde la lan", "visible": true, "protocol": "tcp", "port": 22, "source": "192.168.1.10", "destination": "10.0.0.5", "expect": "permitir" },
-            { "kind": "packet", "label": "No pasa SSH desde internet", "visible": false, "protocol": "tcp", "port": 22, "source": "203.0.113.4", "destination": "10.0.0.5", "expect": "bloquear", "failure": "SSH solo debe entrar desde la lan." }
+            { "kind": "clean", "label": "Sin reglas redundantes" },
+            { "kind": "packet", "label": "Pasa la web desde internet", "protocol": "tcp", "port": 80, "source": "203.0.113.4", "destination": "10.0.0.5", "expect": "permitir" },
+            { "kind": "packet", "label": "Pasa SSH desde la lan", "protocol": "tcp", "port": 22, "source": "192.168.1.10", "destination": "10.0.0.5", "expect": "permitir" },
+            { "kind": "packet", "label": "No pasa SSH desde internet", "protocol": "tcp", "port": 22, "source": "203.0.113.4", "destination": "10.0.0.5", "expect": "bloquear", "failure": "SSH solo debe entrar desde la lan." }
           ]
         }
       ]
@@ -237,15 +237,15 @@
           "concepts": ["todo junto"],
           "lesson": {"title": "Repaso", "text": "Declara las redes que necesitas, escribe una regla por cada servicio y puerto, cuida el orden y cierra con politica_defecto = bloquear."},
           "tests": [
-            { "kind": "policy", "label": "politica_defecto = bloquear", "visible": true, "expect": "bloquear" },
-            { "kind": "packet", "label": "Web 80 abierta a todos", "visible": true, "protocol": "tcp", "port": 80, "source": "203.0.113.4", "destination": "10.0.0.5", "expect": "permitir" },
-            { "kind": "packet", "label": "Web 443 abierta a todos", "visible": true, "protocol": "tcp", "port": 443, "source": "203.0.113.4", "destination": "10.0.0.5", "expect": "permitir" },
-            { "kind": "packet", "label": "SSH desde la lan", "visible": true, "protocol": "tcp", "port": 22, "source": "192.168.1.10", "destination": "10.0.0.5", "expect": "permitir" },
-            { "kind": "packet", "label": "DNS desde la lan", "visible": true, "protocol": "udp", "port": 53, "source": "192.168.1.10", "destination": "10.0.0.53", "expect": "permitir" },
-            { "kind": "packet", "label": "Sin SSH desde internet", "visible": false, "protocol": "tcp", "port": 22, "source": "203.0.113.4", "destination": "10.0.0.5", "expect": "bloquear", "failure": "SSH no debe entrar desde internet." },
-            { "kind": "packet", "label": "Sin DNS desde internet", "visible": false, "protocol": "udp", "port": 53, "source": "203.0.113.4", "destination": "10.0.0.53", "expect": "bloquear", "failure": "DNS solo debe responder a la lan." },
-            { "kind": "packet", "label": "Sin DNS por tcp", "visible": false, "protocol": "tcp", "port": 53, "source": "192.168.1.10", "destination": "10.0.0.53", "expect": "bloquear", "failure": "DNS usa udp: no abras tcp 53." },
-            { "kind": "packet", "label": "Sin otros puertos", "visible": false, "protocol": "tcp", "port": 8080, "source": "203.0.113.4", "destination": "10.0.0.5", "expect": "bloquear", "failure": "Solo los puertos 80 y 443 de la web deben estar abiertos." }
+            { "kind": "policy", "label": "politica_defecto = bloquear", "expect": "bloquear" },
+            { "kind": "packet", "label": "Web 80 abierta a todos", "protocol": "tcp", "port": 80, "source": "203.0.113.4", "destination": "10.0.0.5", "expect": "permitir" },
+            { "kind": "packet", "label": "Web 443 abierta a todos", "protocol": "tcp", "port": 443, "source": "203.0.113.4", "destination": "10.0.0.5", "expect": "permitir" },
+            { "kind": "packet", "label": "SSH desde la lan", "protocol": "tcp", "port": 22, "source": "192.168.1.10", "destination": "10.0.0.5", "expect": "permitir" },
+            { "kind": "packet", "label": "DNS desde la lan", "protocol": "udp", "port": 53, "source": "192.168.1.10", "destination": "10.0.0.53", "expect": "permitir" },
+            { "kind": "packet", "label": "Sin SSH desde internet", "protocol": "tcp", "port": 22, "source": "203.0.113.4", "destination": "10.0.0.5", "expect": "bloquear", "failure": "SSH no debe entrar desde internet." },
+            { "kind": "packet", "label": "Sin DNS desde internet", "protocol": "udp", "port": 53, "source": "203.0.113.4", "destination": "10.0.0.53", "expect": "bloquear", "failure": "DNS solo debe responder a la lan." },
+            { "kind": "packet", "label": "Sin DNS por tcp", "protocol": "tcp", "port": 53, "source": "192.168.1.10", "destination": "10.0.0.53", "expect": "bloquear", "failure": "DNS usa udp: no abras tcp 53." },
+            { "kind": "packet", "label": "Sin otros puertos", "protocol": "tcp", "port": 8080, "source": "203.0.113.4", "destination": "10.0.0.5", "expect": "bloquear", "failure": "Solo los puertos 80 y 443 de la web deben estar abiertos." }
           ]
         }
       ]

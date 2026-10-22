@@ -192,7 +192,7 @@ public partial class ChallengePanel : UserControl
         for (var i = 0; i < outcomes.Count; i++)
         {
             await Correction.WalkToAsync(new Point(chips[i].Center.X, chips[i].Top + 4), 340 * _pace);
-            if (outcomes[i] is { Allowed: { } allowed, Test.Visible: true } outcome)
+            if (outcomes[i] is { Allowed: { } allowed } outcome)
             {
                 await HighlightAsync(outcome.Rule, allowed);
             }

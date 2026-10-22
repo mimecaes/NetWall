@@ -505,11 +505,8 @@
                             </Border>
 
                             <StackPanel DockPanel.Dock="Bottom" Margin="0,12,0,0">
-                                <StackPanel Orientation="Horizontal" Spacing="10" Margin="0,0,0,6">
-                                    <TextBlock FontSize="11" FontWeight="Bold" LetterSpacing="1"
-                                               Foreground="{DynamicResource PastelLavenderBrush}" Text="PRUEBAS" />
-                                    <TextBlock Classes="muted" FontSize="11" Text="{Binding HiddenText}" />
-                                </StackPanel>
+                                <TextBlock FontSize="11" FontWeight="Bold" LetterSpacing="1" Margin="0,0,0,6"
+                                           Foreground="{DynamicResource PastelLavenderBrush}" Text="PRUEBAS" />
                                 <ItemsControl Name="TestList" ItemsSource="{Binding Tests}">
                                     <ItemsControl.ItemsPanel>
                                         <ItemsPanelTemplate>

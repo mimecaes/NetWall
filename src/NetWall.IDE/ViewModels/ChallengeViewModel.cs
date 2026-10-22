@@ -46,7 +46,7 @@ public sealed partial class ChallengeTestCard(ChallengeTest test) : ObservableOb
 {
     public ChallengeTest Test { get; } = test;
 
-    public string Title => Test.Visible ? Test.Label : "Prueba oculta";
+    public string Title => Test.Label;
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(IsPassed), nameof(IsFailed), nameof(StateText))]
@@ -60,7 +60,7 @@ public sealed partial class ChallengeTestCard(ChallengeTest test) : ObservableOb
     {
         ChallengeTestState.Passed => "✓",
         ChallengeTestState.Failed => "✕",
-        _ => Test.Visible ? "·" : "?",
+        _ => "·",
     };
 }
 
@@ -109,7 +109,7 @@ public partial class ChallengeViewModel : ViewModelBase
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(ChapterText), nameof(CanGoBack), nameof(CanGoForward),
-        nameof(HiddenText), nameof(IsPredict), nameof(IsWriting), nameof(Question), nameof(TypeLabel),
+        nameof(IsPredict), nameof(IsWriting), nameof(Question), nameof(TypeLabel),
         nameof(TypeText), nameof(TypeBrush), nameof(Learn), nameof(HasLesson), nameof(SealText))]
     public partial ChallengeLevel? Current { get; set; }
 
@@ -187,20 +187,6 @@ public partial class ChallengeViewModel : ViewModelBase
 
     public string ProgressText => $"{SealCount} de {Levels.Count} retos";
 
-    public string HiddenText
-    {
-        get
-        {
-            var hidden = Tests.Count(card => !card.Test.Visible);
-            return hidden switch
-            {
-                0 => string.Empty,
-                1 => "1 prueba oculta",
-                _ => $"{hidden} pruebas ocultas",
-            };
-        }
-    }
-
     public void Open() =>
         Select(Levels.FirstOrDefault(level => level is { IsUnlocked: true, Seal: 0 })
                ?? Levels.LastOrDefault(level => level.IsUnlocked));
@@ -256,7 +242,6 @@ public partial class ChallengeViewModel : ViewModelBase
             Tests.Add(new ChallengeTestCard(test));
         }
 
-        OnPropertyChanged(nameof(HiddenText));
         _attempts = 0;
         _usedHint = false;
         HintText = string.Empty;
@@ -436,9 +421,7 @@ public partial class ChallengeViewModel : ViewModelBase
 
         if (Tests.FirstOrDefault(card => card.IsFailed) is { } failed)
         {
-            HelpySpoke?.Invoke(failed.Test.Visible
-                ? failed.Test.Failure ?? $"Todavía no se cumple: {failed.Test.Label}."
-                : $"Falló una prueba oculta. {failed.Test.Failure ?? "Piensa en los casos que no estás viendo."}",
+            HelpySpoke?.Invoke(failed.Test.Failure ?? $"Todavía no se cumple: {failed.Test.Label}.",
                 BubbleTone.Blocked);
             return;
         }

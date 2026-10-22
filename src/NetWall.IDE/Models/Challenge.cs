@@ -16,7 +16,7 @@ public sealed record Challenge(string Id, string Title, string Statement, string
 
 public sealed record ChallengeLesson(string Title, string Text, string? Example);
 
-public sealed record ChallengeTest(string Kind, string Label, bool Visible, string? Name, string? Type, string? Value,
+public sealed record ChallengeTest(string Kind, string Label, string? Name, string? Type, string? Value,
     string? Protocol, int Port, string? Source, string? Destination, string? Expect, string? Failure);
 
 public sealed record ChallengeDiagnostic(string Type, int Line, string Message, string File);
