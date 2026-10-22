@@ -692,49 +692,28 @@
         <DockPanel Name="ChallengeLayer" IsVisible="{Binding IsChallengeMode}"
                    Background="{DynamicResource BackgroundBrush}">
             <Border DockPanel.Dock="Top" Classes="simulation-header">
-                <Grid ColumnDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,*,Auto,Auto,Auto,Auto">
-                    <controls:AnimatedIcon Classes="icon" Kind="PawPrint" Stroke="{DynamicResource AccentBrush}"
+                <Grid ColumnDefinitions="Auto,Auto,Auto,Auto,*,Auto,Auto,Auto">
+                    <controls:AnimatedIcon Classes="icon" Kind="PawPrint" Stroke="{DynamicResource PastelPinkBrush}"
                                            VerticalAlignment="Center" />
                     <TextBlock Grid.Column="1" Classes="sidebar-header" Text="MODO RETOS" Margin="10,0"
                                VerticalAlignment="Center" />
-                    <TextBlock Grid.Column="2" Grid.ColumnSpan="4" Text="Elige un reto del tablero" FontSize="12.5"
-                               Foreground="{DynamicResource TextMutedBrush}" VerticalAlignment="Center"
-                               IsVisible="{Binding Challenges.IsBoardVisible}" />
-                    <Border Grid.Column="2" Classes="simulation-chip" IsVisible="{Binding !Challenges.IsBoardVisible}">
+                    <Border Grid.Column="2" Classes="simulation-chip">
                         <TextBlock Text="{Binding Challenges.Current.Module.Name, FallbackValue=''}"
                                    Foreground="{Binding Challenges.Current.Brush, FallbackValue={x:Null}}" />
                     </Border>
-                    <Button Grid.Column="3" Classes="icon" Margin="10,0,0,0" ToolTip.Tip="Reto anterior"
-                            IsVisible="{Binding !Challenges.IsBoardVisible}"
-                            IsEnabled="{Binding Challenges.CanGoBack}" Click="OnPreviousChallengeClick">
-                        <controls:AnimatedIcon Classes="icon-sm" Kind="ChevronLeft" />
-                    </Button>
-                    <TextBlock Grid.Column="4" Text="{Binding Challenges.Current.Heading, FallbackValue=''}"
-                               FontSize="12.5" FontWeight="SemiBold" Margin="4,0"
-                               Foreground="{DynamicResource TextPrimaryBrush}" VerticalAlignment="Center"
-                               IsVisible="{Binding !Challenges.IsBoardVisible}" />
-                    <Button Grid.Column="5" Classes="icon" ToolTip.Tip="Siguiente reto"
-                            IsVisible="{Binding !Challenges.IsBoardVisible}"
-                            IsEnabled="{Binding Challenges.CanGoForward}" Click="OnNextChallengeClick">
-                        <controls:AnimatedIcon Classes="icon-sm" Kind="ChevronRight" />
-                    </Button>
-                    <Button Grid.Column="7" Classes="simulation-exit" Margin="0,0,14,0"
-                            IsVisible="{Binding !Challenges.IsBoardVisible}" Click="OnChallengeBoardClick">
-                        <StackPanel Orientation="Horizontal" Spacing="8">
-                            <controls:AnimatedIcon Classes="icon-sm" Kind="LayoutGrid" />
-                            <TextBlock Text="Tablero" VerticalAlignment="Center" />
-                        </StackPanel>
-                    </Button>
-                    <StackPanel Grid.Column="8" Orientation="Horizontal" Spacing="6" Margin="0,0,14,0"
-                                VerticalAlignment="Center" ToolTip.Tip="Pescaditos ganados">
-                        <controls:AnimatedIcon Classes="icon-sm" Kind="Fish" Stroke="{DynamicResource Ansi4Brush}" />
-                        <TextBlock Text="{Binding Challenges.TotalFish}" FontSize="12" FontWeight="SemiBold"
+                    <TextBlock Grid.Column="3" Text="{Binding Challenges.Current.Heading, FallbackValue=''}"
+                               FontSize="12.5" FontWeight="SemiBold" Margin="10,0"
+                               Foreground="{DynamicResource TextPrimaryBrush}" VerticalAlignment="Center" />
+                    <StackPanel Grid.Column="5" Orientation="Horizontal" Spacing="6" Margin="0,0,14,0"
+                                VerticalAlignment="Center" ToolTip.Tip="Sellos ganados">
+                        <controls:AnimatedIcon Classes="icon-sm" Kind="Fish" Stroke="{DynamicResource SealPinkBrush}" />
+                        <TextBlock Text="{Binding Challenges.SealCount}" FontSize="12" FontWeight="SemiBold"
                                    Foreground="{DynamicResource TextPrimaryBrush}" VerticalAlignment="Center" />
                     </StackPanel>
-                    <TextBlock Grid.Column="9" Text="{Binding Challenges.ProgressText}" FontSize="12"
+                    <TextBlock Grid.Column="6" Text="{Binding Challenges.ProgressText}" FontSize="12"
                                Foreground="{DynamicResource TextMutedBrush}" Margin="0,0,14,0"
                                VerticalAlignment="Center" />
-                    <Button Grid.Column="10" Classes="simulation-exit" Click="OnExitChallengeClick">
+                    <Button Grid.Column="7" Classes="simulation-exit" Click="OnExitChallengeClick">
                         <StackPanel Orientation="Horizontal" Spacing="8">
                             <controls:AnimatedIcon Classes="icon-sm" Kind="LogOut" />
                             <TextBlock Text="Salir" VerticalAlignment="Center" />

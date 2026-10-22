@@ -36,7 +36,7 @@ public sealed partial class ChallengeLevel(Challenge challenge, ChallengeModule 
     public string Heading => $"{Challenge.Id} · {Challenge.Title}";
 
     [ObservableProperty]
-    public partial int Fish { get; set; }
+    public partial int Seal { get; set; }
 
     [ObservableProperty]
     public partial bool IsUnlocked { get; set; }
@@ -58,18 +58,10 @@ public sealed partial class ChallengeTestCard(ChallengeTest test) : ObservableOb
 
     public string StateText => State switch
     {
-        ChallengeTestState.Passed => "✓ pasa",
-        ChallengeTestState.Failed => "✕ falla",
-        _ => Test.Visible ? "por probar" : "?",
+        ChallengeTestState.Passed => "✓",
+        ChallengeTestState.Failed => "✕",
+        _ => Test.Visible ? "·" : "?",
     };
-}
-
-public sealed partial class ChallengeReward(string text) : ObservableObject
-{
-    public string Text { get; } = text;
-
-    [ObservableProperty]
-    public partial bool IsEarned { get; set; }
 }
 
 public sealed record ChallengeOutcome(ChallengeTest Test, bool Passed, bool? Allowed);
@@ -77,7 +69,7 @@ public sealed record ChallengeOutcome(ChallengeTest Test, bool Passed, bool? All
 public partial class ChallengeViewModel : ViewModelBase
 {
     private readonly Func<string?> _cliPath;
-    private readonly Dictionary<string, int> _fish;
+    private readonly Dictionary<string, int> _seals;
     private CancellationTokenSource? _live;
     private int _attempts;
     private bool _usedHint;
@@ -85,7 +77,7 @@ public partial class ChallengeViewModel : ViewModelBase
     public ChallengeViewModel(Func<string?> cliPath)
     {
         _cliPath = cliPath;
-        _fish = ChallengeProgress.LoadFish();
+        _seals = ChallengeProgress.LoadSeals();
         var number = 0;
         foreach (var module in ChallengeCatalog.Load())
         {
@@ -93,7 +85,7 @@ public partial class ChallengeViewModel : ViewModelBase
             {
                 Levels.Add(new ChallengeLevel(challenge, module, ++number, Resource(module.Brush))
                 {
-                    Fish = _fish.GetValueOrDefault(challenge.Id),
+                    Seal = _seals.GetValueOrDefault(challenge.Id),
                 });
             }
         }
@@ -105,27 +97,20 @@ public partial class ChallengeViewModel : ViewModelBase
 
     public ObservableCollection<ChallengeTestCard> Tests { get; } = [];
 
-    public ObservableCollection<ChallengeTestCard> Objectives { get; } = [];
-
-    public ObservableCollection<ChallengeReward> Rewards { get; } = [];
-
     public event Action<string>? CodeReplaced;
 
     public event Action<string, BubbleTone>? HelpySpoke;
 
+    public event Action<int>? SealAwarded;
+
     public Func<IReadOnlyList<ChallengeOutcome>, Task>? Presenter { get; set; }
-
-    [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(HasStamp))]
-    public partial string StampText { get; set; } = string.Empty;
-
-    public bool HasStamp => StampText.Length > 0;
 
     public string Code { get; private set; } = string.Empty;
 
     [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(Subtitle), nameof(CanGoBack), nameof(CanGoForward), nameof(HiddenText),
-        nameof(IsPredict), nameof(IsWriting), nameof(HasLesson), nameof(Question))]
+    [NotifyPropertyChangedFor(nameof(ChapterText), nameof(CanGoBack), nameof(CanGoForward),
+        nameof(HiddenText), nameof(IsPredict), nameof(IsWriting), nameof(Question), nameof(TypeLabel),
+        nameof(TypeText), nameof(TypeBrush), nameof(Learn), nameof(HasLesson), nameof(SealText))]
     public partial ChallengeLevel? Current { get; set; }
 
     public bool IsPredict => Current?.Challenge.IsPredict == true;
@@ -136,8 +121,38 @@ public partial class ChallengeViewModel : ViewModelBase
 
     public string Question => IsPredict ? Current!.Challenge.Tests[0].Label : string.Empty;
 
-    [ObservableProperty]
-    public partial bool IsLessonVisible { get; set; }
+    public IReadOnlyList<string> Learn => Current?.Challenge.Learn ?? [];
+
+    public string ChapterText => Current is null ? string.Empty
+        : $"Reto {Current.Number} de {Levels.Count} · {Current.Module.Name}";
+
+    public string TypeLabel => Current?.Challenge.Type switch
+    {
+        "predict" => "Predice",
+        "fix" => "Arregla",
+        _ => "Escribe",
+    };
+
+    public string TypeText => Current?.Challenge.Type switch
+    {
+        "predict" => "No escribes código: lees un firewall y decides qué le pasa a un paquete.",
+        "fix" => "Este código tiene un problema. Encuéntralo y corrígelo sin empezar de cero.",
+        _ => "Escribe el código que pide el reto y presiona Comprobar para probarlo.",
+    };
+
+    public IBrush? TypeBrush => Resource(Current?.Challenge.Type switch
+    {
+        "predict" => "PastelPeachBrush",
+        "fix" => "PastelLavenderBrush",
+        _ => "PastelMintBrush",
+    });
+
+    public string SealText => Current?.Seal switch
+    {
+        2 => "sello dorado: ¡perfecto!",
+        1 => "sello rosa · el dorado se gana sin pistas",
+        _ => string.Empty,
+    };
 
     [ObservableProperty]
     public partial string DiagnosticsText { get; set; } = string.Empty;
@@ -158,15 +173,13 @@ public partial class ChallengeViewModel : ViewModelBase
     [NotifyCanExecuteChangedFor(nameof(CheckCommand), nameof(AnswerCommand))]
     public partial bool IsChecking { get; set; }
 
-    public string Subtitle => Current is null ? string.Empty : $"Reto {Current.Number} de {Levels.Count}";
-
     public bool CanGoBack => Current is not null && Current.Number > 1;
 
     public bool CanGoForward => Current is not null && Current.Number < Levels.Count && Levels[Current.Number].IsUnlocked;
 
-    public int TotalFish => Levels.Sum(level => level.Fish);
+    public int SealCount => Levels.Count(level => level.Seal > 0);
 
-    public string ProgressText => $"{Levels.Count(level => level.Fish > 0)} de {Levels.Count} retos";
+    public string ProgressText => $"{SealCount} de {Levels.Count} retos";
 
     public string HiddenText
     {
@@ -182,10 +195,9 @@ public partial class ChallengeViewModel : ViewModelBase
         }
     }
 
-    [ObservableProperty]
-    public partial bool IsBoardVisible { get; set; } = true;
-
-    public void Open() => IsBoardVisible = true;
+    public void Open() =>
+        Select(Levels.FirstOrDefault(level => level is { IsUnlocked: true, Seal: 0 })
+               ?? Levels.LastOrDefault(level => level.IsUnlocked));
 
     public void Close()
     {
@@ -195,26 +207,15 @@ public partial class ChallengeViewModel : ViewModelBase
 
     public void OpenLevel(ChallengeLevel level)
     {
-        if (!level.IsUnlocked)
+        if (level.IsUnlocked)
         {
-            return;
+            Select(level);
         }
-
-        Select(level);
-        IsBoardVisible = false;
-    }
-
-    public void ShowBoard()
-    {
-        _live?.Cancel();
-        SaveCode();
-        IsBoardVisible = true;
     }
 
     public void UpdateCode(string code)
     {
         Code = code;
-        StampText = string.Empty;
         _ = LiveDiagnosticsAsync();
     }
 
@@ -243,45 +244,17 @@ public partial class ChallengeViewModel : ViewModelBase
 
         SaveCode();
         Current = level;
-        StampText = string.Empty;
         Tests.Clear();
-        Objectives.Clear();
         foreach (var test in level.Challenge.Tests)
         {
-            var card = new ChallengeTestCard(test);
-            Tests.Add(card);
-            if (test.Visible)
-            {
-                Objectives.Add(card);
-            }
+            Tests.Add(new ChallengeTestCard(test));
         }
 
-        Rewards.Clear();
-        if (level.Challenge.IsPredict)
-        {
-            Rewards.Add(new ChallengeReward("Responde correctamente"));
-            Rewards.Add(new ChallengeReward("Acierta a la primera"));
-            Rewards.Add(new ChallengeReward("Sin pedir pista"));
-        }
-        else
-        {
-            Rewards.Add(new ChallengeReward("Pasa todas las pruebas"));
-            Rewards.Add(new ChallengeReward(level.Challenge.MaxRules switch
-            {
-                null => "Sin reglas de más",
-                1 => "Usa una sola regla",
-                var max => $"Usa hasta {max} reglas",
-            }));
-            Rewards.Add(new ChallengeReward("Sin advertencias del analizador"));
-        }
-
-        ShowRewards(level.Fish);
         OnPropertyChanged(nameof(HiddenText));
         _attempts = 0;
         _usedHint = false;
 
         var saved = level.Challenge.IsPredict ? null : ChallengeProgress.LoadCode(level.Challenge.Id);
-        IsLessonVisible = level.Challenge.Lesson is not null && level.Fish == 0 && saved is null;
         Code = saved ?? level.Challenge.Starter;
         CodeReplaced?.Invoke(Code);
         DiagnosticsText = string.Empty;
@@ -299,12 +272,6 @@ public partial class ChallengeViewModel : ViewModelBase
             HelpySpoke?.Invoke(Current.Challenge.Hint, BubbleTone.Neutral);
         }
     }
-
-    [RelayCommand]
-    private void ShowLesson() => IsLessonVisible = HasLesson;
-
-    [RelayCommand]
-    private void HideLesson() => IsLessonVisible = false;
 
     [RelayCommand(CanExecute = nameof(CanCheck))]
     private async Task AnswerAsync(string? choice)
@@ -349,15 +316,14 @@ public partial class ChallengeViewModel : ViewModelBase
         Tests[0].State = correct ? ChallengeTestState.Passed : ChallengeTestState.Failed;
         if (!correct)
         {
-            ShowRewards(0);
             HelpySpoke?.Invoke($"No exactamente. {Explain(packet)} Inténtalo otra vez.", BubbleTone.Blocked);
             return;
         }
 
-        var fish = _attempts > 1 ? 1 : _usedHint ? 2 : 3;
-        Award(level, fish);
-        HelpySpoke?.Invoke($"¡Correcto! {Explain(packet)} Ganaste {fish} {(fish == 1 ? "pescadito" : "pescaditos")}.",
-            BubbleTone.Allowed);
+        var perfect = _attempts == 1 && !_usedHint;
+        Award(level, perfect ? 2 : 1);
+        HelpySpoke?.Invoke($"¡Correcto! {Explain(packet)} "
+                           + (perfect ? "Ganaste el sello dorado." : "Ganaste tu sello."), BubbleTone.Allowed);
     }
 
     private static string Explain(SimulatedPacket packet)
@@ -385,7 +351,6 @@ public partial class ChallengeViewModel : ViewModelBase
 
         Code = Current.Challenge.Starter;
         CodeReplaced?.Invoke(Code);
-        StampText = string.Empty;
         _ = LiveDiagnosticsAsync();
         foreach (var card in Tests)
         {
@@ -444,9 +409,6 @@ public partial class ChallengeViewModel : ViewModelBase
             outcomes.Add(new ChallengeOutcome(card.Test, Passes(card.Test, result, packets, ref next), allowed));
         }
 
-        var rulesOk = level.Challenge.MaxRules is not { } max || (result.Rules?.Count ?? 0) <= max;
-        var clean = result.Diagnostics.Count == 0;
-        var fish = outcomes.All(outcome => outcome.Passed) ? rulesOk ? clean ? 3 : 2 : 1 : 0;
         if (Presenter is not null)
         {
             IsChecking = true;
@@ -465,7 +427,6 @@ public partial class ChallengeViewModel : ViewModelBase
 
         if (Tests.FirstOrDefault(card => card.IsFailed) is { } failed)
         {
-            ShowRewards(0);
             HelpySpoke?.Invoke(failed.Test.Visible
                 ? failed.Test.Failure ?? $"Todavía no se cumple: {failed.Test.Label}."
                 : $"Falló una prueba oculta. {failed.Test.Failure ?? "Piensa en los casos que no estás viendo."}",
@@ -473,41 +434,45 @@ public partial class ChallengeViewModel : ViewModelBase
             return;
         }
 
-        Award(level, fish);
-        HelpySpoke?.Invoke(SuccessMessage(level, fish), BubbleTone.Allowed);
-    }
-
-    private void Award(ChallengeLevel level, int fish)
-    {
-        ShowRewards(fish);
-        StampText = fish switch
+        var missing = new List<string>();
+        if (_usedHint)
         {
-            3 => "¡Excelente!",
-            2 => "¡Muy bien!",
-            _ => level.Challenge.IsPredict ? "¡Correcto!" : "¡Funciona!",
-        };
-        if (fish > level.Fish)
-        {
-            level.Fish = fish;
-            _fish[level.Challenge.Id] = fish;
-            ChallengeProgress.SaveFish(_fish);
-            UpdateUnlocks();
-            OnPropertyChanged(nameof(TotalFish));
-            OnPropertyChanged(nameof(ProgressText));
-            OnPropertyChanged(nameof(CanGoForward));
+            missing.Add("no pidas pista");
         }
+
+        if (level.Challenge.MaxRules is { } max && (result.Rules?.Count ?? 0) > max)
+        {
+            missing.Add(max == 1 ? "usa una sola regla" : $"usa {max} reglas o menos");
+        }
+
+        if (result.Diagnostics.Count > 0)
+        {
+            missing.Add("corrige las advertencias del analizador");
+        }
+
+        Award(level, missing.Count == 0 ? 2 : 1);
+        var after = level.Number < Levels.Count ? " Ya puedes pasar la página." : " ¡Terminaste el cuaderno!";
+        HelpySpoke?.Invoke(missing.Count == 0
+            ? $"¡Perfecto! Ganaste el sello dorado.{after}"
+            : $"¡Lo lograste! Ganaste tu sello. Para el dorado: {string.Join(", ", missing)}.", BubbleTone.Allowed);
     }
 
-    private string SuccessMessage(ChallengeLevel level, int fish)
+    private void Award(ChallengeLevel level, int seal)
     {
-        var next = level.Number < Levels.Count ? " Ya puedes pasar al siguiente reto." : " ¡Terminaste el curso!";
-        return fish switch
+        if (seal <= level.Seal)
         {
-            3 => $"¡Excelente! Ganaste 3 pescaditos.{next}",
-            2 => "¡Lo lograste! Ganaste 2 pescaditos. Para el tercero, corrige lo que el analizador marca como advertencia.",
-            _ => $"¡Funciona! Ganaste 1 pescadito. Para más, intenta usar "
-                 + $"{(level.Challenge.MaxRules == 1 ? "una sola regla" : $"{level.Challenge.MaxRules} reglas o menos")}.",
-        };
+            return;
+        }
+
+        level.Seal = seal;
+        _seals[level.Challenge.Id] = seal;
+        ChallengeProgress.SaveSeals(_seals);
+        UpdateUnlocks();
+        OnPropertyChanged(nameof(SealCount));
+        OnPropertyChanged(nameof(ProgressText));
+        OnPropertyChanged(nameof(CanGoForward));
+        OnPropertyChanged(nameof(SealText));
+        SealAwarded?.Invoke(seal);
     }
 
     private static bool Passes(ChallengeTest test, ChallengeResult result, List<SimulatedPacket> packets, ref int next)
@@ -531,14 +496,6 @@ public partial class ChallengeViewModel : ViewModelBase
         declaration.Type == "Red"
             ? Ipv4.Parse(declaration.Text) is { } actual && Ipv4.Parse(expected) == actual
             : declaration.Text == expected;
-
-    private void ShowRewards(int fish)
-    {
-        for (var i = 0; i < Rewards.Count; i++)
-        {
-            Rewards[i].IsEarned = i < fish;
-        }
-    }
 
     private async Task LiveDiagnosticsAsync()
     {
@@ -604,7 +561,7 @@ public partial class ChallengeViewModel : ViewModelBase
 
     private void SaveCode()
     {
-        if (Current is not null)
+        if (Current is { Challenge.IsPredict: false })
         {
             ChallengeProgress.SaveCode(Current.Challenge.Id, Code);
         }
@@ -614,7 +571,7 @@ public partial class ChallengeViewModel : ViewModelBase
     {
         for (var i = 0; i < Levels.Count; i++)
         {
-            Levels[i].IsUnlocked = i == 0 || Levels[i - 1].Fish > 0;
+            Levels[i].IsUnlocked = i == 0 || Levels[i - 1].Seal > 0;
         }
     }
 

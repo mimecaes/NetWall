@@ -1,10 +1,13 @@
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Threading;
 using System.Threading.Tasks;
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
+using Avalonia.Media.Imaging;
 using NetWall.IDE.Controls;
 using NetWall.IDE.Models;
 using NetWall.IDE.Themes;
@@ -18,29 +21,25 @@ public partial class ChallengePanel : UserControl
     private ChallengeViewModel? _viewModel;
     private CancellationTokenSource? _typing;
     private bool _replacing;
+    private bool _turning;
 
     public ChallengePanel()
     {
         InitializeComponent();
         Editor.TextArea.TextView.LineTransformers.Add(_colorizer);
         Editor.TextChanged += OnEditorTextChanged;
-        Board.LevelClicked += level => _viewModel?.OpenLevel(level);
         AddHandler(KeyDownEvent, OnPanelKeyDown, RoutingStrategies.Tunnel);
     }
 
-    public void SetHelpyColor(PetColor color)
-    {
-        Helpy.SetColor(color);
-        Board.SetHelpyColor(color);
-    }
+    public void SetHelpyColor(PetColor color) => Helpy.SetColor(color);
 
-    protected override void OnAttachedToVisualTree(Avalonia.VisualTreeAttachmentEventArgs e)
+    protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
     {
         base.OnAttachedToVisualTree(e);
         ThemeManager.ThemeApplied += OnThemeApplied;
     }
 
-    protected override void OnDetachedFromVisualTree(Avalonia.VisualTreeAttachmentEventArgs e)
+    protected override void OnDetachedFromVisualTree(VisualTreeAttachmentEventArgs e)
     {
         base.OnDetachedFromVisualTree(e);
         ThemeManager.ThemeApplied -= OnThemeApplied;
@@ -53,6 +52,7 @@ public partial class ChallengePanel : UserControl
         {
             _viewModel.CodeReplaced -= OnCodeReplaced;
             _viewModel.HelpySpoke -= OnHelpySpoke;
+            _viewModel.SealAwarded -= OnSealAwarded;
             _viewModel.Presenter = null;
             _viewModel.PropertyChanged -= OnViewModelPropertyChanged;
         }
@@ -62,22 +62,65 @@ public partial class ChallengePanel : UserControl
         {
             _viewModel.CodeReplaced += OnCodeReplaced;
             _viewModel.HelpySpoke += OnHelpySpoke;
+            _viewModel.SealAwarded += OnSealAwarded;
             _viewModel.Presenter = PresentAsync;
             _viewModel.PropertyChanged += OnViewModelPropertyChanged;
         }
-
-        Board.Levels = _viewModel?.Levels ?? [];
     }
 
     private void OnThemeApplied(object? sender, EventArgs e) => Editor.TextArea.TextView.Redraw();
 
-    private void OnViewModelPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+    private void OnViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
         if (e.PropertyName == nameof(ChallengeViewModel.IsPredict) && _viewModel is not null)
         {
             Editor.IsReadOnly = _viewModel.IsPredict;
         }
     }
+
+    private void OnSealAwarded(int seal) => Seal.Drop();
+
+    private void OnPreviousClick(object? sender, RoutedEventArgs e) => _ = TurnAsync(false);
+
+    private void OnNextClick(object? sender, RoutedEventArgs e) => _ = TurnAsync(true);
+
+    private void OnPreviousCornerPressed(object? sender, PointerPressedEventArgs e) => _ = TurnAsync(false);
+
+    private void OnNextCornerPressed(object? sender, PointerPressedEventArgs e) => _ = TurnAsync(true);
+
+    private async Task TurnAsync(bool forward)
+    {
+        if (_turning || _viewModel is null || !(forward ? _viewModel.CanGoForward : _viewModel.CanGoBack))
+        {
+            return;
+        }
+
+        _turning = true;
+        PageTurn.Cover(Snapshot(), PageRect(LeftPage), PageRect(RightPage));
+        if (forward)
+        {
+            _viewModel.GoForward();
+        }
+        else
+        {
+            _viewModel.GoBack();
+        }
+
+        await Task.Delay(60);
+        await PageTurn.PlayAsync(Snapshot(), forward);
+        _turning = false;
+    }
+
+    private RenderTargetBitmap Snapshot()
+    {
+        var size = Notebook.Bounds.Size;
+        var bitmap = new RenderTargetBitmap(new PixelSize(Math.Max(1, (int)size.Width), Math.Max(1, (int)size.Height)));
+        bitmap.Render(Notebook);
+        return bitmap;
+    }
+
+    private Rect PageRect(Control page) =>
+        new(page.TranslatePoint(default, Notebook) ?? default, page.Bounds.Size);
 
     private void OnCodeReplaced(string code)
     {
@@ -96,9 +139,21 @@ public partial class ChallengePanel : UserControl
 
     private void OnPanelKeyDown(object? sender, KeyEventArgs e)
     {
-        if (e.Key == Key.Enter && e.KeyModifiers.HasFlag(KeyModifiers.Control) && _viewModel is not null)
+        if (_viewModel is null)
+        {
+            return;
+        }
+
+        if (e.Key == Key.Enter && e.KeyModifiers.HasFlag(KeyModifiers.Control))
         {
             _viewModel.CheckCommand.Execute(null);
+            e.Handled = true;
+        }
+        else if (e.KeyModifiers == KeyModifiers.None && !Editor.TextArea.IsKeyboardFocusWithin
+                 && e.Key is Key.Left or Key.Right)
+        {
+            _ = TurnAsync(e.Key == Key.Right);
+
             e.Handled = true;
         }
     }

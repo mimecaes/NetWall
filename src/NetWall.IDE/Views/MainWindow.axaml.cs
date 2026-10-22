@@ -149,12 +149,6 @@ public partial class MainWindow : Window
         _exitingChallenge = false;
     }
 
-    private void OnChallengeBoardClick(object? sender, RoutedEventArgs e) => ViewModel?.Challenges.ShowBoard();
-
-    private void OnPreviousChallengeClick(object? sender, RoutedEventArgs e) => ViewModel?.Challenges.GoBack();
-
-    private void OnNextChallengeClick(object? sender, RoutedEventArgs e) => ViewModel?.Challenges.GoForward();
-
     private void OnWindowKeyDown(object? sender, KeyEventArgs e)
     {
         if (e.Key == Key.Escape && ViewModel is { IsSimulationMode: true })

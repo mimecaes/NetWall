@@ -10,9 +10,9 @@ public static class ChallengeProgress
     private static readonly string Folder = Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "NetWall.IDE", "challenges");
 
-    private static readonly string ProgressPath = Path.Combine(Folder, "progress.json");
+    private static readonly string ProgressPath = Path.Combine(Folder, "seals.json");
 
-    public static Dictionary<string, int> LoadFish()
+    public static Dictionary<string, int> LoadSeals()
     {
         try
         {
@@ -26,12 +26,12 @@ public static class ChallengeProgress
         }
     }
 
-    public static void SaveFish(Dictionary<string, int> fish)
+    public static void SaveSeals(Dictionary<string, int> seals)
     {
         try
         {
             Directory.CreateDirectory(Folder);
-            File.WriteAllText(ProgressPath, JsonSerializer.Serialize(fish));
+            File.WriteAllText(ProgressPath, JsonSerializer.Serialize(seals));
         }
         catch (Exception e) when (e is IOException or UnauthorizedAccessException)
         {
