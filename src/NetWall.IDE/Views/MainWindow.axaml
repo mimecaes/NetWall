@@ -697,11 +697,12 @@
                                            VerticalAlignment="Center" />
                     <TextBlock Grid.Column="1" Classes="sidebar-header" Text="MODO RETOS" Margin="10,0"
                                VerticalAlignment="Center" />
-                    <Border Grid.Column="2" Classes="simulation-chip">
-                        <TextBlock Text="{Binding Challenges.Current.Module.Name, FallbackValue=''}"
-                                   Foreground="{Binding Challenges.Current.Brush, FallbackValue={x:Null}}" />
+                    <Border Grid.Column="2" Classes="simulation-chip"
+                            IsVisible="{Binding Challenges.Chapter, Converter={x:Static ObjectConverters.IsNotNull}}">
+                        <TextBlock Text="{Binding Challenges.Chapter.Name, FallbackValue=''}"
+                                   Foreground="{Binding Challenges.Chapter.Brush, FallbackValue={x:Null}}" />
                     </Border>
-                    <TextBlock Grid.Column="3" Text="{Binding Challenges.Current.Heading, FallbackValue=''}"
+                    <TextBlock Grid.Column="3" Text="{Binding Challenges.HeaderText}"
                                FontSize="12.5" FontWeight="SemiBold" Margin="10,0"
                                Foreground="{DynamicResource TextPrimaryBrush}" VerticalAlignment="Center" />
                     <StackPanel Grid.Column="5" Orientation="Horizontal" Spacing="6" Margin="0,0,14,0"

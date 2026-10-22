@@ -103,24 +103,72 @@ public partial class ChallengePanel : UserControl
 
     private void OnNextCornerPressed(object? sender, PointerPressedEventArgs e) => _ = TurnAsync(true);
 
-    private async Task TurnAsync(bool forward)
+    private void OnIndexBookmarkClick(object? sender, RoutedEventArgs e)
     {
-        if (_turning || _viewModel is null || !(forward ? _viewModel.CanGoForward : _viewModel.CanGoBack))
+        if (_viewModel is { } viewModel)
+        {
+            _ = TurnToAsync(viewModel.Pages[0]);
+        }
+    }
+
+    private void OnBookmarkClick(object? sender, RoutedEventArgs e) => OpenChapter(sender);
+
+    private void OnChapterRowClick(object? sender, RoutedEventArgs e) => OpenChapter(sender);
+
+    private void OpenChapter(object? sender)
+    {
+        if (sender is Control { DataContext: ChallengeChapter chapter } && _viewModel is { } viewModel)
+        {
+            _ = TurnToAsync(viewModel.CoverOf(chapter));
+        }
+    }
+
+    private void OnLevelRowClick(object? sender, RoutedEventArgs e)
+    {
+        if (sender is Control { DataContext: ChallengeLevel level } && _viewModel is { } viewModel)
+        {
+            _ = TurnToAsync(viewModel.PageOf(level));
+        }
+    }
+
+    private void OnStartChapterClick(object? sender, RoutedEventArgs e)
+    {
+        if (_viewModel is { Chapter: { } chapter } viewModel)
+        {
+            _ = TurnToAsync(viewModel.PageOf(viewModel.StartOf(chapter)));
+        }
+    }
+
+    private Task TurnAsync(bool forward)
+    {
+        if (_viewModel is not { } viewModel || !(forward ? viewModel.CanGoForward : viewModel.CanGoBack))
+        {
+            return Task.CompletedTask;
+        }
+
+        return FlipAsync(forward ? viewModel.GoForward : viewModel.GoBack, forward);
+    }
+
+    private Task TurnToAsync(NotebookPage page)
+    {
+        if (_viewModel is not { } viewModel || page == viewModel.Page || !viewModel.IsOpen(page))
+        {
+            return Task.CompletedTask;
+        }
+
+        return FlipAsync(() => viewModel.OpenPage(page), viewModel.IsAfterCurrent(page));
+    }
+
+    private async Task FlipAsync(Action navigate, bool forward)
+    {
+        if (_turning)
         {
             return;
         }
 
         _turning = true;
         PageTurn.Cover(Snapshot(), PageRect(LeftPage), PageRect(RightPage));
-        if (forward)
-        {
-            _viewModel.GoForward();
-        }
-        else
-        {
-            _viewModel.GoBack();
-        }
-
+        navigate();
         await Task.Delay(60);
         await PageTurn.PlayAsync(Snapshot(), forward);
         _turning = false;

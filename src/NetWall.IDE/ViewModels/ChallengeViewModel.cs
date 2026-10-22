@@ -66,6 +66,46 @@ public sealed partial class ChallengeTestCard(ChallengeTest test) : ObservableOb
 
 public sealed record ChallengeOutcome(ChallengeTest Test, bool Passed, bool? Allowed, string? Rule);
 
+public enum NotebookPageKind
+{
+    Index,
+    Cover,
+    Level,
+}
+
+public sealed record NotebookPage(NotebookPageKind Kind, ChallengeChapter Chapter, ChallengeLevel? Level);
+
+public sealed partial class ChallengeChapter(ChallengeModule module, int number, IBrush? brush,
+    IReadOnlyList<ChallengeLevel> levels) : ObservableObject
+{
+    public ChallengeModule Module { get; } = module;
+
+    public int Number { get; } = number;
+
+    public IBrush? Brush { get; } = brush;
+
+    public IReadOnlyList<ChallengeLevel> Levels { get; } = levels;
+
+    public string Title => Levels.Count == 1 ? "Examen final" : $"Capítulo {Number}";
+
+    public string Name => Module.Name;
+
+    public string Description => Module.Description ?? string.Empty;
+
+    public string ProgressText => $"{Levels.Count(level => level.Seal > 0)} de {Levels.Count}";
+
+    public bool IsUnlocked => Levels[0].IsUnlocked;
+
+    [ObservableProperty]
+    public partial bool IsActive { get; set; }
+
+    public void Refresh()
+    {
+        OnPropertyChanged(nameof(ProgressText));
+        OnPropertyChanged(nameof(IsUnlocked));
+    }
+}
+
 public partial class ChallengeViewModel : ViewModelBase
 {
     private readonly Func<string?> _cliPath;
@@ -81,17 +121,65 @@ public partial class ChallengeViewModel : ViewModelBase
         var number = 0;
         foreach (var module in ChallengeCatalog.Load())
         {
-            foreach (var challenge in module.Challenges)
+            var levels = module.Challenges.Select(challenge => new ChallengeLevel(challenge, module, ++number,
+                Resource(module.Brush))
             {
-                Levels.Add(new ChallengeLevel(challenge, module, ++number, Resource(module.Brush))
-                {
-                    Seal = _seals.GetValueOrDefault(challenge.Id),
-                });
+                Seal = _seals.GetValueOrDefault(challenge.Id),
+            }).ToList();
+            foreach (var level in levels)
+            {
+                Levels.Add(level);
             }
+
+            Chapters.Add(new ChallengeChapter(module, Chapters.Count + 1, Resource(module.Brush), levels));
         }
 
         UpdateUnlocks();
+        Pages.Add(new NotebookPage(NotebookPageKind.Index, Chapters[0], null));
+        foreach (var chapter in Chapters)
+        {
+            Pages.Add(new NotebookPage(NotebookPageKind.Cover, chapter, null));
+            Pages.AddRange(chapter.Levels.Select(level => new NotebookPage(NotebookPageKind.Level, chapter, level)));
+        }
     }
+
+    public ObservableCollection<ChallengeChapter> Chapters { get; } = [];
+
+    public List<NotebookPage> Pages { get; } = [];
+
+    public IEnumerable<ChallengeChapter> IndexLeft => Chapters.Take(2);
+
+    public IEnumerable<ChallengeChapter> IndexRight => Chapters.Skip(2);
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsIndexPage), nameof(IsCoverPage), nameof(IsLevelPage), nameof(Chapter),
+        nameof(HeaderText), nameof(CanGoBack), nameof(CanGoForward), nameof(PagesBefore), nameof(PagesAfter),
+        nameof(CoverDoodle))]
+    public partial NotebookPage? Page { get; set; }
+
+    public bool IsIndexPage => Page?.Kind == NotebookPageKind.Index;
+
+    public bool IsCoverPage => Page?.Kind == NotebookPageKind.Cover;
+
+    public bool IsLevelPage => Page?.Kind == NotebookPageKind.Level;
+
+    public ChallengeChapter? Chapter => Page?.Kind == NotebookPageKind.Index ? null : Page?.Chapter;
+
+    public string HeaderText => Page?.Kind switch
+    {
+        NotebookPageKind.Index => "Índice",
+        NotebookPageKind.Cover => $"{Page.Chapter.Title} · {Page.Chapter.Name}",
+        _ => Current?.Heading ?? string.Empty,
+    };
+
+    public DoodleKind CoverDoodle => (DoodleKind)((Page?.Chapter.Number ?? 0) % 5);
+
+    private int PageIndex => Page is null ? 0 : Pages.IndexOf(Page);
+
+    public int PagesBefore => Math.Min(5, (PageIndex + 1) / 2);
+
+    public int PagesAfter => Math.Min(5, (Pages.Count - PageIndex) / 2);
+
 
     public ObservableCollection<ChallengeLevel> Levels { get; } = [];
 
@@ -108,7 +196,7 @@ public partial class ChallengeViewModel : ViewModelBase
     public string Code { get; private set; } = string.Empty;
 
     [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(ChapterText), nameof(CanGoBack), nameof(CanGoForward),
+    [NotifyPropertyChangedFor(nameof(ChapterText),
         nameof(IsPredict), nameof(IsWriting), nameof(Question), nameof(TypeLabel),
         nameof(TypeText), nameof(TypeBrush), nameof(Learn), nameof(HasLesson), nameof(DoodleTop),
         nameof(DoodleBottom))]
@@ -177,9 +265,58 @@ public partial class ChallengeViewModel : ViewModelBase
     [NotifyCanExecuteChangedFor(nameof(CheckCommand), nameof(AnswerCommand))]
     public partial bool IsChecking { get; set; }
 
-    public bool CanGoBack => Current is not null && Current.Number > 1;
+    public bool CanGoBack => PageIndex > 0;
 
-    public bool CanGoForward => Current is not null && Current.Number < Levels.Count && Levels[Current.Number].IsUnlocked;
+    public bool CanGoForward => PageIndex < Pages.Count - 1 && IsOpen(Pages[PageIndex + 1]);
+
+    public bool IsOpen(NotebookPage page) => page.Kind switch
+    {
+        NotebookPageKind.Index => true,
+        NotebookPageKind.Cover => page.Chapter.IsUnlocked,
+        _ => page.Level!.IsUnlocked,
+    };
+
+    public NotebookPage PageOf(ChallengeLevel level) => Pages.First(page => page.Level == level);
+
+    public NotebookPage CoverOf(ChallengeChapter chapter) =>
+        Pages.First(page => page.Kind == NotebookPageKind.Cover && page.Chapter == chapter);
+
+    public bool IsAfterCurrent(NotebookPage page) => Pages.IndexOf(page) > PageIndex;
+
+    public void OpenPage(NotebookPage page)
+    {
+        if (!IsOpen(page) || page == Page)
+        {
+            return;
+        }
+
+        if (page.Level is { } level)
+        {
+            Select(level);
+            return;
+        }
+
+        _live?.Cancel();
+        SaveCode();
+        Current = null;
+        Tests.Clear();
+        HintText = string.Empty;
+        DiagnosticsText = string.Empty;
+        DiagnosticsDetail = string.Empty;
+        SetPage(page);
+    }
+
+    public ChallengeLevel StartOf(ChallengeChapter chapter) =>
+        chapter.Levels.FirstOrDefault(level => level is { IsUnlocked: true, Seal: 0 }) ?? chapter.Levels[0];
+
+    private void SetPage(NotebookPage page)
+    {
+        Page = page;
+        foreach (var chapter in Chapters)
+        {
+            chapter.IsActive = page.Kind != NotebookPageKind.Index && chapter == page.Chapter;
+        }
+    }
 
     public int SealCount => Levels.Count(level => level.Seal > 0);
 
@@ -213,7 +350,7 @@ public partial class ChallengeViewModel : ViewModelBase
     {
         if (CanGoBack)
         {
-            Select(Levels[Current!.Number - 2]);
+            OpenPage(Pages[PageIndex - 1]);
         }
     }
 
@@ -221,7 +358,7 @@ public partial class ChallengeViewModel : ViewModelBase
     {
         if (CanGoForward)
         {
-            Select(Levels[Current!.Number]);
+            OpenPage(Pages[PageIndex + 1]);
         }
     }
 
@@ -234,6 +371,7 @@ public partial class ChallengeViewModel : ViewModelBase
 
         SaveCode();
         Current = level;
+        SetPage(PageOf(level));
         Tests.Clear();
         foreach (var test in level.Challenge.Tests)
         {
@@ -458,6 +596,11 @@ public partial class ChallengeViewModel : ViewModelBase
         _seals[level.Challenge.Id] = seal;
         ChallengeProgress.SaveSeals(_seals);
         UpdateUnlocks();
+        foreach (var chapter in Chapters)
+        {
+            chapter.Refresh();
+        }
+
         OnPropertyChanged(nameof(SealCount));
         OnPropertyChanged(nameof(ProgressText));
         OnPropertyChanged(nameof(CanGoForward));

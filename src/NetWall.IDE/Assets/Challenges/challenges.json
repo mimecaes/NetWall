@@ -3,6 +3,7 @@
     {
       "id": "U1",
       "name": "Variables y redes",
+      "description": "Aprende a guardar datos en variables y a describir redes y equipos con sus direcciones.",
       "brush": "PastelPinkBrush",
       "challenges": [
         {
@@ -65,6 +66,7 @@
     {
       "id": "U2",
       "name": "Reglas",
+      "description": "Escribe tus primeras reglas de firewall y decide qué tráfico pasa y cuál se bloquea.",
       "brush": "PastelMintBrush",
       "challenges": [
         {
@@ -151,6 +153,7 @@
     {
       "id": "U3",
       "name": "Avanzado",
+      "description": "Rangos de puertos, el orden de las reglas y cómo mantener un firewall limpio.",
       "brush": "PastelSkyBrush",
       "challenges": [
         {
@@ -224,6 +227,7 @@
     {
       "id": "EX",
       "name": "Examen",
+      "description": "Junta todo lo que aprendiste para proteger la red completa de una empresa.",
       "brush": "PastelButterBrush",
       "challenges": [
         {
