@@ -203,6 +203,71 @@
         </Style>
         <Style Selector="controls|AnimatedIcon.fish.earned">
             <Setter Property="Stroke" Value="{DynamicResource Ansi4Brush}" />
+            <Style.Animations>
+                <Animation Duration="0:0:0.6" Easing="BounceEaseOut" FillMode="Forward">
+                    <KeyFrame Cue="0%">
+                        <Setter Property="Opacity" Value="0" />
+                        <Setter Property="Margin" Value="0,-16,10,16" />
+                    </KeyFrame>
+                    <KeyFrame Cue="100%">
+                        <Setter Property="Opacity" Value="1" />
+                        <Setter Property="Margin" Value="0,0,10,0" />
+                    </KeyFrame>
+                </Animation>
+            </Style.Animations>
+        </Style>
+        <Style Selector="Border.stamp">
+            <Setter Property="Opacity" Value="0" />
+            <Setter Property="Padding" Value="12,3" />
+            <Setter Property="CornerRadius" Value="8" />
+            <Setter Property="BorderThickness" Value="2.5" />
+            <Setter Property="BorderBrush" Value="{DynamicResource RunGreenBrush}" />
+            <Setter Property="IsHitTestVisible" Value="False" />
+        </Style>
+        <Style Selector="Border.stamp TextBlock">
+            <Setter Property="FontFamily" Value="Cascadia Code,Consolas,DejaVu Sans Mono,monospace" />
+            <Setter Property="FontSize" Value="18" />
+            <Setter Property="FontWeight" Value="Bold" />
+            <Setter Property="Foreground" Value="{DynamicResource RunGreenBrush}" />
+        </Style>
+        <Style Selector="Border.stamp.stamped">
+            <Setter Property="Opacity" Value="0.9" />
+            <Style.Animations>
+                <Animation Duration="0:0:0.45" Easing="BackEaseOut" FillMode="Forward">
+                    <KeyFrame Cue="0%">
+                        <Setter Property="Opacity" Value="0" />
+                        <Setter Property="ScaleTransform.ScaleX" Value="2.2" />
+                        <Setter Property="ScaleTransform.ScaleY" Value="2.2" />
+                    </KeyFrame>
+                    <KeyFrame Cue="100%">
+                        <Setter Property="Opacity" Value="0.9" />
+                        <Setter Property="ScaleTransform.ScaleX" Value="1" />
+                        <Setter Property="ScaleTransform.ScaleY" Value="1" />
+                    </KeyFrame>
+                </Animation>
+            </Style.Animations>
+        </Style>
+        <Style Selector="Panel.check-overlay">
+            <Setter Property="Opacity" Value="0" />
+            <Setter Property="Transitions">
+                <Transitions>
+                    <DoubleTransition Property="Opacity" Duration="0:0:0.25" />
+                </Transitions>
+            </Setter>
+        </Style>
+        <Style Selector="Panel.check-overlay.shown">
+            <Setter Property="Opacity" Value="1" />
+        </Style>
+        <Style Selector="Border.check-card">
+            <Setter Property="Margin" Value="40" />
+            <Setter Property="MaxWidth" Value="940" />
+            <Setter Property="MaxHeight" Value="460" />
+            <Setter Property="Padding" Value="10" />
+            <Setter Property="CornerRadius" Value="16" />
+            <Setter Property="Background" Value="{DynamicResource PanelBackgroundBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="BoxShadow" Value="0 12 32 0 #70000000" />
         </Style>
         <Style Selector="TextBlock.reward-text">
             <Setter Property="FontSize" Value="12.5" />
@@ -231,6 +296,16 @@
             <Border Grid.Column="0" Classes="notebook">
                 <Panel>
                     <controls:NotebookPaper />
+                    <Border Classes="stamp" Classes.stamped="{Binding HasStamp}" HorizontalAlignment="Right"
+                            VerticalAlignment="Top" Margin="0,20,28,0">
+                        <Border.RenderTransform>
+                            <TransformGroup>
+                                <ScaleTransform />
+                                <RotateTransform Angle="-12" />
+                            </TransformGroup>
+                        </Border.RenderTransform>
+                        <TextBlock Text="{Binding StampText}" />
+                    </Border>
                     <DockPanel Margin="52,16,18,14">
                         <StackPanel DockPanel.Dock="Top">
                             <TextBlock Classes="challenge-title" Text="{Binding Current.Heading, FallbackValue=''}"
@@ -363,5 +438,11 @@
                 </ScrollViewer>
             </Border>
         </Grid>
+        <Panel Name="CheckOverlay" Classes="check-overlay" IsVisible="False">
+            <Border Background="{DynamicResource BackgroundBrush}" Opacity="0.8" />
+            <Border Classes="check-card">
+                <controls:ChallengeCheckStage Name="Stage" />
+            </Border>
+        </Panel>
     </Panel>
 </UserControl>

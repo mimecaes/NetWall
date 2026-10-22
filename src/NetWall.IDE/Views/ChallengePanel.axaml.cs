@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using Avalonia.Controls;
@@ -52,6 +53,7 @@ public partial class ChallengePanel : UserControl
         {
             _viewModel.CodeReplaced -= OnCodeReplaced;
             _viewModel.HelpySpoke -= OnHelpySpoke;
+            _viewModel.Presenter = null;
         }
 
         _viewModel = DataContext as ChallengeViewModel;
@@ -59,6 +61,7 @@ public partial class ChallengePanel : UserControl
         {
             _viewModel.CodeReplaced += OnCodeReplaced;
             _viewModel.HelpySpoke += OnHelpySpoke;
+            _viewModel.Presenter = PresentAsync;
         }
 
         Board.Levels = _viewModel?.Levels ?? [];
@@ -88,6 +91,17 @@ public partial class ChallengePanel : UserControl
             _viewModel.CheckCommand.Execute(null);
             e.Handled = true;
         }
+    }
+
+    private async Task PresentAsync(IReadOnlyList<ChallengeOutcome> outcomes)
+    {
+        CheckOverlay.IsVisible = true;
+        await Task.Delay(30);
+        CheckOverlay.Classes.Add("shown");
+        await Stage.PlayAsync(outcomes);
+        CheckOverlay.Classes.Remove("shown");
+        await Task.Delay(260);
+        CheckOverlay.IsVisible = false;
     }
 
     private void OnHelpySpoke(string text, BubbleTone tone) => _ = TypeAsync(text, tone);

@@ -72,6 +72,8 @@ public sealed partial class ChallengeReward(string text) : ObservableObject
     public partial bool IsEarned { get; set; }
 }
 
+public sealed record ChallengeOutcome(ChallengeTest Test, bool Passed, bool? Allowed);
+
 public partial class ChallengeViewModel : ViewModelBase
 {
     private readonly Func<string?> _cliPath;
@@ -108,6 +110,14 @@ public partial class ChallengeViewModel : ViewModelBase
     public event Action<string>? CodeReplaced;
 
     public event Action<string, BubbleTone>? HelpySpoke;
+
+    public Func<IReadOnlyList<ChallengeOutcome>, Task>? Presenter { get; set; }
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasStamp))]
+    public partial string StampText { get; set; } = string.Empty;
+
+    public bool HasStamp => StampText.Length > 0;
 
     public string Code { get; private set; } = string.Empty;
 
@@ -190,6 +200,7 @@ public partial class ChallengeViewModel : ViewModelBase
     public void UpdateCode(string code)
     {
         Code = code;
+        StampText = string.Empty;
         _ = LiveDiagnosticsAsync();
     }
 
@@ -218,6 +229,7 @@ public partial class ChallengeViewModel : ViewModelBase
 
         SaveCode();
         Current = level;
+        StampText = string.Empty;
         Tests.Clear();
         Objectives.Clear();
         foreach (var test in level.Challenge.Tests)
@@ -269,6 +281,7 @@ public partial class ChallengeViewModel : ViewModelBase
 
         Code = Current.Challenge.Starter;
         CodeReplaced?.Invoke(Code);
+        StampText = string.Empty;
         _ = LiveDiagnosticsAsync();
         foreach (var card in Tests)
         {
@@ -320,11 +333,30 @@ public partial class ChallengeViewModel : ViewModelBase
 
         var packets = result.Packets ?? [];
         var next = 0;
+        var outcomes = new List<ChallengeOutcome>();
         foreach (var card in Tests)
         {
-            card.State = Passes(card.Test, result, packets, ref next)
-                ? ChallengeTestState.Passed
-                : ChallengeTestState.Failed;
+            var allowed = card.Test.Kind == "packet" && next < packets.Count ? packets[next].IsAllowed : (bool?)null;
+            outcomes.Add(new ChallengeOutcome(card.Test, Passes(card.Test, result, packets, ref next), allowed));
+        }
+
+        var rulesOk = level.Challenge.MaxRules is not { } max || (result.Rules?.Count ?? 0) <= max;
+        var clean = result.Diagnostics.Count == 0;
+        var fish = outcomes.All(outcome => outcome.Passed) ? rulesOk ? clean ? 3 : 2 : 1 : 0;
+        if (Presenter is not null)
+        {
+            IsChecking = true;
+            await Presenter(outcomes);
+            IsChecking = false;
+            if (Current != level)
+            {
+                return;
+            }
+        }
+
+        for (var i = 0; i < Tests.Count; i++)
+        {
+            Tests[i].State = outcomes[i].Passed ? ChallengeTestState.Passed : ChallengeTestState.Failed;
         }
 
         if (Tests.FirstOrDefault(card => card.IsFailed) is { } failed)
@@ -337,10 +369,13 @@ public partial class ChallengeViewModel : ViewModelBase
             return;
         }
 
-        var rulesOk = level.Challenge.MaxRules is not { } max || (result.Rules?.Count ?? 0) <= max;
-        var clean = result.Diagnostics.Count == 0;
-        var fish = rulesOk ? clean ? 3 : 2 : 1;
         ShowRewards(fish);
+        StampText = fish switch
+        {
+            3 => "¡Excelente!",
+            2 => "¡Muy bien!",
+            _ => "¡Funciona!",
+        };
         if (fish > level.Fish)
         {
             level.Fish = fish;
