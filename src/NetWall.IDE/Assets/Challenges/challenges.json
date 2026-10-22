@@ -3,11 +3,12 @@
     {
       "id": "U1",
       "name": "Variables y redes",
-      "brush": "Ansi5Brush",
+      "brush": "PastelPinkBrush",
       "challenges": [
         {
           "id": "VAR-01",
           "title": "Tu primera variable",
+          "learn": ["Qué es una variable", "Cómo se declara", "El tipo Int"],
           "statement": "Las variables guardan datos con un nombre para usarlos después. Declara la variable puerto_web de tipo Int con el valor 80.",
           "hint": "La forma es: declarar nombre: Tipo = valor; y va antes de principal.",
           "starter": "\n\nprincipal {\n}\n",
@@ -20,9 +21,11 @@
         {
           "id": "VAR-02",
           "title": "Cada dato con su tipo",
+          "type": "fix",
+          "learn": ["Los tipos Int, Float y String", "Leer un error de tipos", "Corregir código que ya existe"],
           "statement": "Este código tiene un error: 2.5 no es un número entero, así que no cabe en un Int. Cambia el tipo de version para que el programa compile.",
           "hint": "Los números con decimales son de tipo Float.",
-          "starter": "declarar version: Int = 2.5;\ndeclarar empresa: String = \"Panadería López\";\n\nprincipal {\n}\n",
+          "starter": "declarar version: Int = 2.5;\ndeclarar empresa: String = \"Microsoft Pérez\";\n\nprincipal {\n}\n",
           "concepts": ["Float", "String", "tipos"],
           "lesson": {"title": "Tipos de datos", "text": "Int guarda números enteros, Float números con decimales y String texto entre comillas. El valor tiene que coincidir con el tipo; si no, NetWall marca un error.", "example": "declarar precio: Float = 9.5;\ndeclarar ciudad: String = \"Heredia\";"},
           "tests": [
@@ -33,6 +36,7 @@
         {
           "id": "RED-01",
           "title": "Redes con CIDR",
+          "learn": ["Qué es una red", "La notación CIDR", "Cuántas direcciones tiene un /24"],
           "statement": "Una red se escribe con su dirección y una máscara. 192.168.1.0/24 son las 256 direcciones que van de 192.168.1.0 a 192.168.1.255. Declara la red lan de tipo Red con ese valor.",
           "hint": "El valor de una Red va entre comillas: \"192.168.1.0/24\".",
           "starter": "\n\nprincipal {\n}\n",
@@ -45,6 +49,7 @@
         {
           "id": "RED-02",
           "title": "Un solo equipo",
+          "learn": ["Representar un solo equipo", "La máscara /32", "Redes y equipos juntos"],
           "statement": "Una red /32 tiene una sola dirección, así que representa un equipo. Declara el servidor web con la dirección 10.0.0.5/32.",
           "hint": "Es igual que una red, pero con la máscara /32.",
           "starter": "declarar lan: Red = \"192.168.1.0/24\";\n\n\nprincipal {\n}\n",
@@ -60,11 +65,12 @@
     {
       "id": "U2",
       "name": "Reglas",
-      "brush": "Ansi6Brush",
+      "brush": "PastelMintBrush",
       "challenges": [
         {
           "id": "RGL-01",
           "title": "Tu primera regla",
+          "learn": ["Qué es una regla", "Los campos accion, protocolo y puerto", "Qué pasa con lo que la regla no menciona"],
           "statement": "Las reglas deciden qué tráfico pasa por el firewall. Escribe una regla que permita el tráfico tcp al puerto 80, que es el de las páginas web.",
           "hint": "Una regla se ve así: regla nombre { accion = permitir, protocolo = tcp, puerto = 80 };",
           "starter": "declarar web: Red = \"10.0.0.5/32\";\n\n\nprincipal {\n}\n",
@@ -79,6 +85,7 @@
         {
           "id": "RGL-02",
           "title": "¿De dónde viene?",
+          "learn": ["El campo origen", "El campo destino", "Usar variables Red en una regla"],
           "statement": "Una regla también puede mirar el origen del paquete. Permite la web (tcp 80) hacia web solo cuando el paquete viene de la lan.",
           "hint": "Agrega origen = lan y destino = web a tu regla.",
           "starter": "declarar lan: Red = \"192.168.1.0/24\";\ndeclarar web: Red = \"10.0.0.5/32\";\n\n\nprincipal {\n}\n",
@@ -95,6 +102,7 @@
         {
           "id": "PRE-01",
           "title": "¿Pasa o se bloquea?",
+          "learn": ["Las reglas se revisan en orden", "Qué hace politica_defecto", "Leer origen y destino"],
           "type": "predict",
           "statement": "Lee este firewall sin cambiarlo. Un paquete tcp al puerto 80 llega desde internet (203.0.113.4) hacia web. ¿Pasa o se bloquea?",
           "hint": "Mira el origen de la regla: ¿203.0.113.4 está dentro de la lan?",
@@ -108,6 +116,7 @@
         {
           "id": "RGL-03",
           "title": "La política por defecto",
+          "learn": ["El bloque principal", "La política por defecto", "El protocolo udp"],
           "statement": "Cuando ninguna regla coincide se aplica politica_defecto, que se escribe dentro de principal. Escríbela como bloquear y permite las consultas DNS (udp 53) hacia dns.",
           "hint": "Dentro de principal va: politica_defecto = bloquear;",
           "starter": "declarar lan: Red = \"192.168.1.0/24\";\ndeclarar dns: Red = \"10.0.0.53/32\";\n\n\nprincipal {\n}\n",
@@ -123,6 +132,7 @@
         {
           "id": "RGL-04",
           "title": "Bloquear también es regla",
+          "learn": ["Bloquear con una regla", "Lista blanca y lista negra", "El servicio SSH"],
           "statement": "Esta vez todo está permitido por defecto. Escribe politica_defecto = permitir y una regla que bloquee SSH (tcp 22) hacia servidor, venga de donde venga.",
           "hint": "Usa accion = bloquear en tu regla.",
           "starter": "declarar lan: Red = \"192.168.1.0/24\";\ndeclarar servidor: Red = \"10.0.0.7/32\";\n\n\nprincipal {\n}\n",
@@ -141,11 +151,12 @@
     {
       "id": "U3",
       "name": "Avanzado",
-      "brush": "Ansi4Brush",
+      "brush": "PastelSkyBrush",
       "challenges": [
         {
           "id": "ADV-01",
           "title": "Rangos de puertos",
+          "learn": ["Rangos de puertos", "Los extremos del rango", "Una regla para muchos puertos"],
           "statement": "Algunas aplicaciones usan muchos puertos. Permite el tráfico tcp del puerto 1000 al 2000 hacia app con una sola regla.",
           "hint": "Un rango se escribe puerto = rango(1000, 2000).",
           "starter": "declarar app: Red = \"10.0.0.8/32\";\n\n\nprincipal {\n    politica_defecto = bloquear;\n}\n",
@@ -162,6 +173,8 @@
         {
           "id": "ADV-02",
           "title": "El orden importa",
+          "type": "fix",
+          "learn": ["Gana la primera regla que coincide", "Reglas que nunca se usan", "Ordenar de lo específico a lo general"],
           "statement": "Gana la primera regla que coincide. Aquí permitir_web nunca se usa porque bloquear_tcp va antes y la cubre. Ordena las reglas para que la web pase.",
           "hint": "Mueve permitir_web arriba de bloquear_tcp.",
           "starter": "declarar web: Red = \"10.0.0.5/32\";\n\nregla bloquear_tcp {\n    accion = bloquear,\n    protocolo = tcp\n};\n\nregla permitir_web {\n    accion = permitir,\n    protocolo = tcp,\n    puerto = 80,\n    destino = web\n};\n\nprincipal {\n    politica_defecto = permitir;\n}\n",
@@ -177,6 +190,7 @@
         {
           "id": "PRE-02",
           "title": "La primera que coincide",
+          "learn": ["La primera coincidencia", "Reglas que se cruzan", "Leer un firewall sin ejecutarlo"],
           "type": "predict",
           "statement": "Lee este firewall sin cambiarlo. Un paquete tcp al puerto 22 va desde internet hacia web. Las dos reglas parecen servir. ¿Pasa o se bloquea?",
           "hint": "Revisa las reglas en orden: ¿cuál es la primera que coincide con tcp 22?",
@@ -190,6 +204,8 @@
         {
           "id": "ADV-03",
           "title": "Un firewall limpio",
+          "type": "fix",
+          "learn": ["Reglas redundantes", "Las advertencias del analizador", "Un firewall fácil de leer"],
           "statement": "web_lan no sirve de nada: web_todos ya permite todo lo que ella cubre. Quita la regla redundante sin cambiar lo que el firewall deja pasar.",
           "hint": "Una regla es redundante si otra anterior ya hace lo mismo.",
           "starter": "declarar lan: Red = \"192.168.1.0/24\";\ndeclarar web: Red = \"10.0.0.5/32\";\n\nregla web_todos {\n    accion = permitir,\n    protocolo = tcp,\n    puerto = 80,\n    destino = web\n};\n\nregla web_lan {\n    accion = permitir,\n    protocolo = tcp,\n    puerto = 80,\n    origen = lan,\n    destino = web\n};\n\nregla ssh_lan {\n    accion = permitir,\n    protocolo = tcp,\n    puerto = 22,\n    origen = lan,\n    destino = web\n};\n\nprincipal {\n    politica_defecto = bloquear;\n}\n",
@@ -208,12 +224,13 @@
     {
       "id": "EX",
       "name": "Examen",
-      "brush": "Ansi3Brush",
+      "brush": "PastelButterBrush",
       "challenges": [
         {
           "id": "EXAMEN",
           "title": "La red de la empresa",
-          "statement": "Examen final. La web (tcp 80 y 443) debe estar abierta a todos, SSH (tcp 22) hacia web solo desde la lan y DNS (udp 53) hacia dns solo desde la lan. Todo lo demás se bloquea con politica_defecto.",
+          "learn": ["Juntar todo lo aprendido", "Diseñar un firewall completo", "Probarlo con pruebas ocultas"],
+          "statement": "¡Examen final! La web (tcp 80 y 443) debe estar abierta a todos, SSH (tcp 22) hacia web solo desde la lan y DNS (udp 53) hacia dns solo desde la lan. Todo lo demás se bloquea con politica_defecto.",
           "hint": "Necesitas una regla por cada servicio y puerto, y la política en principal.",
           "starter": "declarar lan: Red = \"192.168.1.0/24\";\ndeclarar web: Red = \"10.0.0.5/32\";\ndeclarar dns: Red = \"10.0.0.53/32\";\n\n\nprincipal {\n}\n",
           "maxRules": 4,

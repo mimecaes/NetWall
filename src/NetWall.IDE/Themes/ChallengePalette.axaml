@@ -1,0 +1,22 @@
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <SolidColorBrush x:Key="NotebookCoverBrush" Color="#2B2440" />
+    <SolidColorBrush x:Key="NotebookPageBrush" Color="#221D33" />
+    <SolidColorBrush x:Key="NotebookLineBrush" Color="#16C3B1E1" />
+    <SolidColorBrush x:Key="NotebookRingBrush" Color="#C3B1E1" />
+    <SolidColorBrush x:Key="NotebookBoxBrush" Color="#2E2745" />
+    <SolidColorBrush x:Key="NotebookCodeBrush" Color="#17131F" />
+    <SolidColorBrush x:Key="NotebookInkBrush" Color="#ECE6F8" />
+    <SolidColorBrush x:Key="NotebookMutedBrush" Color="#8F86AA" />
+    <SolidColorBrush x:Key="PastelPinkBrush" Color="#F5B8D0" />
+    <SolidColorBrush x:Key="PastelMintBrush" Color="#A8E6CF" />
+    <SolidColorBrush x:Key="PastelLavenderBrush" Color="#C3B1E1" />
+    <SolidColorBrush x:Key="PastelPeachBrush" Color="#FFD3B6" />
+    <SolidColorBrush x:Key="PastelSkyBrush" Color="#A0C4FF" />
+    <SolidColorBrush x:Key="PastelButterBrush" Color="#FFE3A3" />
+    <SolidColorBrush x:Key="PastelInkBrush" Color="#2B2440" />
+    <SolidColorBrush x:Key="SealPinkBrush" Color="#E8899E" />
+    <SolidColorBrush x:Key="SealGoldBrush" Color="#F2C46D" />
+
+</ResourceDictionary>

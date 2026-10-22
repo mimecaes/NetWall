@@ -8,7 +8,8 @@ public sealed record ChallengeCatalogData(List<ChallengeModule> Modules);
 public sealed record ChallengeModule(string Id, string Name, string Brush, List<Challenge> Challenges);
 
 public sealed record Challenge(string Id, string Title, string Statement, string Hint, string Starter, int? MaxRules,
-    List<string> Concepts, List<ChallengeTest> Tests, string? Type = null, ChallengeLesson? Lesson = null)
+    List<string> Concepts, List<ChallengeTest> Tests, string? Type = null, ChallengeLesson? Lesson = null,
+    List<string>? Learn = null)
 {
     public bool IsPredict => Type == "predict";
 }
