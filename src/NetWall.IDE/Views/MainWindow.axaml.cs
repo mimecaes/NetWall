@@ -123,11 +123,28 @@ public partial class MainWindow : Window
 
     private void OnExitSimulationClick(object? sender, RoutedEventArgs e) => _ = ExitSimulationAsync();
 
+    private void OnChallengeModeClick(object? sender, RoutedEventArgs e)
+    {
+        ChallengeView.SetHelpyColor(Pet.Color);
+        ViewModel?.EnterChallengeMode();
+    }
+
+    private void OnExitChallengeClick(object? sender, RoutedEventArgs e) => ViewModel?.ExitChallengeMode();
+
+    private void OnPreviousChallengeClick(object? sender, RoutedEventArgs e) => ViewModel?.Challenges.GoBack();
+
+    private void OnNextChallengeClick(object? sender, RoutedEventArgs e) => ViewModel?.Challenges.GoForward();
+
     private void OnWindowKeyDown(object? sender, KeyEventArgs e)
     {
         if (e.Key == Key.Escape && ViewModel is { IsSimulationMode: true })
         {
             _ = ExitSimulationAsync();
+            e.Handled = true;
+        }
+        else if (e.Key == Key.Escape && ViewModel is { IsChallengeMode: true } viewModel)
+        {
+            viewModel.ExitChallengeMode();
             e.Handled = true;
         }
     }
@@ -413,6 +430,7 @@ public partial class MainWindow : Window
         {
             Pet.SetColor(color);
             SimulationView.SetHelpyColor(color);
+            ChallengeView.SetHelpyColor(color);
         }
     }
 

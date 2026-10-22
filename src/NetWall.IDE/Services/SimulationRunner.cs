@@ -15,7 +15,7 @@ public static class SimulationRunner
     private static readonly JsonSerializerOptions Options = new() { PropertyNameCaseInsensitive = true };
 
     public static Task<SimulationResult?> RunAsync(string cliPath, string filePath) =>
-        RunAsync(cliPath, filePath, request: null);
+        RunCliAsync<SimulationResult>(cliPath, filePath, "--simulacion", null);
 
     public static Task<SimulationResult?> RunCustomAsync(string cliPath, string filePath, IEnumerable<string> rules,
         IEnumerable<SimulatedPacket> packets)
@@ -31,14 +31,31 @@ public static class SimulationRunner
                 destination = packet.Destination,
             }),
         });
-        return RunAsync(cliPath, filePath, request);
+        return RunCliAsync<SimulationResult>(cliPath, filePath, "--simulacion-personalizada", request);
     }
 
-    private static async Task<SimulationResult?> RunAsync(string cliPath, string filePath, string? request)
+    public static Task<ChallengeResult?> RunChallengeAsync(string cliPath, string filePath,
+        IEnumerable<ChallengeTest> packets)
+    {
+        var request = JsonSerializer.Serialize(new
+        {
+            packets = packets.Select(packet => new
+            {
+                protocol = packet.Protocol,
+                port = packet.Port,
+                source = packet.Source,
+                destination = packet.Destination,
+            }),
+        });
+        return RunCliAsync<ChallengeResult>(cliPath, filePath, "--retos", request);
+    }
+
+    private static async Task<T?> RunCliAsync<T>(string cliPath, string filePath, string mode, string? request)
+        where T : class
     {
         var startInfo = new ProcessStartInfo("python")
         {
-            ArgumentList = { cliPath, filePath, request is null ? "--simulacion" : "--simulacion-personalizada" },
+            ArgumentList = { cliPath, filePath, mode },
             RedirectStandardOutput = true,
             RedirectStandardInput = request is not null,
             UseShellExecute = false,
@@ -63,7 +80,7 @@ public static class SimulationRunner
 
             var output = await process.StandardOutput.ReadToEndAsync();
             await process.WaitForExitAsync();
-            return JsonSerializer.Deserialize<SimulationResult>(output, Options);
+            return JsonSerializer.Deserialize<T>(output, Options);
         }
         catch (Exception e) when (e is Win32Exception or JsonException)
         {

@@ -1,0 +1,199 @@
+{
+  "modules": [
+    {
+      "id": "U1",
+      "name": "Variables y redes",
+      "brush": "Ansi5Brush",
+      "challenges": [
+        {
+          "id": "VAR-01",
+          "title": "Tu primera variable",
+          "statement": "Las variables guardan datos con un nombre para usarlos después. Declara la variable puerto_web de tipo Int con el valor 80.",
+          "hint": "La forma es: declarar nombre: Tipo = valor; y va antes de principal.",
+          "starter": "\n\nprincipal {\n}\n",
+          "concepts": ["declarar", "Int"],
+          "tests": [
+            { "kind": "variable", "label": "puerto_web es Int y vale 80", "visible": true, "name": "puerto_web", "type": "Int", "value": "80" }
+          ]
+        },
+        {
+          "id": "VAR-02",
+          "title": "Cada dato con su tipo",
+          "statement": "Este código tiene un error: 2.5 no es un número entero, así que no cabe en un Int. Cambia el tipo de version para que el programa compile.",
+          "hint": "Los números con decimales son de tipo Float.",
+          "starter": "declarar version: Int = 2.5;\ndeclarar empresa: String = \"Panadería López\";\n\nprincipal {\n}\n",
+          "concepts": ["Float", "String", "tipos"],
+          "tests": [
+            { "kind": "variable", "label": "version es Float y vale 2.5", "visible": true, "name": "version", "type": "Float", "value": "2.5" },
+            { "kind": "variable", "label": "empresa sigue siendo String", "visible": false, "name": "empresa", "type": "String", "failure": "No borres empresa: solo había que corregir version." }
+          ]
+        },
+        {
+          "id": "RED-01",
+          "title": "Redes con CIDR",
+          "statement": "Una red se escribe con su dirección y una máscara. 192.168.1.0/24 son las 256 direcciones que van de 192.168.1.0 a 192.168.1.255. Declara la red lan de tipo Red con ese valor.",
+          "hint": "El valor de una Red va entre comillas: \"192.168.1.0/24\".",
+          "starter": "\n\nprincipal {\n}\n",
+          "concepts": ["Red", "CIDR", "/24"],
+          "tests": [
+            { "kind": "variable", "label": "lan es la red 192.168.1.0/24", "visible": true, "name": "lan", "type": "Red", "value": "192.168.1.0/24" }
+          ]
+        },
+        {
+          "id": "RED-02",
+          "title": "Un solo equipo",
+          "statement": "Una red /32 tiene una sola dirección, así que representa un equipo. Declara el servidor web con la dirección 10.0.0.5/32.",
+          "hint": "Es igual que una red, pero con la máscara /32.",
+          "starter": "declarar lan: Red = \"192.168.1.0/24\";\n\n\nprincipal {\n}\n",
+          "concepts": ["/32", "host"],
+          "tests": [
+            { "kind": "variable", "label": "web es el equipo 10.0.0.5", "visible": true, "name": "web", "type": "Red", "value": "10.0.0.5/32" },
+            { "kind": "variable", "label": "lan sigue declarada", "visible": false, "name": "lan", "type": "Red", "value": "192.168.1.0/24", "failure": "No borres lan: la vas a necesitar en los próximos retos." }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "U2",
+      "name": "Reglas",
+      "brush": "Ansi6Brush",
+      "challenges": [
+        {
+          "id": "RGL-01",
+          "title": "Tu primera regla",
+          "statement": "Las reglas deciden qué tráfico pasa por el firewall. Escribe una regla que permita el tráfico tcp al puerto 80, que es el de las páginas web.",
+          "hint": "Una regla se ve así: regla nombre { accion = permitir, protocolo = tcp, puerto = 80 };",
+          "starter": "declarar web: Red = \"10.0.0.5/32\";\n\n\nprincipal {\n}\n",
+          "maxRules": 1,
+          "concepts": ["regla", "accion", "puerto"],
+          "tests": [
+            { "kind": "packet", "label": "Pasa tcp 80 hacia web", "visible": true, "protocol": "tcp", "port": 80, "source": "203.0.113.4", "destination": "10.0.0.5", "expect": "permitir" },
+            { "kind": "packet", "label": "No pasa tcp 22", "visible": false, "protocol": "tcp", "port": 22, "source": "203.0.113.4", "destination": "10.0.0.5", "expect": "bloquear", "failure": "Tu regla deja pasar más que la web: limita el puerto." }
+          ]
+        },
+        {
+          "id": "RGL-02",
+          "title": "¿De dónde viene?",
+          "statement": "Una regla también puede mirar el origen del paquete. Permite la web (tcp 80) hacia web solo cuando el paquete viene de la lan.",
+          "hint": "Agrega origen = lan y destino = web a tu regla.",
+          "starter": "declarar lan: Red = \"192.168.1.0/24\";\ndeclarar web: Red = \"10.0.0.5/32\";\n\n\nprincipal {\n}\n",
+          "maxRules": 1,
+          "concepts": ["origen", "destino"],
+          "tests": [
+            { "kind": "packet", "label": "Pasa desde la lan", "visible": true, "protocol": "tcp", "port": 80, "source": "192.168.1.10", "destination": "10.0.0.5", "expect": "permitir" },
+            { "kind": "packet", "label": "No pasa desde internet", "visible": true, "protocol": "tcp", "port": 80, "source": "203.0.113.4", "destination": "10.0.0.5", "expect": "bloquear" },
+            { "kind": "packet", "label": "Pasa desde otro equipo de la lan", "visible": false, "protocol": "tcp", "port": 80, "source": "192.168.1.77", "destination": "10.0.0.5", "expect": "permitir", "failure": "Toda la lan debe poder entrar, no solo un equipo." },
+            { "kind": "packet", "label": "No pasa tcp 443 desde la lan", "visible": false, "protocol": "tcp", "port": 443, "source": "192.168.1.10", "destination": "10.0.0.5", "expect": "bloquear", "failure": "Solo el puerto 80 debe pasar." }
+          ]
+        },
+        {
+          "id": "RGL-03",
+          "title": "La política por defecto",
+          "statement": "Cuando ninguna regla coincide se aplica politica_defecto, que se escribe dentro de principal. Escríbela como bloquear y permite las consultas DNS (udp 53) hacia dns.",
+          "hint": "Dentro de principal va: politica_defecto = bloquear;",
+          "starter": "declarar lan: Red = \"192.168.1.0/24\";\ndeclarar dns: Red = \"10.0.0.53/32\";\n\n\nprincipal {\n}\n",
+          "maxRules": 1,
+          "concepts": ["principal", "politica_defecto", "udp"],
+          "tests": [
+            { "kind": "policy", "label": "politica_defecto = bloquear", "visible": true, "expect": "bloquear" },
+            { "kind": "packet", "label": "Pasa DNS por udp 53", "visible": true, "protocol": "udp", "port": 53, "source": "192.168.1.10", "destination": "10.0.0.53", "expect": "permitir" },
+            { "kind": "packet", "label": "No pasa tcp 53", "visible": false, "protocol": "tcp", "port": 53, "source": "192.168.1.10", "destination": "10.0.0.53", "expect": "bloquear", "failure": "DNS usa udp: revisa el protocolo de tu regla." }
+          ]
+        },
+        {
+          "id": "RGL-04",
+          "title": "Bloquear también es regla",
+          "statement": "Esta vez todo está permitido por defecto. Escribe politica_defecto = permitir y una regla que bloquee SSH (tcp 22) hacia servidor, venga de donde venga.",
+          "hint": "Usa accion = bloquear en tu regla.",
+          "starter": "declarar lan: Red = \"192.168.1.0/24\";\ndeclarar servidor: Red = \"10.0.0.7/32\";\n\n\nprincipal {\n}\n",
+          "maxRules": 1,
+          "concepts": ["bloquear", "SSH", "lista negra"],
+          "tests": [
+            { "kind": "policy", "label": "politica_defecto = permitir", "visible": true, "expect": "permitir" },
+            { "kind": "packet", "label": "No pasa SSH desde internet", "visible": true, "protocol": "tcp", "port": 22, "source": "203.0.113.4", "destination": "10.0.0.7", "expect": "bloquear" },
+            { "kind": "packet", "label": "Pasa la web", "visible": true, "protocol": "tcp", "port": 80, "source": "203.0.113.4", "destination": "10.0.0.7", "expect": "permitir" },
+            { "kind": "packet", "label": "No pasa SSH desde la lan", "visible": false, "protocol": "tcp", "port": 22, "source": "192.168.1.10", "destination": "10.0.0.7", "expect": "bloquear", "failure": "SSH debe bloquearse venga de donde venga." }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "U3",
+      "name": "Avanzado",
+      "brush": "Ansi4Brush",
+      "challenges": [
+        {
+          "id": "ADV-01",
+          "title": "Rangos de puertos",
+          "statement": "Algunas aplicaciones usan muchos puertos. Permite el tráfico tcp del puerto 1000 al 2000 hacia app con una sola regla.",
+          "hint": "Un rango se escribe puerto = rango(1000, 2000).",
+          "starter": "declarar app: Red = \"10.0.0.8/32\";\n\n\nprincipal {\n    politica_defecto = bloquear;\n}\n",
+          "maxRules": 1,
+          "concepts": ["rango", "puertos"],
+          "tests": [
+            { "kind": "packet", "label": "Pasa el puerto 1500", "visible": true, "protocol": "tcp", "port": 1500, "source": "203.0.113.4", "destination": "10.0.0.8", "expect": "permitir" },
+            { "kind": "packet", "label": "No pasa el puerto 2500", "visible": true, "protocol": "tcp", "port": 2500, "source": "203.0.113.4", "destination": "10.0.0.8", "expect": "bloquear" },
+            { "kind": "packet", "label": "Pasa el puerto 1000", "visible": false, "protocol": "tcp", "port": 1000, "source": "203.0.113.4", "destination": "10.0.0.8", "expect": "permitir", "failure": "El rango incluye sus extremos: el 1000 también debe pasar." },
+            { "kind": "packet", "label": "Pasa el puerto 2000", "visible": false, "protocol": "tcp", "port": 2000, "source": "203.0.113.4", "destination": "10.0.0.8", "expect": "permitir", "failure": "El rango incluye sus extremos: el 2000 también debe pasar." }
+          ]
+        },
+        {
+          "id": "ADV-02",
+          "title": "El orden importa",
+          "statement": "Gana la primera regla que coincide. Aquí permitir_web nunca se usa porque bloquear_tcp va antes y la cubre. Ordena las reglas para que la web pase.",
+          "hint": "Mueve permitir_web arriba de bloquear_tcp.",
+          "starter": "declarar web: Red = \"10.0.0.5/32\";\n\nregla bloquear_tcp {\n    accion = bloquear,\n    protocolo = tcp\n};\n\nregla permitir_web {\n    accion = permitir,\n    protocolo = tcp,\n    puerto = 80,\n    destino = web\n};\n\nprincipal {\n    politica_defecto = permitir;\n}\n",
+          "maxRules": 2,
+          "concepts": ["orden", "primera coincidencia"],
+          "tests": [
+            { "kind": "packet", "label": "Pasa la web", "visible": true, "protocol": "tcp", "port": 80, "source": "203.0.113.4", "destination": "10.0.0.5", "expect": "permitir" },
+            { "kind": "packet", "label": "No pasa otro tcp", "visible": true, "protocol": "tcp", "port": 22, "source": "203.0.113.4", "destination": "10.0.0.5", "expect": "bloquear" },
+            { "kind": "packet", "label": "Pasa udp", "visible": false, "protocol": "udp", "port": 53, "source": "203.0.113.4", "destination": "10.0.0.5", "expect": "permitir", "failure": "No bloquees udp: solo había que reordenar." }
+          ]
+        },
+        {
+          "id": "ADV-03",
+          "title": "Un firewall limpio",
+          "statement": "web_lan no sirve de nada: web_todos ya permite todo lo que ella cubre. Quita la regla redundante sin cambiar lo que el firewall deja pasar.",
+          "hint": "Una regla es redundante si otra anterior ya hace lo mismo.",
+          "starter": "declarar lan: Red = \"192.168.1.0/24\";\ndeclarar web: Red = \"10.0.0.5/32\";\n\nregla web_todos {\n    accion = permitir,\n    protocolo = tcp,\n    puerto = 80,\n    destino = web\n};\n\nregla web_lan {\n    accion = permitir,\n    protocolo = tcp,\n    puerto = 80,\n    origen = lan,\n    destino = web\n};\n\nregla ssh_lan {\n    accion = permitir,\n    protocolo = tcp,\n    puerto = 22,\n    origen = lan,\n    destino = web\n};\n\nprincipal {\n    politica_defecto = bloquear;\n}\n",
+          "maxRules": 2,
+          "concepts": ["redundancia", "buenas prácticas"],
+          "tests": [
+            { "kind": "clean", "label": "Sin reglas redundantes", "visible": true },
+            { "kind": "packet", "label": "Pasa la web desde internet", "visible": true, "protocol": "tcp", "port": 80, "source": "203.0.113.4", "destination": "10.0.0.5", "expect": "permitir" },
+            { "kind": "packet", "label": "Pasa SSH desde la lan", "visible": true, "protocol": "tcp", "port": 22, "source": "192.168.1.10", "destination": "10.0.0.5", "expect": "permitir" },
+            { "kind": "packet", "label": "No pasa SSH desde internet", "visible": false, "protocol": "tcp", "port": 22, "source": "203.0.113.4", "destination": "10.0.0.5", "expect": "bloquear", "failure": "SSH solo debe entrar desde la lan." }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "EX",
+      "name": "Examen",
+      "brush": "Ansi3Brush",
+      "challenges": [
+        {
+          "id": "EXAMEN",
+          "title": "La red de la empresa",
+          "statement": "Examen final. La web (tcp 80 y 443) debe estar abierta a todos, SSH (tcp 22) hacia web solo desde la lan y DNS (udp 53) hacia dns solo desde la lan. Todo lo demás se bloquea con politica_defecto.",
+          "hint": "Necesitas una regla por cada servicio y puerto, y la política en principal.",
+          "starter": "declarar lan: Red = \"192.168.1.0/24\";\ndeclarar web: Red = \"10.0.0.5/32\";\ndeclarar dns: Red = \"10.0.0.53/32\";\n\n\nprincipal {\n}\n",
+          "maxRules": 4,
+          "concepts": ["todo junto"],
+          "tests": [
+            { "kind": "policy", "label": "politica_defecto = bloquear", "visible": true, "expect": "bloquear" },
+            { "kind": "packet", "label": "Web 80 abierta a todos", "visible": true, "protocol": "tcp", "port": 80, "source": "203.0.113.4", "destination": "10.0.0.5", "expect": "permitir" },
+            { "kind": "packet", "label": "Web 443 abierta a todos", "visible": true, "protocol": "tcp", "port": 443, "source": "203.0.113.4", "destination": "10.0.0.5", "expect": "permitir" },
+            { "kind": "packet", "label": "SSH desde la lan", "visible": true, "protocol": "tcp", "port": 22, "source": "192.168.1.10", "destination": "10.0.0.5", "expect": "permitir" },
+            { "kind": "packet", "label": "DNS desde la lan", "visible": true, "protocol": "udp", "port": 53, "source": "192.168.1.10", "destination": "10.0.0.53", "expect": "permitir" },
+            { "kind": "packet", "label": "Sin SSH desde internet", "visible": false, "protocol": "tcp", "port": 22, "source": "203.0.113.4", "destination": "10.0.0.5", "expect": "bloquear", "failure": "SSH no debe entrar desde internet." },
+            { "kind": "packet", "label": "Sin DNS desde internet", "visible": false, "protocol": "udp", "port": 53, "source": "203.0.113.4", "destination": "10.0.0.53", "expect": "bloquear", "failure": "DNS solo debe responder a la lan." },
+            { "kind": "packet", "label": "Sin DNS por tcp", "visible": false, "protocol": "tcp", "port": 53, "source": "192.168.1.10", "destination": "10.0.0.53", "expect": "bloquear", "failure": "DNS usa udp: no abras tcp 53." },
+            { "kind": "packet", "label": "Sin otros puertos", "visible": false, "protocol": "tcp", "port": 8080, "source": "203.0.113.4", "destination": "10.0.0.5", "expect": "bloquear", "failure": "Solo los puertos 80 y 443 de la web deben estar abiertos." }
+          ]
+        }
+      ]
+    }
+  ]
+}

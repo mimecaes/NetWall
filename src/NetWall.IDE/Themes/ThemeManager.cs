@@ -17,6 +17,7 @@ public static class ThemeManager
         "TextPrimary", "TextMuted", "TextDisabled", "Border",
         "Hover", "Active", "RunGreen", "StopRed",
         "TabActiveBackground", "TabInactiveBackground", "TerminalBackground", "EditorBackground",
+        "ChallengePaper", "ChallengeLine",
         "Ansi0", "Ansi1", "Ansi2", "Ansi3", "Ansi4", "Ansi5", "Ansi6", "Ansi7",
         "Ansi8", "Ansi9", "Ansi10", "Ansi11", "Ansi12", "Ansi13", "Ansi14", "Ansi15",
     ];

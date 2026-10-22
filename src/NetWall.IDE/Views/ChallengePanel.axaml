@@ -1,0 +1,364 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:NetWall.IDE.ViewModels"
+             xmlns:controls="using:NetWall.IDE.Controls"
+             xmlns:ae="https://github.com/avaloniaui/avaloniaedit"
+             x:Class="NetWall.IDE.Views.ChallengePanel"
+             x:DataType="vm:ChallengeViewModel"
+             x:CompileBindings="True">
+
+    <UserControl.Styles>
+        <Style Selector="Border.notebook">
+            <Setter Property="Background" Value="{DynamicResource ChallengePaperBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="12" />
+            <Setter Property="ClipToBounds" Value="True" />
+        </Style>
+        <Style Selector="Border.challenge-side">
+            <Setter Property="Background" Value="{DynamicResource PanelBackgroundBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="12" />
+        </Style>
+        <Style Selector="TextBlock.challenge-title">
+            <Setter Property="FontSize" Value="17" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+        </Style>
+        <Style Selector="TextBlock.challenge-subtitle">
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="Margin" Value="0,2,0,0" />
+            <Setter Property="Foreground" Value="{DynamicResource TextMutedBrush}" />
+        </Style>
+        <Style Selector="Border.challenge-avatar">
+            <Setter Property="Width" Value="46" />
+            <Setter Property="Height" Value="46" />
+            <Setter Property="CornerRadius" Value="23" />
+            <Setter Property="VerticalAlignment" Value="Top" />
+            <Setter Property="Background" Value="{DynamicResource SurfaceBackgroundBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+        </Style>
+        <Style Selector="Border.challenge-bubble">
+            <Setter Property="Margin" Value="12,0,0,0" />
+            <Setter Property="Padding" Value="12,9" />
+            <Setter Property="MinHeight" Value="46" />
+            <Setter Property="CornerRadius" Value="12" />
+            <Setter Property="Background" Value="{DynamicResource SurfaceBackgroundBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="Transitions">
+                <Transitions>
+                    <BrushTransition Property="BorderBrush" Duration="0:0:0.25" />
+                </Transitions>
+            </Setter>
+        </Style>
+        <Style Selector="Border.challenge-bubble.ok">
+            <Setter Property="BorderBrush" Value="{DynamicResource RunGreenBrush}" />
+        </Style>
+        <Style Selector="Border.challenge-bubble.no">
+            <Setter Property="BorderBrush" Value="{DynamicResource StopRedBrush}" />
+        </Style>
+        <Style Selector="Border.challenge-bubble TextBlock">
+            <Setter Property="FontSize" Value="13" />
+            <Setter Property="TextWrapping" Value="Wrap" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
+        </Style>
+        <Style Selector="Border.challenge-editor">
+            <Setter Property="Background" Value="{DynamicResource EditorBackgroundBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="8" />
+            <Setter Property="ClipToBounds" Value="True" />
+        </Style>
+        <Style Selector="Border.challenge-diagnostics">
+            <Setter Property="Margin" Value="0,8,0,0" />
+            <Setter Property="Padding" Value="10,6" />
+            <Setter Property="CornerRadius" Value="6" />
+            <Setter Property="Background" Value="{DynamicResource SurfaceBackgroundBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource RunGreenBrush}" />
+            <Setter Property="BorderThickness" Value="1,0,0,0" />
+        </Style>
+        <Style Selector="Border.challenge-diagnostics.warning">
+            <Setter Property="BorderBrush" Value="{DynamicResource Ansi3Brush}" />
+        </Style>
+        <Style Selector="Border.challenge-diagnostics.error">
+            <Setter Property="BorderBrush" Value="{DynamicResource StopRedBrush}" />
+        </Style>
+        <Style Selector="Border.challenge-diagnostics TextBlock">
+            <Setter Property="FontFamily" Value="Cascadia Code,Consolas,DejaVu Sans Mono,monospace" />
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="TextWrapping" Value="Wrap" />
+            <Setter Property="Foreground" Value="{DynamicResource TextMutedBrush}" />
+        </Style>
+        <Style Selector="Button.challenge-action">
+            <Setter Property="Height" Value="32" />
+            <Setter Property="Padding" Value="14,0" />
+            <Setter Property="Margin" Value="0,0,8,0" />
+            <Setter Property="CornerRadius" Value="8" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+            <Setter Property="Background" Value="{DynamicResource SurfaceBackgroundBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
+            <Setter Property="FontSize" Value="12" />
+        </Style>
+        <Style Selector="Button.challenge-action:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource HoverBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}" />
+            <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
+        </Style>
+        <Style Selector="Button.challenge-action.primary">
+            <Setter Property="Margin" Value="0" />
+            <Setter Property="Background" Value="{DynamicResource AccentBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}" />
+            <Setter Property="Foreground" Value="White" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+        </Style>
+        <Style Selector="Button.challenge-action.primary:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource AccentBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource TextPrimaryBrush}" />
+            <Setter Property="Foreground" Value="White" />
+        </Style>
+        <Style Selector="Button.challenge-action.primary:disabled /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource ActiveBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+        </Style>
+        <Style Selector="TextBlock.side-header">
+            <Setter Property="Margin" Value="0,14,0,8" />
+        </Style>
+        <Style Selector="Border.objective-check">
+            <Setter Property="Width" Value="16" />
+            <Setter Property="Height" Value="16" />
+            <Setter Property="CornerRadius" Value="4" />
+            <Setter Property="Margin" Value="0,0,10,0" />
+            <Setter Property="VerticalAlignment" Value="Top" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+        </Style>
+        <Style Selector="Border.objective-check.passed">
+            <Setter Property="Background" Value="{DynamicResource RunGreenBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource RunGreenBrush}" />
+        </Style>
+        <Style Selector="Border.objective-check.failed">
+            <Setter Property="BorderBrush" Value="{DynamicResource StopRedBrush}" />
+        </Style>
+        <Style Selector="TextBlock.objective-text">
+            <Setter Property="FontSize" Value="12.5" />
+            <Setter Property="TextWrapping" Value="Wrap" />
+            <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
+        </Style>
+        <Style Selector="Border.test-card">
+            <Setter Property="Width" Value="116" />
+            <Setter Property="MinHeight" Value="62" />
+            <Setter Property="Margin" Value="0,0,8,8" />
+            <Setter Property="Padding" Value="9,7" />
+            <Setter Property="CornerRadius" Value="9" />
+            <Setter Property="Background" Value="{DynamicResource SurfaceBackgroundBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="Transitions">
+                <Transitions>
+                    <BrushTransition Property="BorderBrush" Duration="0:0:0.25" />
+                </Transitions>
+            </Setter>
+        </Style>
+        <Style Selector="Border.test-card.hidden">
+            <Setter Property="Background" Value="{DynamicResource ActiveBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}" />
+        </Style>
+        <Style Selector="Border.test-card.passed">
+            <Setter Property="BorderBrush" Value="{DynamicResource RunGreenBrush}" />
+        </Style>
+        <Style Selector="Border.test-card.failed">
+            <Setter Property="BorderBrush" Value="{DynamicResource StopRedBrush}" />
+        </Style>
+        <Style Selector="Border.test-card TextBlock.card-title">
+            <Setter Property="FontSize" Value="11.5" />
+            <Setter Property="TextWrapping" Value="Wrap" />
+            <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
+        </Style>
+        <Style Selector="Border.test-card TextBlock.card-state">
+            <Setter Property="FontSize" Value="11.5" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Margin" Value="0,4,0,0" />
+            <Setter Property="Foreground" Value="{DynamicResource TextMutedBrush}" />
+        </Style>
+        <Style Selector="Border.test-card.passed TextBlock.card-state">
+            <Setter Property="Foreground" Value="{DynamicResource RunGreenBrush}" />
+        </Style>
+        <Style Selector="Border.test-card.failed TextBlock.card-state">
+            <Setter Property="Foreground" Value="{DynamicResource StopRedBrush}" />
+        </Style>
+        <Style Selector="controls|AnimatedIcon.fish">
+            <Setter Property="Width" Value="16" />
+            <Setter Property="Height" Value="16" />
+            <Setter Property="Margin" Value="0,0,10,0" />
+            <Setter Property="Stretch" Value="Uniform" />
+            <Setter Property="StrokeThickness" Value="1.8" />
+            <Setter Property="StrokeLineCap" Value="Round" />
+            <Setter Property="StrokeJoin" Value="Round" />
+            <Setter Property="Stroke" Value="{DynamicResource TextDisabledBrush}" />
+        </Style>
+        <Style Selector="controls|AnimatedIcon.fish.earned">
+            <Setter Property="Stroke" Value="{DynamicResource Ansi4Brush}" />
+        </Style>
+        <Style Selector="TextBlock.reward-text">
+            <Setter Property="FontSize" Value="12.5" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="Foreground" Value="{DynamicResource TextMutedBrush}" />
+        </Style>
+        <Style Selector="TextBlock.reward-text.earned">
+            <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
+        </Style>
+        <Style Selector="Border.concept-chip">
+            <Setter Property="Margin" Value="0,0,6,6" />
+            <Setter Property="Padding" Value="9,3" />
+            <Setter Property="CornerRadius" Value="10" />
+            <Setter Property="Background" Value="{DynamicResource ActiveBrush}" />
+        </Style>
+        <Style Selector="Border.concept-chip TextBlock">
+            <Setter Property="FontFamily" Value="Cascadia Code,Consolas,DejaVu Sans Mono,monospace" />
+            <Setter Property="FontSize" Value="11.5" />
+            <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
+        </Style>
+    </UserControl.Styles>
+
+    <Grid ColumnDefinitions="2*,*" Margin="14">
+        <Border Grid.Column="0" Classes="notebook">
+            <Panel>
+                <controls:NotebookPaper />
+                <DockPanel Margin="52,16,18,14">
+                    <StackPanel DockPanel.Dock="Top">
+                        <TextBlock Classes="challenge-title" Text="{Binding Current.Heading, FallbackValue=''}"
+                                   Foreground="{Binding Current.Brush, FallbackValue={x:Null}}" />
+                        <TextBlock Classes="challenge-subtitle" Text="{Binding Subtitle}" />
+                    </StackPanel>
+
+                    <Grid DockPanel.Dock="Top" ColumnDefinitions="Auto,*" Margin="0,14,0,12">
+                        <Border Classes="challenge-avatar">
+                            <controls:HelpySprite Name="Helpy" Width="40" Height="40" />
+                        </Border>
+                        <Border Grid.Column="1" Name="Bubble" Classes="challenge-bubble">
+                            <TextBlock Name="BubbleText" />
+                        </Border>
+                    </Grid>
+
+                    <Grid DockPanel.Dock="Bottom" ColumnDefinitions="Auto,Auto,*,Auto" Margin="0,10,0,0">
+                        <Button Classes="challenge-action" Command="{Binding HintCommand}" ToolTip.Tip="Pídele una pista a Helpy">
+                            <StackPanel Orientation="Horizontal" Spacing="7">
+                                <controls:AnimatedIcon Classes="icon-sm" Kind="Lightbulb" />
+                                <TextBlock Text="Pista" VerticalAlignment="Center" />
+                            </StackPanel>
+                        </Button>
+                        <Button Grid.Column="1" Classes="challenge-action" Command="{Binding ResetCommand}"
+                                ToolTip.Tip="Volver al código del inicio">
+                            <StackPanel Orientation="Horizontal" Spacing="7">
+                                <controls:AnimatedIcon Classes="icon-sm" Kind="RotateCcw" />
+                                <TextBlock Text="Reiniciar" VerticalAlignment="Center" />
+                            </StackPanel>
+                        </Button>
+                        <Button Grid.Column="3" Classes="challenge-action primary" Command="{Binding CheckCommand}"
+                                ToolTip.Tip="Comprobar (Ctrl+Enter)">
+                            <StackPanel Orientation="Horizontal" Spacing="7">
+                                <controls:AnimatedIcon Classes="icon-sm" Kind="Play" Stroke="White" />
+                                <TextBlock Text="Comprobar" VerticalAlignment="Center" />
+                            </StackPanel>
+                        </Button>
+                    </Grid>
+
+                    <Border DockPanel.Dock="Bottom" Classes="challenge-diagnostics"
+                            Classes.warning="{Binding HasWarnings}" Classes.error="{Binding HasCodeErrors}"
+                            IsVisible="{Binding DiagnosticsText.Length}">
+                        <StackPanel Spacing="2">
+                            <TextBlock Text="{Binding DiagnosticsText}" />
+                            <TextBlock Text="{Binding DiagnosticsDetail}" IsVisible="{Binding HasDiagnosticsDetail}" />
+                        </StackPanel>
+                    </Border>
+
+                    <Border Classes="challenge-editor">
+                        <ae:TextEditor Name="Editor"
+                                       ShowLineNumbers="True"
+                                       WordWrap="False"
+                                       Background="{DynamicResource EditorBackgroundBrush}"
+                                       Foreground="{DynamicResource TextPrimaryBrush}"
+                                       LineNumbersForeground="{DynamicResource TextDisabledBrush}"
+                                       FontFamily="Cascadia Code,Consolas,DejaVu Sans Mono,monospace"
+                                       FontSize="14"
+                                       Padding="8,8" />
+                    </Border>
+                </DockPanel>
+            </Panel>
+        </Border>
+
+        <Border Grid.Column="1" Classes="challenge-side" Margin="14,0,0,0">
+            <ScrollViewer>
+                <StackPanel Margin="16,2,16,16">
+                    <TextBlock Classes="sidebar-header side-header" Text="OBJETIVOS" />
+                    <ItemsControl ItemsSource="{Binding Objectives}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate x:DataType="vm:ChallengeTestCard">
+                                <Grid ColumnDefinitions="Auto,*" Margin="0,0,0,8">
+                                    <Border Classes="objective-check" Classes.passed="{Binding IsPassed}"
+                                            Classes.failed="{Binding IsFailed}" />
+                                    <TextBlock Grid.Column="1" Classes="objective-text" Text="{Binding Test.Label}" />
+                                </Grid>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+
+                    <TextBlock Classes="sidebar-header side-header" Text="PRUEBAS" />
+                    <ItemsControl ItemsSource="{Binding Tests}">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <WrapPanel />
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate x:DataType="vm:ChallengeTestCard">
+                                <Border Classes="test-card" Classes.hidden="{Binding !Test.Visible}"
+                                        Classes.passed="{Binding IsPassed}" Classes.failed="{Binding IsFailed}">
+                                    <StackPanel>
+                                        <TextBlock Classes="card-title" Text="{Binding Title}" />
+                                        <TextBlock Classes="card-state" Text="{Binding StateText}" />
+                                    </StackPanel>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                    <TextBlock Classes="challenge-subtitle" Text="{Binding HiddenText}"
+                               IsVisible="{Binding HiddenText.Length}" />
+
+                    <TextBlock Classes="sidebar-header side-header" Text="RECOMPENSA" />
+                    <ItemsControl ItemsSource="{Binding Rewards}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate x:DataType="vm:ChallengeReward">
+                                <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+                                    <controls:AnimatedIcon Classes="fish" Classes.earned="{Binding IsEarned}" Kind="Fish" />
+                                    <TextBlock Classes="reward-text" Classes.earned="{Binding IsEarned}" Text="{Binding Text}" />
+                                </StackPanel>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+
+                    <TextBlock Classes="sidebar-header side-header" Text="APRENDES" />
+                    <ItemsControl ItemsSource="{Binding Current.Challenge.Concepts, FallbackValue={x:Null}}">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <WrapPanel />
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate x:DataType="x:String">
+                                <Border Classes="concept-chip">
+                                    <TextBlock Text="{Binding}" />
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+            </ScrollViewer>
+        </Border>
+    </Grid>
+</UserControl>
