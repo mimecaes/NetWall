@@ -28,6 +28,7 @@ public partial class MainWindow : Window
     private double? _gripStartY;
     private double _gripStartHeight;
     private bool _exitingSimulation;
+    private bool _exitingChallenge;
 
     public MainWindow()
     {
@@ -123,13 +124,30 @@ public partial class MainWindow : Window
 
     private void OnExitSimulationClick(object? sender, RoutedEventArgs e) => _ = ExitSimulationAsync();
 
-    private void OnChallengeModeClick(object? sender, RoutedEventArgs e)
+    private async void OnChallengeModeClick(object? sender, RoutedEventArgs e)
     {
+        if (ViewModel is not { } viewModel)
+        {
+            return;
+        }
+
         ChallengeView.SetHelpyColor(Pet.Color);
-        ViewModel?.EnterChallengeMode();
+        await ChallengeCurtain.PlayAsync(Pet.Color, viewModel.EnterChallengeMode);
     }
 
-    private void OnExitChallengeClick(object? sender, RoutedEventArgs e) => ViewModel?.ExitChallengeMode();
+    private void OnExitChallengeClick(object? sender, RoutedEventArgs e) => _ = ExitChallengeAsync();
+
+    private async Task ExitChallengeAsync()
+    {
+        if (_exitingChallenge || ViewModel is not { IsChallengeMode: true } viewModel)
+        {
+            return;
+        }
+
+        _exitingChallenge = true;
+        await ChallengeCurtain.PlayExitAsync(Pet.Color, viewModel.ExitChallengeMode);
+        _exitingChallenge = false;
+    }
 
     private void OnChallengeBoardClick(object? sender, RoutedEventArgs e) => ViewModel?.Challenges.ShowBoard();
 
@@ -144,9 +162,9 @@ public partial class MainWindow : Window
             _ = ExitSimulationAsync();
             e.Handled = true;
         }
-        else if (e.Key == Key.Escape && ViewModel is { IsChallengeMode: true } viewModel)
+        else if (e.Key == Key.Escape && ViewModel is { IsChallengeMode: true })
         {
-            viewModel.ExitChallengeMode();
+            _ = ExitChallengeAsync();
             e.Handled = true;
         }
     }

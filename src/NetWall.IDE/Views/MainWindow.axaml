@@ -746,6 +746,7 @@
         </DockPanel>
 
         <controls:SimulationIntro Name="Intro" />
+        <controls:ChallengeIntro Name="ChallengeCurtain" />
         </Panel>
     </DockPanel>
 
