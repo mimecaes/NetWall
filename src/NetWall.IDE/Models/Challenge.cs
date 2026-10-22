@@ -8,7 +8,12 @@ public sealed record ChallengeCatalogData(List<ChallengeModule> Modules);
 public sealed record ChallengeModule(string Id, string Name, string Brush, List<Challenge> Challenges);
 
 public sealed record Challenge(string Id, string Title, string Statement, string Hint, string Starter, int? MaxRules,
-    List<string> Concepts, List<ChallengeTest> Tests);
+    List<string> Concepts, List<ChallengeTest> Tests, string? Type = null, ChallengeLesson? Lesson = null)
+{
+    public bool IsPredict => Type == "predict";
+}
+
+public sealed record ChallengeLesson(string Title, string Text, string? Example);
 
 public sealed record ChallengeTest(string Kind, string Label, bool Visible, string? Name, string? Type, string? Value,
     string? Protocol, int Port, string? Source, string? Destination, string? Expect, string? Failure);

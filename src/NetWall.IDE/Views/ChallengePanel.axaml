@@ -247,6 +247,70 @@
                 </Animation>
             </Style.Animations>
         </Style>
+        <Style Selector="Button.lesson-link">
+            <Setter Property="Padding" Value="8,1" />
+            <Setter Property="Margin" Value="8,2,0,0" />
+            <Setter Property="CornerRadius" Value="8" />
+            <Setter Property="FontSize" Value="11.5" />
+            <Setter Property="Background" Value="{DynamicResource ActiveBrush}" />
+            <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
+            <Setter Property="BorderThickness" Value="0" />
+        </Style>
+        <Style Selector="Button.lesson-link:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource HoverBrush}" />
+            <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
+        </Style>
+        <Style Selector="Border.lesson-card">
+            <Setter Property="MaxWidth" Value="520" />
+            <Setter Property="Margin" Value="40,0" />
+            <Setter Property="Padding" Value="20,18" />
+            <Setter Property="CornerRadius" Value="14" />
+            <Setter Property="HorizontalAlignment" Value="Center" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="Background" Value="{DynamicResource PanelBackgroundBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="BoxShadow" Value="0 12 32 0 #70000000" />
+        </Style>
+        <Style Selector="TextBlock.lesson-title">
+            <Setter Property="FontSize" Value="17" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Margin" Value="0,4,0,10" />
+            <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
+        </Style>
+        <Style Selector="TextBlock.lesson-text">
+            <Setter Property="FontSize" Value="13" />
+            <Setter Property="LineHeight" Value="20" />
+            <Setter Property="TextWrapping" Value="Wrap" />
+            <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
+        </Style>
+        <Style Selector="Border.lesson-example">
+            <Setter Property="Margin" Value="0,14,0,0" />
+            <Setter Property="Padding" Value="12,10" />
+            <Setter Property="CornerRadius" Value="8" />
+            <Setter Property="Background" Value="{DynamicResource EditorBackgroundBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+        </Style>
+        <Style Selector="TextBlock.predict-question">
+            <Setter Property="FontFamily" Value="Cascadia Code,Consolas,DejaVu Sans Mono,monospace" />
+            <Setter Property="FontSize" Value="12.5" />
+            <Setter Property="Margin" Value="6,0,12,0" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="TextTrimming" Value="CharacterEllipsis" />
+            <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
+        </Style>
+        <Style Selector="Button.challenge-action.allow">
+            <Setter Property="BorderBrush" Value="{DynamicResource RunGreenBrush}" />
+            <Setter Property="Foreground" Value="{DynamicResource RunGreenBrush}" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+        </Style>
+        <Style Selector="Button.challenge-action.block">
+            <Setter Property="Margin" Value="0" />
+            <Setter Property="BorderBrush" Value="{DynamicResource StopRedBrush}" />
+            <Setter Property="Foreground" Value="{DynamicResource StopRedBrush}" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+        </Style>
         <Style Selector="Panel.check-overlay">
             <Setter Property="Opacity" Value="0" />
             <Setter Property="Transitions">
@@ -296,7 +360,8 @@
             <Border Grid.Column="0" Classes="notebook">
                 <Panel>
                     <controls:NotebookPaper />
-                    <Border Classes="stamp" Classes.stamped="{Binding HasStamp}" HorizontalAlignment="Right"
+                    <Border Classes="stamp" Classes.stamped="{Binding HasStamp}" IsVisible="{Binding HasStamp}"
+                            HorizontalAlignment="Right"
                             VerticalAlignment="Top" Margin="0,20,28,0">
                         <Border.RenderTransform>
                             <TransformGroup>
@@ -310,7 +375,16 @@
                         <StackPanel DockPanel.Dock="Top">
                             <TextBlock Classes="challenge-title" Text="{Binding Current.Heading, FallbackValue=''}"
                                        Foreground="{Binding Current.Brush, FallbackValue={x:Null}}" />
-                            <TextBlock Classes="challenge-subtitle" Text="{Binding Subtitle}" />
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Classes="challenge-subtitle" Text="{Binding Subtitle}" />
+                                <Button Classes="lesson-link" Command="{Binding ShowLessonCommand}"
+                                        IsVisible="{Binding HasLesson}">
+                                    <StackPanel Orientation="Horizontal" Spacing="6">
+                                        <controls:AnimatedIcon Classes="icon-sm" Kind="BookOpen" />
+                                        <TextBlock Text="Mini lección" VerticalAlignment="Center" />
+                                    </StackPanel>
+                                </Button>
+                            </StackPanel>
                         </StackPanel>
 
                         <Grid DockPanel.Dock="Top" ColumnDefinitions="Auto,*" Margin="0,14,0,12">
@@ -322,7 +396,23 @@
                             </Border>
                         </Grid>
 
-                        <Grid DockPanel.Dock="Bottom" ColumnDefinitions="Auto,Auto,*,Auto" Margin="0,10,0,0">
+                        <Grid DockPanel.Dock="Bottom" ColumnDefinitions="Auto,*,Auto,Auto" Margin="0,10,0,0"
+                              IsVisible="{Binding IsPredict}">
+                            <Button Classes="challenge-action" Command="{Binding HintCommand}" ToolTip.Tip="Pídele una pista a Helpy">
+                                <StackPanel Orientation="Horizontal" Spacing="7">
+                                    <controls:AnimatedIcon Classes="icon-sm" Kind="Lightbulb" />
+                                    <TextBlock Text="Pista" VerticalAlignment="Center" />
+                                </StackPanel>
+                            </Button>
+                            <TextBlock Grid.Column="1" Classes="predict-question" Text="{Binding Question}" />
+                            <Button Grid.Column="2" Classes="challenge-action allow" Command="{Binding AnswerCommand}"
+                                    CommandParameter="permitir" Content="✓ Pasa" />
+                            <Button Grid.Column="3" Classes="challenge-action block" Command="{Binding AnswerCommand}"
+                                    CommandParameter="bloquear" Content="✕ Se bloquea" />
+                        </Grid>
+
+                        <Grid DockPanel.Dock="Bottom" ColumnDefinitions="Auto,Auto,*,Auto" Margin="0,10,0,0"
+                              IsVisible="{Binding IsWriting}">
                             <Button Classes="challenge-action" Command="{Binding HintCommand}" ToolTip.Tip="Pídele una pista a Helpy">
                                 <StackPanel Orientation="Horizontal" Spacing="7">
                                     <controls:AnimatedIcon Classes="icon-sm" Kind="Lightbulb" />
@@ -366,6 +456,26 @@
                                            Padding="8,8" />
                         </Border>
                     </DockPanel>
+                    <Panel IsVisible="{Binding IsLessonVisible}">
+                        <Border Background="{DynamicResource ChallengePaperBrush}" Opacity="0.85" />
+                        <Border Classes="lesson-card">
+                            <StackPanel>
+                                <TextBlock Classes="sidebar-header" Text="MINI LECCIÓN" />
+                                <TextBlock Classes="lesson-title"
+                                           Text="{Binding Current.Challenge.Lesson.Title, FallbackValue=''}" />
+                                <TextBlock Classes="lesson-text"
+                                           Text="{Binding Current.Challenge.Lesson.Text, FallbackValue=''}" />
+                                <Border Classes="lesson-example"
+                                        IsVisible="{Binding Current.Challenge.Lesson.Example, Converter={x:Static ObjectConverters.IsNotNull}, FallbackValue=False}">
+                                    <controls:CodePreview Code="{Binding Current.Challenge.Lesson.Example, FallbackValue=''}"
+                                                          FontFamily="Cascadia Code,Consolas,DejaVu Sans Mono,monospace"
+                                                          FontSize="13" />
+                                </Border>
+                                <Button Classes="challenge-action primary" HorizontalAlignment="Right" Margin="0,16,0,0"
+                                        Command="{Binding HideLessonCommand}" Content="Entendido" />
+                            </StackPanel>
+                        </Border>
+                    </Panel>
                 </Panel>
             </Border>
 

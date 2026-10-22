@@ -54,6 +54,7 @@ public partial class ChallengePanel : UserControl
             _viewModel.CodeReplaced -= OnCodeReplaced;
             _viewModel.HelpySpoke -= OnHelpySpoke;
             _viewModel.Presenter = null;
+            _viewModel.PropertyChanged -= OnViewModelPropertyChanged;
         }
 
         _viewModel = DataContext as ChallengeViewModel;
@@ -62,12 +63,21 @@ public partial class ChallengePanel : UserControl
             _viewModel.CodeReplaced += OnCodeReplaced;
             _viewModel.HelpySpoke += OnHelpySpoke;
             _viewModel.Presenter = PresentAsync;
+            _viewModel.PropertyChanged += OnViewModelPropertyChanged;
         }
 
         Board.Levels = _viewModel?.Levels ?? [];
     }
 
     private void OnThemeApplied(object? sender, EventArgs e) => Editor.TextArea.TextView.Redraw();
+
+    private void OnViewModelPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(ChallengeViewModel.IsPredict) && _viewModel is not null)
+        {
+            Editor.IsReadOnly = _viewModel.IsPredict;
+        }
+    }
 
     private void OnCodeReplaced(string code)
     {

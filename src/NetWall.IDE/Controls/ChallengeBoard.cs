@@ -18,7 +18,6 @@ namespace NetWall.IDE.Controls;
 
 public sealed class ChallengeBoard : Control
 {
-    private const int Columns = 5;
     private const int Rows = 4;
     private const double Tile = 112;
     private const double Gap = 14;
@@ -31,16 +30,12 @@ public sealed class ChallengeBoard : Control
 
     private static readonly FontFamily Mono = new("Cascadia Code,Consolas,DejaVu Sans Mono,monospace");
 
-    private static readonly (int Column, int Row)[] Track =
-    [
-        (0, 0), (1, 0), (2, 0), (3, 0), (4, 0), (4, 1), (4, 2),
-        (4, 3), (3, 3), (2, 3), (1, 3), (0, 3), (0, 2), (0, 1),
-    ];
-
     private readonly DispatcherTimer _timer = new() { Interval = TimeSpan.FromMilliseconds(16) };
     private readonly Stopwatch _clock = Stopwatch.StartNew();
     private readonly Dictionary<int, double> _grow = [];
     private IReadOnlyList<ChallengeLevel> _levels = [];
+    private (int Column, int Row)[] _track = [];
+    private int _columns = 3;
     private Bitmap _sheet = PetWidget.LoadSheet(PetColor.Gray);
     private double _scale = 1;
     private Vector _offset;
@@ -71,6 +66,15 @@ public sealed class ChallengeBoard : Control
             {
                 level.PropertyChanged += OnLevelChanged;
             }
+
+            _columns = Math.Max(3, (_levels.Count - 2 * (Rows - 2) + 3) / 2);
+            _track =
+            [
+                .. Enumerable.Range(0, _columns).Select(column => (column, 0)),
+                .. Enumerable.Range(1, Rows - 2).Select(row => (_columns - 1, row)),
+                .. Enumerable.Range(0, _columns).Select(column => (_columns - 1 - column, Rows - 1)),
+                .. Enumerable.Range(1, Rows - 2).Select(row => (0, Rows - 1 - row)),
+            ];
 
             InvalidateVisual();
         }
@@ -144,7 +148,7 @@ public sealed class ChallengeBoard : Control
         DrawBoard(context, size);
         DrawTrail(context);
         DrawStart(context);
-        for (var i = 0; i < _levels.Count && i + 1 < Track.Length - 1; i++)
+        for (var i = 0; i < _levels.Count && i + 1 < _track.Length - 1; i++)
         {
             DrawSquare(context, i);
         }
@@ -154,19 +158,19 @@ public sealed class ChallengeBoard : Control
         DrawHelpy(context);
     }
 
-    private static Size BoardSize() =>
-        new(2 * Padding + Columns * Tile + (Columns - 1) * Gap, 2 * Padding + Rows * Tile + (Rows - 1) * Gap);
+    private Size BoardSize() =>
+        new(2 * Padding + _columns * Tile + (_columns - 1) * Gap, 2 * Padding + Rows * Tile + (Rows - 1) * Gap);
 
-    private static Rect Square(int track)
+    private Rect Square(int track)
     {
-        var (column, row) = Track[track];
+        var (column, row) = _track[track];
         return new Rect(Padding + column * (Tile + Gap), Padding + row * (Tile + Gap), Tile, Tile);
     }
 
-    private static Rect Center() =>
-        new(Padding + Tile + Gap * 2, Padding + Tile + Gap * 2, (Columns - 2) * Tile, (Rows - 2) * Tile);
+    private Rect Center() =>
+        new(Padding + Tile + Gap * 2, Padding + Tile + Gap * 2, (_columns - 2) * Tile, (Rows - 2) * Tile);
 
-    private static Rect DeckCard()
+    private Rect DeckCard()
     {
         var center = Center();
         return new Rect(center.Right - 128, center.Y + 34, 114, 158);
@@ -237,7 +241,7 @@ public sealed class ChallengeBoard : Control
 
     private void DrawTrail(DrawingContext context)
     {
-        for (var i = 0; i < Track.Length - 1; i++)
+        for (var i = 0; i < _track.Length - 1; i++)
         {
             var completed = i == 0 || i - 1 < _levels.Count && _levels[i - 1].Fish > 0;
             var pen = completed
@@ -261,7 +265,7 @@ public sealed class ChallengeBoard : Control
 
     private void DrawFinish(DrawingContext context)
     {
-        var square = Square(Track.Length - 1);
+        var square = Square(_track.Length - 1);
         var gold = ColorOf("Ansi3Brush");
         var graduated = _levels.Count > 0 && _levels.All(level => level.Fish > 0);
         using var opacity = context.PushOpacity(graduated ? 1 : 0.5);
@@ -447,7 +451,7 @@ public sealed class ChallengeBoard : Control
     private void DrawHelpy(DrawingContext context)
     {
         var square = NextIndex() is { } next ? Square(next + 1)
-            : _levels.Count > 0 && _levels.All(level => level.Fish > 0) ? Square(Track.Length - 1)
+            : _levels.Count > 0 && _levels.All(level => level.Fish > 0) ? Square(_track.Length - 1)
             : Square(0);
         var hop = Math.Abs(Math.Sin(_clock.ElapsedMilliseconds / 260.0)) * 3;
         var foot = new Point(square.Right - 18, square.Y + 20);

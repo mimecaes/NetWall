@@ -118,14 +118,15 @@ public sealed class ChallengeCheckStage : Control
         if (active >= _outcomes.Count)
         {
             var failed = _outcomes.Count(outcome => !outcome.Passed);
-            text = failed == 0 ? "¡Todas las pruebas pasan!"
+            text = _outcomes.Count == 1 ? failed == 0 ? "¡Correcto!" : "Incorrecto"
+                : failed == 0 ? "¡Todas las pruebas pasan!"
                 : failed == 1 ? "Falló 1 prueba"
                 : $"Fallaron {failed} pruebas";
             brush = Brush(failed == 0 ? "RunGreenBrush" : "StopRedBrush");
         }
         else
         {
-            text = $"Comprobando tus pruebas{new string('.', (int)(elapsed / 350) % 4)}";
+            text = $"{(_outcomes.Count == 1 ? "Comprobando" : "Comprobando tus pruebas")}{new string('.', (int)(elapsed / 350) % 4)}";
             brush = Brush("TextPrimaryBrush");
         }
 

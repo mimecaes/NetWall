@@ -79,6 +79,8 @@ public partial class ChallengeViewModel : ViewModelBase
     private readonly Func<string?> _cliPath;
     private readonly Dictionary<string, int> _fish;
     private CancellationTokenSource? _live;
+    private int _attempts;
+    private bool _usedHint;
 
     public ChallengeViewModel(Func<string?> cliPath)
     {
@@ -122,8 +124,20 @@ public partial class ChallengeViewModel : ViewModelBase
     public string Code { get; private set; } = string.Empty;
 
     [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(Subtitle), nameof(CanGoBack), nameof(CanGoForward), nameof(HiddenText))]
+    [NotifyPropertyChangedFor(nameof(Subtitle), nameof(CanGoBack), nameof(CanGoForward), nameof(HiddenText),
+        nameof(IsPredict), nameof(IsWriting), nameof(HasLesson), nameof(Question))]
     public partial ChallengeLevel? Current { get; set; }
+
+    public bool IsPredict => Current?.Challenge.IsPredict == true;
+
+    public bool IsWriting => !IsPredict;
+
+    public bool HasLesson => Current?.Challenge.Lesson is not null;
+
+    public string Question => IsPredict ? Current!.Challenge.Tests[0].Label : string.Empty;
+
+    [ObservableProperty]
+    public partial bool IsLessonVisible { get; set; }
 
     [ObservableProperty]
     public partial string DiagnosticsText { get; set; } = string.Empty;
@@ -141,7 +155,7 @@ public partial class ChallengeViewModel : ViewModelBase
     public partial bool HasWarnings { get; set; }
 
     [ObservableProperty]
-    [NotifyCanExecuteChangedFor(nameof(CheckCommand))]
+    [NotifyCanExecuteChangedFor(nameof(CheckCommand), nameof(AnswerCommand))]
     public partial bool IsChecking { get; set; }
 
     public string Subtitle => Current is null ? string.Empty : $"Reto {Current.Number} de {Levels.Count}";
@@ -243,18 +257,32 @@ public partial class ChallengeViewModel : ViewModelBase
         }
 
         Rewards.Clear();
-        Rewards.Add(new ChallengeReward("Pasa todas las pruebas"));
-        Rewards.Add(new ChallengeReward(level.Challenge.MaxRules switch
+        if (level.Challenge.IsPredict)
         {
-            null => "Sin reglas de más",
-            1 => "Usa una sola regla",
-            var max => $"Usa hasta {max} reglas",
-        }));
-        Rewards.Add(new ChallengeReward("Sin advertencias del analizador"));
+            Rewards.Add(new ChallengeReward("Responde correctamente"));
+            Rewards.Add(new ChallengeReward("Acierta a la primera"));
+            Rewards.Add(new ChallengeReward("Sin pedir pista"));
+        }
+        else
+        {
+            Rewards.Add(new ChallengeReward("Pasa todas las pruebas"));
+            Rewards.Add(new ChallengeReward(level.Challenge.MaxRules switch
+            {
+                null => "Sin reglas de más",
+                1 => "Usa una sola regla",
+                var max => $"Usa hasta {max} reglas",
+            }));
+            Rewards.Add(new ChallengeReward("Sin advertencias del analizador"));
+        }
+
         ShowRewards(level.Fish);
         OnPropertyChanged(nameof(HiddenText));
+        _attempts = 0;
+        _usedHint = false;
 
-        Code = ChallengeProgress.LoadCode(level.Challenge.Id) ?? level.Challenge.Starter;
+        var saved = level.Challenge.IsPredict ? null : ChallengeProgress.LoadCode(level.Challenge.Id);
+        IsLessonVisible = level.Challenge.Lesson is not null && level.Fish == 0 && saved is null;
+        Code = saved ?? level.Challenge.Starter;
         CodeReplaced?.Invoke(Code);
         DiagnosticsText = string.Empty;
         DiagnosticsDetail = string.Empty;
@@ -267,8 +295,84 @@ public partial class ChallengeViewModel : ViewModelBase
     {
         if (Current is not null)
         {
+            _usedHint = true;
             HelpySpoke?.Invoke(Current.Challenge.Hint, BubbleTone.Neutral);
         }
+    }
+
+    [RelayCommand]
+    private void ShowLesson() => IsLessonVisible = HasLesson;
+
+    [RelayCommand]
+    private void HideLesson() => IsLessonVisible = false;
+
+    [RelayCommand(CanExecute = nameof(CanCheck))]
+    private async Task AnswerAsync(string? choice)
+    {
+        if (Current is not { Challenge.IsPredict: true } level)
+        {
+            return;
+        }
+
+        IsChecking = true;
+        var result = await RunAsync(level);
+        IsChecking = false;
+        if (Current != level)
+        {
+            return;
+        }
+
+        ShowDiagnostics(result);
+        if (result is not { Errors: false, Packets: [var packet] })
+        {
+            HelpySpoke?.Invoke("No pude ejecutar NetWall. Revisa que Python esté instalado.", BubbleTone.Blocked);
+            return;
+        }
+
+        _attempts++;
+        var correct = packet.Action == choice;
+        var test = level.Challenge.Tests[0] with
+        {
+            Label = choice == "permitir" ? "Tu respuesta: pasa" : "Tu respuesta: se bloquea",
+        };
+        if (Presenter is not null)
+        {
+            IsChecking = true;
+            await Presenter([new ChallengeOutcome(test, correct, packet.IsAllowed)]);
+            IsChecking = false;
+            if (Current != level)
+            {
+                return;
+            }
+        }
+
+        Tests[0].State = correct ? ChallengeTestState.Passed : ChallengeTestState.Failed;
+        if (!correct)
+        {
+            ShowRewards(0);
+            HelpySpoke?.Invoke($"No exactamente. {Explain(packet)} Inténtalo otra vez.", BubbleTone.Blocked);
+            return;
+        }
+
+        var fish = _attempts > 1 ? 1 : _usedHint ? 2 : 3;
+        Award(level, fish);
+        HelpySpoke?.Invoke($"¡Correcto! {Explain(packet)} Ganaste {fish} {(fish == 1 ? "pescadito" : "pescaditos")}.",
+            BubbleTone.Allowed);
+    }
+
+    private static string Explain(SimulatedPacket packet)
+    {
+        var verdict = packet.IsAllowed ? "pasa" : "se bloquea";
+        if (packet.Rule is not null)
+        {
+            var before = packet.Skipped.FirstOrDefault() is { } skipped
+                ? $" Antes, {skipped.Rule} no coincidió ({skipped.Reason})."
+                : string.Empty;
+            return $"La primera regla que coincide es {packet.Rule}, así que el paquete {verdict}.{before}";
+        }
+
+        var reason = packet.Skipped.FirstOrDefault() is { } first ? $" ({first.Reason})" : string.Empty;
+        return $"Ninguna regla coincide{reason}, así que se aplica la política por defecto y el paquete {verdict}.";
     }
 
     [RelayCommand]
@@ -296,7 +400,7 @@ public partial class ChallengeViewModel : ViewModelBase
     [RelayCommand(CanExecute = nameof(CanCheck))]
     private async Task CheckAsync()
     {
-        if (Current is not { } level)
+        if (Current is not { Challenge.IsPredict: false } level)
         {
             return;
         }
@@ -369,12 +473,18 @@ public partial class ChallengeViewModel : ViewModelBase
             return;
         }
 
+        Award(level, fish);
+        HelpySpoke?.Invoke(SuccessMessage(level, fish), BubbleTone.Allowed);
+    }
+
+    private void Award(ChallengeLevel level, int fish)
+    {
         ShowRewards(fish);
         StampText = fish switch
         {
             3 => "¡Excelente!",
             2 => "¡Muy bien!",
-            _ => "¡Funciona!",
+            _ => level.Challenge.IsPredict ? "¡Correcto!" : "¡Funciona!",
         };
         if (fish > level.Fish)
         {
@@ -386,8 +496,6 @@ public partial class ChallengeViewModel : ViewModelBase
             OnPropertyChanged(nameof(ProgressText));
             OnPropertyChanged(nameof(CanGoForward));
         }
-
-        HelpySpoke?.Invoke(SuccessMessage(level, fish), BubbleTone.Allowed);
     }
 
     private string SuccessMessage(ChallengeLevel level, int fish)
