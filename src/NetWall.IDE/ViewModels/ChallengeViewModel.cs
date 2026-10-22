@@ -64,7 +64,7 @@ public sealed partial class ChallengeTestCard(ChallengeTest test) : ObservableOb
     };
 }
 
-public sealed record ChallengeOutcome(ChallengeTest Test, bool Passed, bool? Allowed);
+public sealed record ChallengeOutcome(ChallengeTest Test, bool Passed, bool? Allowed, string? Rule);
 
 public partial class ChallengeViewModel : ViewModelBase
 {
@@ -153,6 +153,12 @@ public partial class ChallengeViewModel : ViewModelBase
         1 => "sello rosa · el dorado se gana sin pistas",
         _ => string.Empty,
     };
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasHint))]
+    public partial string HintText { get; set; } = string.Empty;
+
+    public bool HasHint => HintText.Length > 0;
 
     [ObservableProperty]
     public partial string DiagnosticsText { get; set; } = string.Empty;
@@ -253,6 +259,7 @@ public partial class ChallengeViewModel : ViewModelBase
         OnPropertyChanged(nameof(HiddenText));
         _attempts = 0;
         _usedHint = false;
+        HintText = string.Empty;
 
         var saved = level.Challenge.IsPredict ? null : ChallengeProgress.LoadCode(level.Challenge.Id);
         Code = saved ?? level.Challenge.Starter;
@@ -269,7 +276,8 @@ public partial class ChallengeViewModel : ViewModelBase
         if (Current is not null)
         {
             _usedHint = true;
-            HelpySpoke?.Invoke(Current.Challenge.Hint, BubbleTone.Neutral);
+            HintText = Current.Challenge.Hint;
+            HelpySpoke?.Invoke("Te dejé una pista en una nota. ¡Tú puedes!", BubbleTone.Neutral);
         }
     }
 
@@ -305,7 +313,7 @@ public partial class ChallengeViewModel : ViewModelBase
         if (Presenter is not null)
         {
             IsChecking = true;
-            await Presenter([new ChallengeOutcome(test, correct, packet.IsAllowed)]);
+            await Presenter([new ChallengeOutcome(test, correct, packet.IsAllowed, packet.Rule)]);
             IsChecking = false;
             if (Current != level)
             {
@@ -405,8 +413,9 @@ public partial class ChallengeViewModel : ViewModelBase
         var outcomes = new List<ChallengeOutcome>();
         foreach (var card in Tests)
         {
-            var allowed = card.Test.Kind == "packet" && next < packets.Count ? packets[next].IsAllowed : (bool?)null;
-            outcomes.Add(new ChallengeOutcome(card.Test, Passes(card.Test, result, packets, ref next), allowed));
+            var packet = card.Test.Kind == "packet" && next < packets.Count ? packets[next] : null;
+            outcomes.Add(new ChallengeOutcome(card.Test, Passes(card.Test, result, packets, ref next), packet?.IsAllowed,
+                packet?.Rule));
         }
 
         if (Presenter is not null)

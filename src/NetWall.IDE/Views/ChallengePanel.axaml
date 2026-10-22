@@ -102,14 +102,83 @@
             <Setter Property="CornerRadius" Value="10" />
             <Setter Property="Background" Value="{DynamicResource NotebookBoxBrush}" />
         </Style>
-        <Style Selector="Border.washi">
-            <Setter Property="Width" Value="76" />
-            <Setter Property="Height" Value="16" />
-            <Setter Property="Margin" Value="0,-24,0,6" />
+        <Style Selector="controls|WashiTape.washi">
+            <Setter Property="Width" Value="104" />
+            <Setter Property="Height" Value="22" />
+            <Setter Property="Margin" Value="0,-28,0,6" />
             <Setter Property="HorizontalAlignment" Value="Center" />
-            <Setter Property="Background" Value="{DynamicResource PastelLavenderBrush}" />
-            <Setter Property="Opacity" Value="0.55" />
+            <Setter Property="RenderTransform" Value="rotate(-4deg)" />
+        </Style>
+        <Style Selector="Border.post-it">
+            <Setter Property="Width" Value="210" />
+            <Setter Property="Margin" Value="40,0,0,18" />
+            <Setter Property="HorizontalAlignment" Value="Left" />
+            <Setter Property="VerticalAlignment" Value="Bottom" />
             <Setter Property="RenderTransform" Value="rotate(-3deg)" />
+            <Setter Property="Opacity" Value="0" />
+        </Style>
+        <Style Selector="Border.post-it.shown">
+            <Setter Property="Opacity" Value="1" />
+            <Style.Animations>
+                <Animation Duration="0:0:0.15" FillMode="Forward">
+                    <KeyFrame Cue="0%">
+                        <Setter Property="Opacity" Value="0" />
+                    </KeyFrame>
+                    <KeyFrame Cue="100%">
+                        <Setter Property="Opacity" Value="1" />
+                    </KeyFrame>
+                </Animation>
+            </Style.Animations>
+        </Style>
+        <Style Selector="Border.post-it-top">
+            <Setter Property="Background" Value="#FFF1A8" />
+            <Setter Property="Padding" Value="14,0,14,4" />
+            <Setter Property="BoxShadow" Value="1 3 6 0 #44000000" />
+        </Style>
+        <Style Selector="Border.post-it-glue">
+            <Setter Property="Height" Value="9" />
+            <Setter Property="Margin" Value="-14,0,-14,7" />
+            <Setter Property="Background" Value="#F4DE7A" />
+        </Style>
+        <Style Selector="Border.post-it-bottom">
+            <Setter Property="Background" Value="#FFF1A8" />
+            <Setter Property="Padding" Value="14,0,14,16" />
+            <Setter Property="BoxShadow" Value="2 6 12 0 #55000000" />
+        </Style>
+        <Style Selector="Border.post-it.shown Border.post-it-bottom">
+            <Style.Animations>
+                <Animation Duration="0:0:0.5" Delay="0:0:0.15" Easing="CubicEaseOut" FillMode="Both">
+                    <KeyFrame Cue="0%">
+                        <Setter Property="ScaleTransform.ScaleY" Value="0" />
+                    </KeyFrame>
+                    <KeyFrame Cue="100%">
+                        <Setter Property="ScaleTransform.ScaleY" Value="1" />
+                    </KeyFrame>
+                </Animation>
+            </Style.Animations>
+        </Style>
+        <Style Selector="Border.fold-shade">
+            <Setter Property="IsHitTestVisible" Value="False" />
+            <Setter Property="Margin" Value="-14,0,-14,-16" />
+            <Setter Property="Opacity" Value="0" />
+            <Setter Property="Background">
+                <LinearGradientBrush StartPoint="0%,0%" EndPoint="0%,100%">
+                    <GradientStop Offset="0" Color="#66000000" />
+                    <GradientStop Offset="1" Color="#00000000" />
+                </LinearGradientBrush>
+            </Setter>
+        </Style>
+        <Style Selector="Border.post-it.shown Border.fold-shade">
+            <Style.Animations>
+                <Animation Duration="0:0:0.5" Delay="0:0:0.15" Easing="CubicEaseOut" FillMode="Both">
+                    <KeyFrame Cue="0%">
+                        <Setter Property="Opacity" Value="1" />
+                    </KeyFrame>
+                    <KeyFrame Cue="100%">
+                        <Setter Property="Opacity" Value="0" />
+                    </KeyFrame>
+                </Animation>
+            </Style.Animations>
         </Style>
         <Style Selector="Border.code-box">
             <Setter Property="Margin" Value="0,12,0,0" />
@@ -277,28 +346,6 @@
             <Setter Property="TextTrimming" Value="CharacterEllipsis" />
             <Setter Property="Foreground" Value="#FDE8F1" />
         </Style>
-        <Style Selector="Panel.check-overlay">
-            <Setter Property="Opacity" Value="0" />
-            <Setter Property="Transitions">
-                <Transitions>
-                    <DoubleTransition Property="Opacity" Duration="0:0:0.25" />
-                </Transitions>
-            </Setter>
-        </Style>
-        <Style Selector="Panel.check-overlay.shown">
-            <Setter Property="Opacity" Value="1" />
-        </Style>
-        <Style Selector="Border.check-card">
-            <Setter Property="Margin" Value="40" />
-            <Setter Property="MaxWidth" Value="940" />
-            <Setter Property="MaxHeight" Value="460" />
-            <Setter Property="Padding" Value="10" />
-            <Setter Property="CornerRadius" Value="16" />
-            <Setter Property="Background" Value="{DynamicResource NotebookPageBrush}" />
-            <Setter Property="BorderBrush" Value="{DynamicResource NotebookCoverBrush}" />
-            <Setter Property="BorderThickness" Value="2" />
-            <Setter Property="BoxShadow" Value="0 12 32 0 #70000000" />
-        </Style>
     </UserControl.Styles>
 
     <Panel>
@@ -352,7 +399,7 @@
                                 <ScrollViewer VerticalScrollBarVisibility="Auto">
                                     <Border Classes="lesson" IsVisible="{Binding HasLesson}">
                                         <StackPanel>
-                                            <Border Classes="washi" />
+                                            <controls:WashiTape Classes="washi" Fill="{DynamicResource PastelLavenderBrush}" />
                                             <TextBlock FontSize="11" FontWeight="Bold" LetterSpacing="1"
                                                        Foreground="{DynamicResource PastelLavenderBrush}" Text="MINI LECCIÓN" />
                                             <TextBlock Classes="ink" FontWeight="SemiBold" FontSize="14" Margin="0,6,0,6"
@@ -369,6 +416,30 @@
                                     </Border>
                                 </ScrollViewer>
                             </DockPanel>
+                            <Border Classes="post-it" Classes.shown="{Binding HasHint}" IsVisible="{Binding HasHint}">
+                                <StackPanel>
+                                    <Border Classes="post-it-top">
+                                        <StackPanel>
+                                            <Border Classes="post-it-glue" />
+                                            <TextBlock FontSize="11" FontWeight="Bold" LetterSpacing="1" Foreground="#8A6F12"
+                                                       Text="PISTA DE HELPY" />
+                                        </StackPanel>
+                                    </Border>
+                                    <Border Classes="post-it-bottom" RenderTransformOrigin="50%,0%">
+                                        <Border.RenderTransform>
+                                            <ScaleTransform />
+                                        </Border.RenderTransform>
+                                        <Panel>
+                                            <TextBlock FontSize="19" Margin="0,2,0,0" TextWrapping="Wrap" Foreground="#4F420C"
+                                                       FontFamily="avares://NetWall.IDE/Assets/Fonts#Caveat"
+                                                       Text="{Binding HintText}" />
+                                            <Path HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="0,0,-14,-16"
+                                                  Data="M 18 0 L 18 18 L 0 18 Z" Fill="#E8D77E" />
+                                            <Border Classes="fold-shade" />
+                                        </Panel>
+                                    </Border>
+                                </StackPanel>
+                            </Border>
                         </Panel>
                     </Border>
 
@@ -473,6 +544,7 @@
                             </Border>
                         </DockPanel>
                     </Border>
+                    <controls:CorrectionLayer Grid.Column="2" Name="Correction" />
                     <Path Grid.Column="0" Classes="page-corner" HorizontalAlignment="Left" VerticalAlignment="Bottom"
                           Data="M 0 0 L 26 26 L 0 26 Z" ToolTip.Tip="Página anterior"
                           IsVisible="{Binding CanGoBack}" PointerPressed="OnPreviousCornerPressed" />
@@ -489,11 +561,5 @@
             </Button>
         </Grid>
 
-        <Panel Name="CheckOverlay" Classes="check-overlay" IsVisible="False">
-            <Border Background="{DynamicResource BackgroundBrush}" Opacity="0.8" />
-            <Border Classes="check-card">
-                <controls:ChallengeCheckStage Name="Stage" />
-            </Border>
-        </Panel>
     </Panel>
 </UserControl>

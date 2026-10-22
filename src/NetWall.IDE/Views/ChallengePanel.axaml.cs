@@ -1,5 +1,8 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.Linq;
+using System.Text.RegularExpressions;
 using System.ComponentModel;
 using System.Threading;
 using System.Threading.Tasks;
@@ -7,6 +10,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
+using Avalonia.Media;
 using Avalonia.Media.Imaging;
 using NetWall.IDE.Controls;
 using NetWall.IDE.Models;
@@ -18,20 +22,29 @@ namespace NetWall.IDE.Views;
 public partial class ChallengePanel : UserControl
 {
     private readonly NetWallSyntaxColorizer _colorizer = new() { IsEnabled = true };
+    private readonly RuleHighlighter _highlighter = new();
     private ChallengeViewModel? _viewModel;
     private CancellationTokenSource? _typing;
     private bool _replacing;
     private bool _turning;
+    private bool _correcting;
+    private double _pace = 1;
 
     public ChallengePanel()
     {
         InitializeComponent();
         Editor.TextArea.TextView.LineTransformers.Add(_colorizer);
+        Editor.TextArea.TextView.BackgroundRenderers.Add(_highlighter);
+        AddHandler(PointerPressedEvent, OnPanelPointerPressed, RoutingStrategies.Tunnel);
         Editor.TextChanged += OnEditorTextChanged;
         AddHandler(KeyDownEvent, OnPanelKeyDown, RoutingStrategies.Tunnel);
     }
 
-    public void SetHelpyColor(PetColor color) => Helpy.SetColor(color);
+    public void SetHelpyColor(PetColor color)
+    {
+        Helpy.SetColor(color);
+        Correction.SetHelpyColor(color);
+    }
 
     protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
     {
@@ -124,6 +137,7 @@ public partial class ChallengePanel : UserControl
 
     private void OnCodeReplaced(string code)
     {
+        ClearCorrection();
         _replacing = true;
         Editor.Text = code;
         _replacing = false;
@@ -133,6 +147,7 @@ public partial class ChallengePanel : UserControl
     {
         if (!_replacing)
         {
+            ClearCorrection();
             _viewModel?.UpdateCode(Editor.Text);
         }
     }
@@ -160,13 +175,112 @@ public partial class ChallengePanel : UserControl
 
     private async Task PresentAsync(IReadOnlyList<ChallengeOutcome> outcomes)
     {
-        CheckOverlay.IsVisible = true;
-        await Task.Delay(30);
-        CheckOverlay.Classes.Add("shown");
-        await Stage.PlayAsync(outcomes);
-        CheckOverlay.Classes.Remove("shown");
-        await Task.Delay(260);
-        CheckOverlay.IsVisible = false;
+        ClearCorrection();
+        _correcting = true;
+        _pace = outcomes.Count switch
+        {
+            <= 3 => 1,
+            <= 5 => 0.75,
+            _ => 0.55,
+        };
+        var chips = Enumerable.Range(0, outcomes.Count).Select(ChipRect).ToList();
+        if (chips.Count > 0)
+        {
+            Correction.ShowHelpy(new Point(chips[0].Left - 26, chips[0].Top + 4));
+        }
+
+        for (var i = 0; i < outcomes.Count; i++)
+        {
+            await Correction.WalkToAsync(new Point(chips[i].Center.X, chips[i].Top + 4), 340 * _pace);
+            if (outcomes[i] is { Allowed: { } allowed, Test.Visible: true } outcome)
+            {
+                await HighlightAsync(outcome.Rule, allowed);
+            }
+
+            await Correction.MarkAsync(chips[i], outcomes[i].Passed, 420 * _pace);
+            await Task.Delay((int)(140 * _pace));
+        }
+
+        var success = outcomes.All(outcome => outcome.Passed);
+        var anchor = new Point(TestList.Bounds.Width, -6);
+        anchor = TestList.TranslatePoint(anchor, Correction) ?? anchor;
+        await Correction.NoteAsync(success ? "¡Muy bien!" : "Revisa esto", success, anchor, 650 * Math.Max(_pace, 0.6));
+        await Task.Delay((int)(350 * _pace));
+        await Correction.HideHelpyAsync();
+        _correcting = false;
+    }
+
+    private Rect ChipRect(int index)
+    {
+        if (TestList.ContainerFromIndex(index) is not { } chip)
+        {
+            return default;
+        }
+
+        var origin = chip.TranslatePoint(default, Correction) ?? default;
+        return new Rect(origin, chip.Bounds.Size);
+    }
+
+    private async Task HighlightAsync(string? rule, bool allowed)
+    {
+        if (RuleLines(rule) is not var (first, last))
+        {
+            return;
+        }
+
+        var color = this.TryFindResource(allowed ? "PastelMintBrush" : "PastelPinkBrush", out var resource)
+                    && resource is ISolidColorBrush brush ? brush.Color : Colors.Plum;
+        _highlighter.Show(first, last, color, rule is null ? "← política" : "← decide");
+        Editor.ScrollToLine(first);
+        var duration = 480 * _pace;
+        var clock = Stopwatch.StartNew();
+        while (clock.ElapsedMilliseconds < duration)
+        {
+            _highlighter.Progress = clock.ElapsedMilliseconds / duration;
+            Editor.TextArea.TextView.InvalidateLayer(AvaloniaEdit.Rendering.KnownLayer.Background);
+            await Task.Delay(16);
+        }
+
+        _highlighter.Progress = 1;
+        Editor.TextArea.TextView.InvalidateLayer(AvaloniaEdit.Rendering.KnownLayer.Background);
+        await Task.Delay((int)(380 * _pace));
+    }
+
+    private (int First, int Last)? RuleLines(string? rule)
+    {
+        var lines = Editor.Text.Split('\n');
+        var pattern = rule is null ? @"^\s*politica_defecto\b" : $@"^\s*regla\s+{Regex.Escape(rule)}\b";
+        var first = Array.FindIndex(lines, line => Regex.IsMatch(line, pattern));
+        if (first < 0)
+        {
+            return null;
+        }
+
+        var last = rule is null ? first : Array.FindIndex(lines, first, line => line.Contains("};"));
+        return (first + 1, (last < 0 ? first : last) + 1);
+    }
+
+    private void ClearCorrection()
+    {
+        if (_correcting)
+        {
+            return;
+        }
+
+        Correction.Clear();
+        if (_highlighter.IsActive)
+        {
+            _highlighter.Clear();
+            Editor.TextArea.TextView.InvalidateLayer(AvaloniaEdit.Rendering.KnownLayer.Background);
+        }
+    }
+
+    private void OnPanelPointerPressed(object? sender, PointerPressedEventArgs e)
+    {
+        if (_correcting)
+        {
+            _pace = 0.15;
+        }
     }
 
     private void OnHelpySpoke(string text, BubbleTone tone) => _ = TypeAsync(text, tone);
