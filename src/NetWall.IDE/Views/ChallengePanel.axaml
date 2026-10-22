@@ -225,140 +225,143 @@
         </Style>
     </UserControl.Styles>
 
-    <Grid ColumnDefinitions="2*,*" Margin="14">
-        <Border Grid.Column="0" Classes="notebook">
-            <Panel>
-                <controls:NotebookPaper />
-                <DockPanel Margin="52,16,18,14">
-                    <StackPanel DockPanel.Dock="Top">
-                        <TextBlock Classes="challenge-title" Text="{Binding Current.Heading, FallbackValue=''}"
-                                   Foreground="{Binding Current.Brush, FallbackValue={x:Null}}" />
-                        <TextBlock Classes="challenge-subtitle" Text="{Binding Subtitle}" />
-                    </StackPanel>
-
-                    <Grid DockPanel.Dock="Top" ColumnDefinitions="Auto,*" Margin="0,14,0,12">
-                        <Border Classes="challenge-avatar">
-                            <controls:HelpySprite Name="Helpy" Width="40" Height="40" />
-                        </Border>
-                        <Border Grid.Column="1" Name="Bubble" Classes="challenge-bubble">
-                            <TextBlock Name="BubbleText" />
-                        </Border>
-                    </Grid>
-
-                    <Grid DockPanel.Dock="Bottom" ColumnDefinitions="Auto,Auto,*,Auto" Margin="0,10,0,0">
-                        <Button Classes="challenge-action" Command="{Binding HintCommand}" ToolTip.Tip="Pídele una pista a Helpy">
-                            <StackPanel Orientation="Horizontal" Spacing="7">
-                                <controls:AnimatedIcon Classes="icon-sm" Kind="Lightbulb" />
-                                <TextBlock Text="Pista" VerticalAlignment="Center" />
-                            </StackPanel>
-                        </Button>
-                        <Button Grid.Column="1" Classes="challenge-action" Command="{Binding ResetCommand}"
-                                ToolTip.Tip="Volver al código del inicio">
-                            <StackPanel Orientation="Horizontal" Spacing="7">
-                                <controls:AnimatedIcon Classes="icon-sm" Kind="RotateCcw" />
-                                <TextBlock Text="Reiniciar" VerticalAlignment="Center" />
-                            </StackPanel>
-                        </Button>
-                        <Button Grid.Column="3" Classes="challenge-action primary" Command="{Binding CheckCommand}"
-                                ToolTip.Tip="Comprobar (Ctrl+Enter)">
-                            <StackPanel Orientation="Horizontal" Spacing="7">
-                                <controls:AnimatedIcon Classes="icon-sm" Kind="Play" Stroke="White" />
-                                <TextBlock Text="Comprobar" VerticalAlignment="Center" />
-                            </StackPanel>
-                        </Button>
-                    </Grid>
-
-                    <Border DockPanel.Dock="Bottom" Classes="challenge-diagnostics"
-                            Classes.warning="{Binding HasWarnings}" Classes.error="{Binding HasCodeErrors}"
-                            IsVisible="{Binding DiagnosticsText.Length}">
-                        <StackPanel Spacing="2">
-                            <TextBlock Text="{Binding DiagnosticsText}" />
-                            <TextBlock Text="{Binding DiagnosticsDetail}" IsVisible="{Binding HasDiagnosticsDetail}" />
+    <Panel>
+        <controls:ChallengeBoard Name="Board" Margin="14" IsVisible="{Binding IsBoardVisible}" />
+        <Grid ColumnDefinitions="2*,*" Margin="14" IsVisible="{Binding !IsBoardVisible}">
+            <Border Grid.Column="0" Classes="notebook">
+                <Panel>
+                    <controls:NotebookPaper />
+                    <DockPanel Margin="52,16,18,14">
+                        <StackPanel DockPanel.Dock="Top">
+                            <TextBlock Classes="challenge-title" Text="{Binding Current.Heading, FallbackValue=''}"
+                                       Foreground="{Binding Current.Brush, FallbackValue={x:Null}}" />
+                            <TextBlock Classes="challenge-subtitle" Text="{Binding Subtitle}" />
                         </StackPanel>
-                    </Border>
 
-                    <Border Classes="challenge-editor">
-                        <ae:TextEditor Name="Editor"
-                                       ShowLineNumbers="True"
-                                       WordWrap="False"
-                                       Background="{DynamicResource EditorBackgroundBrush}"
-                                       Foreground="{DynamicResource TextPrimaryBrush}"
-                                       LineNumbersForeground="{DynamicResource TextDisabledBrush}"
-                                       FontFamily="Cascadia Code,Consolas,DejaVu Sans Mono,monospace"
-                                       FontSize="14"
-                                       Padding="8,8" />
-                    </Border>
-                </DockPanel>
-            </Panel>
-        </Border>
+                        <Grid DockPanel.Dock="Top" ColumnDefinitions="Auto,*" Margin="0,14,0,12">
+                            <Border Classes="challenge-avatar">
+                                <controls:HelpySprite Name="Helpy" Width="40" Height="40" />
+                            </Border>
+                            <Border Grid.Column="1" Name="Bubble" Classes="challenge-bubble">
+                                <TextBlock Name="BubbleText" />
+                            </Border>
+                        </Grid>
 
-        <Border Grid.Column="1" Classes="challenge-side" Margin="14,0,0,0">
-            <ScrollViewer>
-                <StackPanel Margin="16,2,16,16">
-                    <TextBlock Classes="sidebar-header side-header" Text="OBJETIVOS" />
-                    <ItemsControl ItemsSource="{Binding Objectives}">
-                        <ItemsControl.ItemTemplate>
-                            <DataTemplate x:DataType="vm:ChallengeTestCard">
-                                <Grid ColumnDefinitions="Auto,*" Margin="0,0,0,8">
-                                    <Border Classes="objective-check" Classes.passed="{Binding IsPassed}"
-                                            Classes.failed="{Binding IsFailed}" />
-                                    <TextBlock Grid.Column="1" Classes="objective-text" Text="{Binding Test.Label}" />
-                                </Grid>
-                            </DataTemplate>
-                        </ItemsControl.ItemTemplate>
-                    </ItemsControl>
-
-                    <TextBlock Classes="sidebar-header side-header" Text="PRUEBAS" />
-                    <ItemsControl ItemsSource="{Binding Tests}">
-                        <ItemsControl.ItemsPanel>
-                            <ItemsPanelTemplate>
-                                <WrapPanel />
-                            </ItemsPanelTemplate>
-                        </ItemsControl.ItemsPanel>
-                        <ItemsControl.ItemTemplate>
-                            <DataTemplate x:DataType="vm:ChallengeTestCard">
-                                <Border Classes="test-card" Classes.hidden="{Binding !Test.Visible}"
-                                        Classes.passed="{Binding IsPassed}" Classes.failed="{Binding IsFailed}">
-                                    <StackPanel>
-                                        <TextBlock Classes="card-title" Text="{Binding Title}" />
-                                        <TextBlock Classes="card-state" Text="{Binding StateText}" />
-                                    </StackPanel>
-                                </Border>
-                            </DataTemplate>
-                        </ItemsControl.ItemTemplate>
-                    </ItemsControl>
-                    <TextBlock Classes="challenge-subtitle" Text="{Binding HiddenText}"
-                               IsVisible="{Binding HiddenText.Length}" />
-
-                    <TextBlock Classes="sidebar-header side-header" Text="RECOMPENSA" />
-                    <ItemsControl ItemsSource="{Binding Rewards}">
-                        <ItemsControl.ItemTemplate>
-                            <DataTemplate x:DataType="vm:ChallengeReward">
-                                <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
-                                    <controls:AnimatedIcon Classes="fish" Classes.earned="{Binding IsEarned}" Kind="Fish" />
-                                    <TextBlock Classes="reward-text" Classes.earned="{Binding IsEarned}" Text="{Binding Text}" />
+                        <Grid DockPanel.Dock="Bottom" ColumnDefinitions="Auto,Auto,*,Auto" Margin="0,10,0,0">
+                            <Button Classes="challenge-action" Command="{Binding HintCommand}" ToolTip.Tip="Pídele una pista a Helpy">
+                                <StackPanel Orientation="Horizontal" Spacing="7">
+                                    <controls:AnimatedIcon Classes="icon-sm" Kind="Lightbulb" />
+                                    <TextBlock Text="Pista" VerticalAlignment="Center" />
                                 </StackPanel>
-                            </DataTemplate>
-                        </ItemsControl.ItemTemplate>
-                    </ItemsControl>
+                            </Button>
+                            <Button Grid.Column="1" Classes="challenge-action" Command="{Binding ResetCommand}"
+                                    ToolTip.Tip="Volver al código del inicio">
+                                <StackPanel Orientation="Horizontal" Spacing="7">
+                                    <controls:AnimatedIcon Classes="icon-sm" Kind="RotateCcw" />
+                                    <TextBlock Text="Reiniciar" VerticalAlignment="Center" />
+                                </StackPanel>
+                            </Button>
+                            <Button Grid.Column="3" Classes="challenge-action primary" Command="{Binding CheckCommand}"
+                                    ToolTip.Tip="Comprobar (Ctrl+Enter)">
+                                <StackPanel Orientation="Horizontal" Spacing="7">
+                                    <controls:AnimatedIcon Classes="icon-sm" Kind="Play" Stroke="White" />
+                                    <TextBlock Text="Comprobar" VerticalAlignment="Center" />
+                                </StackPanel>
+                            </Button>
+                        </Grid>
 
-                    <TextBlock Classes="sidebar-header side-header" Text="APRENDES" />
-                    <ItemsControl ItemsSource="{Binding Current.Challenge.Concepts, FallbackValue={x:Null}}">
-                        <ItemsControl.ItemsPanel>
-                            <ItemsPanelTemplate>
-                                <WrapPanel />
-                            </ItemsPanelTemplate>
-                        </ItemsControl.ItemsPanel>
-                        <ItemsControl.ItemTemplate>
-                            <DataTemplate x:DataType="x:String">
-                                <Border Classes="concept-chip">
-                                    <TextBlock Text="{Binding}" />
-                                </Border>
-                            </DataTemplate>
-                        </ItemsControl.ItemTemplate>
-                    </ItemsControl>
-                </StackPanel>
-            </ScrollViewer>
-        </Border>
-    </Grid>
+                        <Border DockPanel.Dock="Bottom" Classes="challenge-diagnostics"
+                                Classes.warning="{Binding HasWarnings}" Classes.error="{Binding HasCodeErrors}"
+                                IsVisible="{Binding DiagnosticsText.Length}">
+                            <StackPanel Spacing="2">
+                                <TextBlock Text="{Binding DiagnosticsText}" />
+                                <TextBlock Text="{Binding DiagnosticsDetail}" IsVisible="{Binding HasDiagnosticsDetail}" />
+                            </StackPanel>
+                        </Border>
+
+                        <Border Classes="challenge-editor">
+                            <ae:TextEditor Name="Editor"
+                                           ShowLineNumbers="True"
+                                           WordWrap="False"
+                                           Background="{DynamicResource EditorBackgroundBrush}"
+                                           Foreground="{DynamicResource TextPrimaryBrush}"
+                                           LineNumbersForeground="{DynamicResource TextDisabledBrush}"
+                                           FontFamily="Cascadia Code,Consolas,DejaVu Sans Mono,monospace"
+                                           FontSize="14"
+                                           Padding="8,8" />
+                        </Border>
+                    </DockPanel>
+                </Panel>
+            </Border>
+
+            <Border Grid.Column="1" Classes="challenge-side" Margin="14,0,0,0">
+                <ScrollViewer>
+                    <StackPanel Margin="16,2,16,16">
+                        <TextBlock Classes="sidebar-header side-header" Text="OBJETIVOS" />
+                        <ItemsControl ItemsSource="{Binding Objectives}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate x:DataType="vm:ChallengeTestCard">
+                                    <Grid ColumnDefinitions="Auto,*" Margin="0,0,0,8">
+                                        <Border Classes="objective-check" Classes.passed="{Binding IsPassed}"
+                                                Classes.failed="{Binding IsFailed}" />
+                                        <TextBlock Grid.Column="1" Classes="objective-text" Text="{Binding Test.Label}" />
+                                    </Grid>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+
+                        <TextBlock Classes="sidebar-header side-header" Text="PRUEBAS" />
+                        <ItemsControl ItemsSource="{Binding Tests}">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <WrapPanel />
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate x:DataType="vm:ChallengeTestCard">
+                                    <Border Classes="test-card" Classes.hidden="{Binding !Test.Visible}"
+                                            Classes.passed="{Binding IsPassed}" Classes.failed="{Binding IsFailed}">
+                                        <StackPanel>
+                                            <TextBlock Classes="card-title" Text="{Binding Title}" />
+                                            <TextBlock Classes="card-state" Text="{Binding StateText}" />
+                                        </StackPanel>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                        <TextBlock Classes="challenge-subtitle" Text="{Binding HiddenText}"
+                                   IsVisible="{Binding HiddenText.Length}" />
+
+                        <TextBlock Classes="sidebar-header side-header" Text="RECOMPENSA" />
+                        <ItemsControl ItemsSource="{Binding Rewards}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate x:DataType="vm:ChallengeReward">
+                                    <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+                                        <controls:AnimatedIcon Classes="fish" Classes.earned="{Binding IsEarned}" Kind="Fish" />
+                                        <TextBlock Classes="reward-text" Classes.earned="{Binding IsEarned}" Text="{Binding Text}" />
+                                    </StackPanel>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+
+                        <TextBlock Classes="sidebar-header side-header" Text="APRENDES" />
+                        <ItemsControl ItemsSource="{Binding Current.Challenge.Concepts, FallbackValue={x:Null}}">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <WrapPanel />
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate x:DataType="x:String">
+                                    <Border Classes="concept-chip">
+                                        <TextBlock Text="{Binding}" />
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </StackPanel>
+                </ScrollViewer>
+            </Border>
+        </Grid>
+    </Panel>
 </UserControl>

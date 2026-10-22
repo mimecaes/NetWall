@@ -23,10 +23,15 @@ public partial class ChallengePanel : UserControl
         InitializeComponent();
         Editor.TextArea.TextView.LineTransformers.Add(_colorizer);
         Editor.TextChanged += OnEditorTextChanged;
+        Board.LevelClicked += level => _viewModel?.OpenLevel(level);
         AddHandler(KeyDownEvent, OnPanelKeyDown, RoutingStrategies.Tunnel);
     }
 
-    public void SetHelpyColor(PetColor color) => Helpy.SetColor(color);
+    public void SetHelpyColor(PetColor color)
+    {
+        Helpy.SetColor(color);
+        Board.SetHelpyColor(color);
+    }
 
     protected override void OnAttachedToVisualTree(Avalonia.VisualTreeAttachmentEventArgs e)
     {
@@ -55,6 +60,8 @@ public partial class ChallengePanel : UserControl
             _viewModel.CodeReplaced += OnCodeReplaced;
             _viewModel.HelpySpoke += OnHelpySpoke;
         }
+
+        Board.Levels = _viewModel?.Levels ?? [];
     }
 
     private void OnThemeApplied(object? sender, EventArgs e) => Editor.TextArea.TextView.Redraw();

@@ -131,6 +131,8 @@ public partial class MainWindow : Window
 
     private void OnExitChallengeClick(object? sender, RoutedEventArgs e) => ViewModel?.ExitChallengeMode();
 
+    private void OnChallengeBoardClick(object? sender, RoutedEventArgs e) => ViewModel?.Challenges.ShowBoard();
+
     private void OnPreviousChallengeClick(object? sender, RoutedEventArgs e) => ViewModel?.Challenges.GoBack();
 
     private void OnNextChallengeClick(object? sender, RoutedEventArgs e) => ViewModel?.Challenges.GoForward();

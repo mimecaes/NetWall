@@ -158,14 +158,33 @@ public partial class ChallengeViewModel : ViewModelBase
         }
     }
 
-    public void Open() =>
-        Select(Levels.FirstOrDefault(level => level is { IsUnlocked: true, Fish: 0 })
-               ?? Levels.LastOrDefault(level => level.IsUnlocked));
+    [ObservableProperty]
+    public partial bool IsBoardVisible { get; set; } = true;
+
+    public void Open() => IsBoardVisible = true;
 
     public void Close()
     {
         _live?.Cancel();
         SaveCode();
+    }
+
+    public void OpenLevel(ChallengeLevel level)
+    {
+        if (!level.IsUnlocked)
+        {
+            return;
+        }
+
+        Select(level);
+        IsBoardVisible = false;
+    }
+
+    public void ShowBoard()
+    {
+        _live?.Cancel();
+        SaveCode();
+        IsBoardVisible = true;
     }
 
     public void UpdateCode(string code)
