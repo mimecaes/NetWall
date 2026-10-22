@@ -621,7 +621,7 @@
 
                     <controls:NotebookSpine Grid.Column="1" />
 
-                    <controls:HelpySprite Grid.Column="2" Name="Helpy" Width="84" Height="84" Margin="34,-66,0,0"
+                    <controls:HelpySprite Grid.Column="2" Name="Helpy" Fidgets="True" Width="84" Height="84" Margin="34,-66,0,0"
                                           HorizontalAlignment="Left" VerticalAlignment="Top" />
                     <Border Grid.Column="2" Name="RightPage" Classes="page">
                         <Panel>

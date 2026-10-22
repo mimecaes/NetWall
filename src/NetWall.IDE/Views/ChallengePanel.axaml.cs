@@ -26,6 +26,7 @@ public partial class ChallengePanel : UserControl
     private readonly RuleHighlighter _highlighter = new();
     private ChallengeViewModel? _viewModel;
     private CancellationTokenSource? _typing;
+    private CancellationTokenSource? _watching;
     private bool _replacing;
     private bool _turning;
     private bool _correcting;
@@ -199,6 +200,25 @@ public partial class ChallengePanel : UserControl
         {
             ClearCorrection();
             _viewModel?.UpdateCode(Editor.Text);
+            _ = WatchAsync();
+        }
+    }
+
+    private async Task WatchAsync()
+    {
+        if (Helpy.Mood == HelpyMood.Talking)
+        {
+            return;
+        }
+
+        _watching?.Cancel();
+        var watching = new CancellationTokenSource();
+        _watching = watching;
+        Helpy.Mood = HelpyMood.Watching;
+        await Task.Delay(1500);
+        if (!watching.IsCancellationRequested && Helpy.Mood == HelpyMood.Watching)
+        {
+            Helpy.Mood = HelpyMood.Idle;
         }
     }
 
