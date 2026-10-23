@@ -24,6 +24,8 @@
     <Color x:Key="Nebula.TopBarStop2">#007F77DD</Color>
 
     <Color x:Key="Nebula.EditorBackground">#111121</Color>
+    <Color x:Key="Nebula.ChallengePaper">#15151D</Color>
+    <Color x:Key="Nebula.ChallengeLine">#1A7F77DD</Color>
 
     <!-- Syntax highlighting: Catppuccin Mocha. -->
     <Color x:Key="Nebula.Syntax.Keyword">#CBA6F7</Color>

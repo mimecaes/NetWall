@@ -191,7 +191,28 @@ public partial class MainViewModel : ViewModelBase
     private int _simulationRun;
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(ShowToolbar))]
     public partial bool IsSimulationMode { get; set; }
+
+    public ChallengeViewModel Challenges { get; } = new(FindNetWallCliPath);
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(ShowToolbar))]
+    public partial bool IsChallengeMode { get; set; }
+
+    public bool ShowToolbar => !IsSimulationMode && !IsChallengeMode;
+
+    public void EnterChallengeMode()
+    {
+        Challenges.Open();
+        IsChallengeMode = true;
+    }
+
+    public void ExitChallengeMode()
+    {
+        Challenges.Close();
+        IsChallengeMode = false;
+    }
 
     public string? SimulationProblem => CanSimulateProgram ? null
         : SelectedTab is null ? "No tienes ningún archivo abierto."

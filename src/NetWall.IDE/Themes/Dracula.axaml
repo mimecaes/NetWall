@@ -27,6 +27,8 @@
     <Color x:Key="Dracula.TopBarStop2">#333546</Color>
 
     <Color x:Key="Dracula.EditorBackground">#333546</Color>
+    <Color x:Key="Dracula.ChallengePaper">#303245</Color>
+    <Color x:Key="Dracula.ChallengeLine">#24BD93F9</Color>
 
     <!-- Syntax highlighting: exact colors of the official Dracula theme for VS Code. -->
     <Color x:Key="Dracula.Syntax.Keyword">#FF79C6</Color>

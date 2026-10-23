@@ -1,0 +1,763 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:NetWall.IDE.ViewModels"
+             xmlns:controls="using:NetWall.IDE.Controls"
+             xmlns:ae="https://github.com/avaloniaui/avaloniaedit"
+             x:Class="NetWall.IDE.Views.ChallengePanel"
+             x:DataType="vm:ChallengeViewModel"
+             x:CompileBindings="True">
+
+    <UserControl.Styles>
+        <Style Selector="Border.notebook-cover">
+            <Setter Property="Background" Value="{DynamicResource NotebookCoverBrush}" />
+            <Setter Property="CornerRadius" Value="18" />
+            <Setter Property="Padding" Value="12" />
+            <Setter Property="BoxShadow" Value="0 22 48 0 #88000000" />
+        </Style>
+        <Style Selector="Border.page">
+            <Setter Property="Background" Value="{DynamicResource NotebookPageBrush}" />
+            <Setter Property="CornerRadius" Value="10" />
+            <Setter Property="ClipToBounds" Value="True" />
+        </Style>
+        <Style Selector="Button.page-arrow">
+            <Setter Property="Width" Value="34" />
+            <Setter Property="Height" Value="34" />
+            <Setter Property="Margin" Value="4,0" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="CornerRadius" Value="17" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="HorizontalContentAlignment" Value="Center" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+            <Setter Property="Background" Value="{DynamicResource NotebookBoxBrush}" />
+            <Setter Property="BorderThickness" Value="0" />
+        </Style>
+        <Style Selector="Button.page-arrow:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource NotebookCoverBrush}" />
+        </Style>
+        <Style Selector="Button.page-arrow:disabled">
+            <Setter Property="Opacity" Value="0.3" />
+        </Style>
+        <Style Selector="Button.page-arrow controls|AnimatedIcon">
+            <Setter Property="Width" Value="16" />
+            <Setter Property="Height" Value="16" />
+            <Setter Property="Stretch" Value="Uniform" />
+            <Setter Property="StrokeThickness" Value="2" />
+            <Setter Property="StrokeLineCap" Value="Round" />
+            <Setter Property="Stroke" Value="{DynamicResource NotebookInkBrush}" />
+        </Style>
+        <Style Selector="Path.page-corner">
+            <Setter Property="Width" Value="26" />
+            <Setter Property="Height" Value="26" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="Fill" Value="{DynamicResource NotebookBoxBrush}" />
+            <Setter Property="Stroke" Value="{DynamicResource NotebookLineBrush}" />
+            <Setter Property="Transitions">
+                <Transitions>
+                    <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.18" />
+                </Transitions>
+            </Setter>
+        </Style>
+        <Style Selector="Path.page-corner:pointerover">
+            <Setter Property="RenderTransform" Value="scale(1.7)" />
+            <Setter Property="Fill" Value="{DynamicResource PastelLavenderBrush}" />
+        </Style>
+        <Style Selector="TextBlock.ink">
+            <Setter Property="Foreground" Value="{DynamicResource NotebookInkBrush}" />
+            <Setter Property="TextWrapping" Value="Wrap" />
+            <Setter Property="FontSize" Value="13" />
+        </Style>
+        <Style Selector="TextBlock.muted">
+            <Setter Property="Foreground" Value="{DynamicResource NotebookMutedBrush}" />
+            <Setter Property="FontSize" Value="12" />
+        </Style>
+        <Style Selector="TextBlock.page-title">
+            <Setter Property="FontFamily" Value="avares://NetWall.IDE/Assets/Fonts#Caveat" />
+            <Setter Property="FontWeight" Value="Bold" />
+            <Setter Property="FontSize" Value="34" />
+            <Setter Property="Margin" Value="0,6,0,0" />
+            <Setter Property="TextWrapping" Value="Wrap" />
+            <Setter Property="Foreground" Value="{DynamicResource NotebookTitleBrush}" />
+        </Style>
+        <Style Selector="controls|HandUnderline.title-underline">
+            <Setter Property="Height" Value="10" />
+            <Setter Property="Margin" Value="0,-6,0,14" />
+        </Style>
+        <Style Selector="TextBlock.section">
+            <Setter Property="FontSize" Value="12.5" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Margin" Value="0,16,0,8" />
+            <Setter Property="Foreground" Value="{DynamicResource InkPinkBrush}" />
+        </Style>
+        <Style Selector="Border.type-badge">
+            <Setter Property="CornerRadius" Value="12" />
+            <Setter Property="Padding" Value="12,3" />
+            <Setter Property="HorizontalAlignment" Value="Left" />
+            <Setter Property="Margin" Value="0,0,0,10" />
+            <Setter Property="BorderBrush" Value="White" />
+            <Setter Property="BorderThickness" Value="2.5" />
+            <Setter Property="BoxShadow" Value="0 2 5 0 #33000000" />
+            <Setter Property="RenderTransform" Value="rotate(-2deg)" />
+        </Style>
+        <Style Selector="Border.type-badge TextBlock">
+            <Setter Property="FontSize" Value="11.5" />
+            <Setter Property="FontWeight" Value="Bold" />
+            <Setter Property="Foreground" Value="{DynamicResource PastelInkBrush}" />
+        </Style>
+        <Style Selector="Border.lesson">
+            <Setter Property="Margin" Value="0,22,4,0" />
+            <Setter Property="VerticalAlignment" Value="Top" />
+            <Setter Property="Padding" Value="16,16,16,14" />
+            <Setter Property="CornerRadius" Value="4" />
+            <Setter Property="BoxShadow" Value="1 5 12 0 #2E000000" />
+            <Setter Property="RenderTransform" Value="rotate(0.6deg)" />
+        </Style>
+        <Style Selector="controls|WashiTape.washi">
+            <Setter Property="Width" Value="104" />
+            <Setter Property="Height" Value="22" />
+            <Setter Property="Margin" Value="0,-28,0,6" />
+            <Setter Property="HorizontalAlignment" Value="Center" />
+            <Setter Property="RenderTransform" Value="rotate(-4deg)" />
+        </Style>
+        <Style Selector="Border.post-it">
+            <Setter Property="Width" Value="210" />
+            <Setter Property="Margin" Value="40,0,0,18" />
+            <Setter Property="HorizontalAlignment" Value="Left" />
+            <Setter Property="VerticalAlignment" Value="Bottom" />
+            <Setter Property="RenderTransform" Value="rotate(-3deg)" />
+            <Setter Property="Opacity" Value="0" />
+        </Style>
+        <Style Selector="Border.post-it.shown">
+            <Setter Property="Opacity" Value="1" />
+            <Style.Animations>
+                <Animation Duration="0:0:0.15" FillMode="Forward">
+                    <KeyFrame Cue="0%">
+                        <Setter Property="Opacity" Value="0" />
+                    </KeyFrame>
+                    <KeyFrame Cue="100%">
+                        <Setter Property="Opacity" Value="1" />
+                    </KeyFrame>
+                </Animation>
+            </Style.Animations>
+        </Style>
+        <Style Selector="Border.post-it-top">
+            <Setter Property="Background" Value="#FFF1A8" />
+            <Setter Property="Padding" Value="14,0,14,4" />
+            <Setter Property="BoxShadow" Value="1 3 6 0 #44000000" />
+        </Style>
+        <Style Selector="Border.post-it-glue">
+            <Setter Property="Height" Value="9" />
+            <Setter Property="Margin" Value="-14,0,-14,7" />
+            <Setter Property="Background" Value="#F4DE7A" />
+        </Style>
+        <Style Selector="Border.post-it-bottom">
+            <Setter Property="Background" Value="#FFF1A8" />
+            <Setter Property="Padding" Value="14,0,14,16" />
+            <Setter Property="BoxShadow" Value="2 6 12 0 #55000000" />
+        </Style>
+        <Style Selector="Border.post-it.shown Border.post-it-bottom">
+            <Style.Animations>
+                <Animation Duration="0:0:0.5" Delay="0:0:0.15" Easing="CubicEaseOut" FillMode="Both">
+                    <KeyFrame Cue="0%">
+                        <Setter Property="ScaleTransform.ScaleY" Value="0" />
+                    </KeyFrame>
+                    <KeyFrame Cue="100%">
+                        <Setter Property="ScaleTransform.ScaleY" Value="1" />
+                    </KeyFrame>
+                </Animation>
+            </Style.Animations>
+        </Style>
+        <Style Selector="Border.fold-shade">
+            <Setter Property="IsHitTestVisible" Value="False" />
+            <Setter Property="Margin" Value="-14,0,-14,-16" />
+            <Setter Property="Opacity" Value="0" />
+            <Setter Property="Background">
+                <LinearGradientBrush StartPoint="0%,0%" EndPoint="0%,100%">
+                    <GradientStop Offset="0" Color="#66000000" />
+                    <GradientStop Offset="1" Color="#00000000" />
+                </LinearGradientBrush>
+            </Setter>
+        </Style>
+        <Style Selector="Border.post-it.shown Border.fold-shade">
+            <Style.Animations>
+                <Animation Duration="0:0:0.5" Delay="0:0:0.15" Easing="CubicEaseOut" FillMode="Both">
+                    <KeyFrame Cue="0%">
+                        <Setter Property="Opacity" Value="1" />
+                    </KeyFrame>
+                    <KeyFrame Cue="100%">
+                        <Setter Property="Opacity" Value="0" />
+                    </KeyFrame>
+                </Animation>
+            </Style.Animations>
+        </Style>
+        <Style Selector="Border.code-box">
+            <Setter Property="Margin" Value="0,12,0,0" />
+            <Setter Property="Padding" Value="12,9" />
+            <Setter Property="CornerRadius" Value="8" />
+            <Setter Property="Background" Value="{DynamicResource NotebookCodeBrush}" />
+        </Style>
+        <Style Selector="controls|HandBubble">
+            <Setter Property="Fill" Value="{DynamicResource NotebookPageBrush}" />
+            <Setter Property="Stroke" Value="{DynamicResource InkLavenderBrush}" />
+        </Style>
+        <Style Selector="controls|HandBubble.ok">
+            <Setter Property="Stroke" Value="{DynamicResource InkMintBrush}" />
+        </Style>
+        <Style Selector="controls|HandBubble.no">
+            <Setter Property="Stroke" Value="{DynamicResource InkPinkBrush}" />
+        </Style>
+        <Style Selector="controls|HandBubble TextBlock">
+            <Setter Property="FontSize" Value="13" />
+            <Setter Property="TextWrapping" Value="Wrap" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="Foreground" Value="{DynamicResource NotebookInkBrush}" />
+        </Style>
+        <Style Selector="Border.editor-box">
+            <Setter Property="CornerRadius" Value="6" />
+            <Setter Property="Background" Value="{DynamicResource NotebookCodeBrush}" />
+            <Setter Property="BoxShadow" Value="2 8 18 0 #45000000" />
+        </Style>
+        <Style Selector="controls|WashiTape.corner-tape">
+            <Setter Property="Width" Value="72" />
+            <Setter Property="Height" Value="20" />
+            <Setter Property="VerticalAlignment" Value="Top" />
+        </Style>
+        <Style Selector="TextBlock.test-text">
+            <Setter Property="FontSize" Value="12.5" />
+            <Setter Property="MaxWidth" Value="240" />
+            <Setter Property="TextTrimming" Value="CharacterEllipsis" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="Foreground" Value="{DynamicResource NotebookInkBrush}" />
+        </Style>
+        <Style Selector="StackPanel.diagnostics">
+            <Setter Property="Margin" Value="4,6,0,0" />
+            <Setter Property="RenderTransform" Value="rotate(-1deg)" />
+        </Style>
+        <Style Selector="StackPanel.diagnostics TextBlock">
+            <Setter Property="FontFamily" Value="avares://NetWall.IDE/Assets/Fonts#Caveat" />
+            <Setter Property="FontSize" Value="18" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="TextWrapping" Value="Wrap" />
+            <Setter Property="Foreground" Value="{DynamicResource InkMintBrush}" />
+        </Style>
+        <Style Selector="StackPanel.diagnostics.warning TextBlock">
+            <Setter Property="Foreground" Value="{DynamicResource InkButterBrush}" />
+        </Style>
+        <Style Selector="StackPanel.diagnostics.error TextBlock">
+            <Setter Property="Foreground" Value="{DynamicResource InkPinkBrush}" />
+        </Style>
+        <Style Selector="Button.notebook-action">
+            <Setter Property="Height" Value="34" />
+            <Setter Property="Padding" Value="14,0" />
+            <Setter Property="Margin" Value="0,0,8,0" />
+            <Setter Property="CornerRadius" Value="10,10,3,3" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+            <Setter Property="HorizontalContentAlignment" Value="Center" />
+            <Setter Property="Background" Value="{DynamicResource PastelButterBrush}" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Foreground" Value="{DynamicResource PastelInkBrush}" />
+            <Setter Property="FontSize" Value="12.5" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Transitions">
+                <Transitions>
+                    <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.15" />
+                </Transitions>
+            </Setter>
+        </Style>
+        <Style Selector="Button.notebook-action /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="BoxShadow" Value="0 2 5 0 #33000000" />
+        </Style>
+        <Style Selector="Button.notebook-action.mint /template/ ContentPresenter#PART_ContentPresenter, Button.notebook-action.pink /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="BoxShadow" Value="none" />
+        </Style>
+        <Style Selector="Button.notebook-action.tab-lavender">
+            <Setter Property="Background" Value="{DynamicResource PastelLavenderBrush}" />
+        </Style>
+        <Style Selector="Button.notebook-action:pointerover">
+            <Setter Property="RenderTransform" Value="translateY(-3px)" />
+        </Style>
+        <Style Selector="Button.page-tab">
+            <Setter Property="Height" Value="44" />
+            <Setter Property="Margin" Value="0" />
+            <Setter Property="Padding" Value="14,8,14,0" />
+            <Setter Property="VerticalContentAlignment" Value="Top" />
+        </Style>
+        <Style Selector="Button.notebook-action:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource PastelButterBrush}" />
+            <Setter Property="Foreground" Value="{DynamicResource PastelInkBrush}" />
+        </Style>
+        <Style Selector="Button.notebook-action.tab-lavender:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource PastelLavenderBrush}" />
+        </Style>
+        <Style Selector="Button.notebook-action controls|AnimatedIcon">
+            <Setter Property="Width" Value="14" />
+            <Setter Property="Height" Value="14" />
+            <Setter Property="Stretch" Value="Uniform" />
+            <Setter Property="StrokeThickness" Value="2" />
+            <Setter Property="StrokeLineCap" Value="Round" />
+            <Setter Property="StrokeJoin" Value="Round" />
+            <Setter Property="Stroke" Value="{DynamicResource PastelInkBrush}" />
+        </Style>
+        <Style Selector="Button.notebook-action.mint, Button.notebook-action.pink">
+            <Setter Property="Margin" Value="0" />
+            <Setter Property="Height" Value="38" />
+            <Setter Property="CornerRadius" Value="6" />
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="2.5" />
+            <Setter Property="FontWeight" Value="Bold" />
+            <Setter Property="FontSize" Value="13" />
+            <Setter Property="RenderTransform" Value="rotate(-2deg)" />
+        </Style>
+        <Style Selector="Button.notebook-action.mint">
+            <Setter Property="BorderBrush" Value="{DynamicResource InkMintBrush}" />
+            <Setter Property="Foreground" Value="{DynamicResource InkMintBrush}" />
+        </Style>
+        <Style Selector="Button.notebook-action.pink">
+            <Setter Property="BorderBrush" Value="{DynamicResource InkPinkBrush}" />
+            <Setter Property="Foreground" Value="{DynamicResource InkPinkBrush}" />
+        </Style>
+        <Style Selector="Button.notebook-action.mint:pointerover, Button.notebook-action.pink:pointerover">
+            <Setter Property="RenderTransform" Value="rotate(-2deg) scale(1.04)" />
+        </Style>
+        <Style Selector="Button.notebook-action.mint:pressed, Button.notebook-action.pink:pressed">
+            <Setter Property="RenderTransform" Value="rotate(-2deg) scale(0.93)" />
+        </Style>
+        <Style Selector="Button.notebook-action.mint:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="#1F2E9C76" />
+            <Setter Property="BorderBrush" Value="{DynamicResource InkMintBrush}" />
+            <Setter Property="Foreground" Value="{DynamicResource InkMintBrush}" />
+        </Style>
+        <Style Selector="Button.notebook-action.pink:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="#1FC2577F" />
+            <Setter Property="BorderBrush" Value="{DynamicResource InkPinkBrush}" />
+            <Setter Property="Foreground" Value="{DynamicResource InkPinkBrush}" />
+        </Style>
+        <Style Selector="Button.notebook-action.mint controls|AnimatedIcon">
+            <Setter Property="Stroke" Value="{DynamicResource InkMintBrush}" />
+        </Style>
+        <Style Selector="Button.notebook-action:disabled">
+            <Setter Property="Opacity" Value="0.5" />
+        </Style>
+        <Style Selector="TextBlock.question">
+            <Setter Property="FontFamily" Value="Cascadia Code,Consolas,DejaVu Sans Mono,monospace" />
+            <Setter Property="FontSize" Value="12.5" />
+            <Setter Property="Margin" Value="4,0,12,0" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="TextTrimming" Value="CharacterEllipsis" />
+            <Setter Property="Foreground" Value="{DynamicResource NotebookInkBrush}" />
+        </Style>
+        <Style Selector="Button.bookmark">
+            <Setter Property="Width" Value="26" />
+            <Setter Property="Height" Value="80" />
+            <Setter Property="Margin" Value="0,14,0,0" />
+            <Setter Property="VerticalAlignment" Value="Top" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="Template">
+                <ControlTemplate>
+                    <Panel>
+                        <Path Data="M 0 0 L 13 9 L 26 0 L 26 80 L 0 80 Z" Fill="{TemplateBinding Background}" />
+                        <ContentPresenter Content="{TemplateBinding Content}" HorizontalAlignment="Center"
+                                          VerticalAlignment="Top" Margin="0,11,0,0" />
+                    </Panel>
+                </ControlTemplate>
+            </Setter>
+            <Setter Property="Transitions">
+                <Transitions>
+                    <ThicknessTransition Property="Margin" Duration="0:0:0.2" />
+                </Transitions>
+            </Setter>
+        </Style>
+        <Style Selector="Button.bookmark.active">
+            <Setter Property="Margin" Value="0,0,0,0" />
+        </Style>
+        <Style Selector="Button.bookmark:pointerover">
+            <Setter Property="Margin" Value="0,6,0,0" />
+        </Style>
+        <Style Selector="Button.bookmark.active:pointerover">
+            <Setter Property="Margin" Value="0,0,0,0" />
+        </Style>
+        <Style Selector="Button.bookmark:disabled">
+            <Setter Property="Opacity" Value="0.35" />
+        </Style>
+        <Style Selector="Button.bookmark TextBlock">
+            <Setter Property="FontFamily" Value="avares://NetWall.IDE/Assets/Fonts#Caveat" />
+            <Setter Property="FontSize" Value="18" />
+            <Setter Property="FontWeight" Value="Bold" />
+            <Setter Property="Foreground" Value="{DynamicResource PastelInkBrush}" />
+        </Style>
+        <Style Selector="Button.bookmark controls|AnimatedIcon">
+            <Setter Property="Width" Value="13" />
+            <Setter Property="Height" Value="13" />
+            <Setter Property="Stretch" Value="Uniform" />
+            <Setter Property="StrokeThickness" Value="2" />
+            <Setter Property="Stroke" Value="{DynamicResource PastelInkBrush}" />
+        </Style>
+        <Style Selector="Button.index-row, Button.index-chapter">
+            <Setter Property="Padding" Value="4,2" />
+            <Setter Property="Margin" Value="0,0,0,2" />
+            <Setter Property="HorizontalAlignment" Value="Stretch" />
+            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="CornerRadius" Value="6" />
+            <Setter Property="Cursor" Value="Hand" />
+        </Style>
+        <Style Selector="Button.index-chapter">
+            <Setter Property="HorizontalAlignment" Value="Left" />
+            <Setter Property="Padding" Value="0" />
+        </Style>
+        <Style Selector="Button.index-row:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="#14000000" />
+        </Style>
+        <Style Selector="Button.index-chapter:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="Transparent" />
+        </Style>
+        <Style Selector="Button.index-row:disabled /template/ ContentPresenter#PART_ContentPresenter, Button.index-chapter:disabled /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="Transparent" />
+        </Style>
+        <Style Selector="Button.index-row:disabled, Button.index-chapter:disabled">
+            <Setter Property="Opacity" Value="0.45" />
+        </Style>
+        <Style Selector="TextBlock.index-id">
+            <Setter Property="FontFamily" Value="Cascadia Code,Consolas,DejaVu Sans Mono,monospace" />
+            <Setter Property="FontSize" Value="11.5" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="Foreground" Value="{DynamicResource NotebookMutedBrush}" />
+        </Style>
+        <Style Selector="TextBlock.index-title">
+            <Setter Property="FontSize" Value="13.5" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="TextTrimming" Value="CharacterEllipsis" />
+            <Setter Property="Foreground" Value="{DynamicResource NotebookInkBrush}" />
+        </Style>
+    </UserControl.Styles>
+
+    <UserControl.Resources>
+        <DataTemplate x:Key="LevelRowTemplate" x:DataType="vm:ChallengeLevel">
+            <Button Classes="index-row" IsEnabled="{Binding IsUnlocked}" Click="OnLevelRowClick">
+                <Grid ColumnDefinitions="58,*,Auto">
+                    <TextBlock Classes="index-id" Text="{Binding Challenge.Id}" />
+                    <TextBlock Grid.Column="1" Classes="index-title" Text="{Binding Challenge.Title}" />
+                    <controls:WaxSeal Grid.Column="2" Width="38" Height="38" Margin="0,-4" Level="{Binding Seal}" />
+                </Grid>
+            </Button>
+        </DataTemplate>
+        <DataTemplate x:Key="IndexChapterTemplate" x:DataType="vm:ChallengeChapter">
+            <StackPanel Margin="0,0,0,14">
+                <Button Classes="index-chapter" IsEnabled="{Binding IsUnlocked}" Click="OnChapterRowClick">
+                    <Panel>
+                        <Border CornerRadius="10" Background="{Binding Brush}" />
+                        <TextBlock Margin="11,3" FontSize="12" FontWeight="SemiBold"
+                                   Foreground="{DynamicResource PastelInkBrush}">
+                            <Run Text="{Binding Title}" />
+                            <Run Text="·" />
+                            <Run Text="{Binding Name}" />
+                        </TextBlock>
+                    </Panel>
+                </Button>
+                <ItemsControl Margin="4,6,0,0" ItemsSource="{Binding Levels}"
+                              ItemTemplate="{StaticResource LevelRowTemplate}" />
+            </StackPanel>
+        </DataTemplate>
+    </UserControl.Resources>
+
+    <Panel>
+        <Grid ColumnDefinitions="Auto,*,Auto" Margin="6,46,6,14">
+            <Button Grid.Column="0" Classes="page-arrow" ToolTip.Tip="Página anterior (←)"
+                    IsEnabled="{Binding CanGoBack}" Click="OnPreviousClick">
+                <controls:AnimatedIcon Kind="ChevronLeft" />
+            </Button>
+
+            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6" HorizontalAlignment="Right"
+                        VerticalAlignment="Top" Margin="0,-46,70,0">
+                <Button Classes="bookmark" Classes.active="{Binding IsIndexPage}" ToolTip.Tip="Índice"
+                        Background="{DynamicResource PastelLavenderBrush}" Click="OnIndexBookmarkClick">
+                    <controls:AnimatedIcon Kind="BookOpen" />
+                </Button>
+                <ItemsControl ItemsSource="{Binding Chapters}">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <StackPanel Orientation="Horizontal" Spacing="6" />
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate x:DataType="vm:ChallengeChapter">
+                            <Button Classes="bookmark" Classes.active="{Binding IsActive}" IsEnabled="{Binding IsUnlocked}"
+                                    Background="{Binding Brush}" ToolTip.Tip="{Binding Name}" Click="OnBookmarkClick">
+                                <TextBlock Text="{Binding Number}" />
+                            </Button>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </StackPanel>
+
+            <Border Grid.Column="1" Name="Notebook" Classes="notebook-cover">
+                <Grid ColumnDefinitions="*,28,1.3*">
+                    <controls:PageStack Grid.Column="0" IsLeft="True" Width="18" HorizontalAlignment="Left"
+                                        Margin="-14,0,0,0" Count="{Binding PagesBefore}" />
+                    <controls:PageStack Grid.Column="2" Width="18" HorizontalAlignment="Right" Margin="0,0,-14,0"
+                                        Count="{Binding PagesAfter}" />
+                    <Border Grid.Column="0" Name="LeftPage" Classes="page">
+                        <Panel>
+                            <controls:NotebookPaper IsLeft="True" />
+                            <DockPanel Margin="32,22,30,16" IsVisible="{Binding IsLevelPage}">
+                                <StackPanel DockPanel.Dock="Top">
+                                    <Panel HorizontalAlignment="Left">
+                                        <Border CornerRadius="10"
+                                                Background="{Binding Current.Brush, FallbackValue={x:Null}}" />
+                                        <TextBlock Margin="11,3" FontSize="11.5" FontWeight="SemiBold"
+                                                   Text="{Binding ChapterText}"
+                                                   Foreground="{DynamicResource PastelInkBrush}" />
+                                    </Panel>
+                                    <StackPanel HorizontalAlignment="Left">
+                                        <TextBlock Classes="page-title" Text="{Binding Current.Challenge.Title, FallbackValue=''}" />
+                                        <controls:HandUnderline Classes="title-underline"
+                                                                Stroke="{Binding Current.Brush, FallbackValue={x:Null}}" />
+                                    </StackPanel>
+                                    <Border Classes="type-badge" Background="{Binding TypeBrush}">
+                                        <TextBlock Text="{Binding TypeLabel}" />
+                                    </Border>
+                                    <TextBlock Classes="ink" Text="{Binding TypeText}" />
+                                    <TextBlock Classes="section" Text="Lo que vas a ver" />
+                                    <ItemsControl ItemsSource="{Binding Learn}">
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate x:DataType="x:String">
+                                                <Grid ColumnDefinitions="Auto,*" Margin="0,0,0,6">
+                                                    <controls:Doodle Kind="Paw" Width="12" Height="12" Margin="0,3,9,0"
+                                                                     VerticalAlignment="Top" Stroke="{DynamicResource InkPinkBrush}" />
+                                                    <TextBlock Grid.Column="1" Classes="ink" Text="{Binding}" />
+                                                </Grid>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                </StackPanel>
+
+                                <Grid DockPanel.Dock="Bottom" ColumnDefinitions="*,Auto,Auto" Margin="0,10,0,0">
+                                    <controls:Doodle Grid.Column="1" Width="30" Height="30" Margin="0,0,30,6" Opacity="0.55"
+                                                     VerticalAlignment="Bottom" RenderTransform="rotate(10deg)"
+                                                     Kind="{Binding DoodleBottom}" Stroke="{DynamicResource InkPinkBrush}" />
+                                    <controls:WaxSeal Grid.Column="2" Name="Seal" Width="92" Height="92"
+                                                      Level="{Binding Current.Seal, FallbackValue=0}" />
+                                </Grid>
+
+                                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                                    <Border Classes="lesson" IsVisible="{Binding HasLesson}"
+                                            Background="{Binding Current.Brush, FallbackValue={x:Null}}">
+                                        <Panel>
+                                        <StackPanel>
+                                            <controls:WashiTape Classes="washi" Fill="{DynamicResource PastelLavenderBrush}" />
+                                            <TextBlock FontSize="11" FontWeight="Bold" LetterSpacing="1"
+                                                       Foreground="{DynamicResource InkLavenderBrush}" Text="MINI LECCIÓN" />
+                                            <TextBlock Classes="ink" FontWeight="SemiBold" FontSize="14" Margin="0,6,0,6"
+                                                       Text="{Binding Current.Challenge.Lesson.Title, FallbackValue=''}" />
+                                            <TextBlock Classes="ink" LineHeight="19"
+                                                       Text="{Binding Current.Challenge.Lesson.Text, FallbackValue=''}" />
+                                            <Border Classes="code-box"
+                                                    IsVisible="{Binding Current.Challenge.Lesson.Example, Converter={x:Static ObjectConverters.IsNotNull}, FallbackValue=False}">
+                                                <controls:CodePreview Code="{Binding Current.Challenge.Lesson.Example, FallbackValue=''}"
+                                                                      FontFamily="Cascadia Code,Consolas,DejaVu Sans Mono,monospace"
+                                                                      FontSize="12.5" Foreground="{DynamicResource NotebookCodeInkBrush}" />
+                                            </Border>
+                                        </StackPanel>
+                                        <Path HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="0,0,-16,-14"
+                                              Data="M 22 0 L 22 22 L 0 22 Z" Fill="{DynamicResource NotebookPageBrush}" />
+                                        <Path HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="0,0,-16,-14"
+                                              Data="M 0 0 L 22 0 L 0 22 Z" Fill="#2A000000" />
+                                        </Panel>
+                                    </Border>
+                                </ScrollViewer>
+                            </DockPanel>
+                            <ScrollViewer Margin="32,22,30,16" VerticalScrollBarVisibility="Auto"
+                                          IsVisible="{Binding IsIndexPage}">
+                                <StackPanel>
+                                    <StackPanel HorizontalAlignment="Left">
+                                        <TextBlock Classes="page-title" FontSize="46" Text="Índice" />
+                                        <controls:HandUnderline Classes="title-underline"
+                                                                Stroke="{DynamicResource PastelLavenderBrush}" />
+                                    </StackPanel>
+                                    <TextBlock Classes="ink" Margin="0,0,0,16"
+                                               Text="Elige un tema para ir a su página. Los temas en gris se abren al completar el anterior." />
+                                    <ItemsControl ItemsSource="{Binding IndexLeft}"
+                                                  ItemTemplate="{StaticResource IndexChapterTemplate}" />
+                                </StackPanel>
+                            </ScrollViewer>
+                            <StackPanel Margin="32,40,30,16" IsVisible="{Binding IsCoverPage}">
+                                <TextBlock FontFamily="avares://NetWall.IDE/Assets/Fonts#Caveat" FontSize="28" FontWeight="Bold"
+                                           Foreground="{DynamicResource InkPinkBrush}"
+                                           Text="{Binding Chapter.Title, FallbackValue=''}" />
+                                <StackPanel HorizontalAlignment="Left">
+                                    <TextBlock Classes="page-title" FontSize="52" Text="{Binding Chapter.Name, FallbackValue=''}" />
+                                    <controls:HandUnderline Classes="title-underline"
+                                                            Stroke="{Binding Chapter.Brush, FallbackValue={x:Null}}" />
+                                </StackPanel>
+                                <TextBlock Classes="ink" FontSize="15" LineHeight="23"
+                                           Text="{Binding Chapter.Description, FallbackValue=''}" />
+                                <controls:Doodle Width="130" Height="130" Margin="0,40,0,0" HorizontalAlignment="Center"
+                                                 Opacity="0.5" RenderTransform="rotate(-8deg)" Kind="{Binding CoverDoodle}"
+                                                 Stroke="{DynamicResource InkLavenderBrush}" />
+                            </StackPanel>
+                            <controls:Doodle Width="34" Height="34" HorizontalAlignment="Right" VerticalAlignment="Top"
+                                             Margin="0,18,36,0" Opacity="0.5" RenderTransform="rotate(-12deg)"
+                                             Kind="{Binding DoodleTop}" Stroke="{DynamicResource InkLavenderBrush}" />
+                            <Border Classes="post-it" Classes.shown="{Binding HasHint}" IsVisible="{Binding HasHint}">
+                                <StackPanel>
+                                    <Border Classes="post-it-top">
+                                        <StackPanel>
+                                            <Border Classes="post-it-glue" />
+                                            <TextBlock FontSize="11" FontWeight="Bold" LetterSpacing="1" Foreground="#8A6F12"
+                                                       Text="PISTA DE HELPY" />
+                                        </StackPanel>
+                                    </Border>
+                                    <Border Classes="post-it-bottom" RenderTransformOrigin="50%,0%">
+                                        <Border.RenderTransform>
+                                            <ScaleTransform />
+                                        </Border.RenderTransform>
+                                        <Panel>
+                                            <TextBlock FontSize="19" Margin="0,2,0,0" TextWrapping="Wrap" Foreground="#4F420C"
+                                                       FontFamily="avares://NetWall.IDE/Assets/Fonts#Caveat"
+                                                       Text="{Binding HintText}" />
+                                            <Path HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="0,0,-14,-16"
+                                                  Data="M 18 0 L 18 18 L 0 18 Z" Fill="#E8D77E" />
+                                            <Border Classes="fold-shade" />
+                                        </Panel>
+                                    </Border>
+                                </StackPanel>
+                            </Border>
+                        </Panel>
+                    </Border>
+
+                    <controls:NotebookSpine Grid.Column="1" />
+
+                    <controls:HelpySprite Grid.Column="2" Name="Helpy" Fidgets="True" Width="84" Height="84" Margin="34,-66,0,0"
+                                          HorizontalAlignment="Left" VerticalAlignment="Top" />
+                    <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="6" Margin="128,-30,0,0"
+                                HorizontalAlignment="Left" VerticalAlignment="Top" IsVisible="{Binding IsLevelPage}">
+                        <Button Classes="notebook-action page-tab" Command="{Binding HintCommand}" ToolTip.Tip="Pídele una pista a Helpy">
+                            <StackPanel Orientation="Horizontal" Spacing="7">
+                                <controls:AnimatedIcon Kind="Lightbulb" />
+                                <TextBlock Text="Pista" VerticalAlignment="Center" />
+                            </StackPanel>
+                        </Button>
+                        <Button Classes="notebook-action page-tab tab-lavender" Command="{Binding ResetCommand}"
+                                ToolTip.Tip="Volver al código del inicio" IsVisible="{Binding IsWriting}">
+                            <StackPanel Orientation="Horizontal" Spacing="7">
+                                <controls:AnimatedIcon Kind="RotateCcw" />
+                                <TextBlock Text="Reiniciar" VerticalAlignment="Center" />
+                            </StackPanel>
+                        </Button>
+                    </StackPanel>
+                    <Border Grid.Column="2" Name="RightPage" Classes="page">
+                        <Panel>
+                            <controls:NotebookPaper />
+                            <DockPanel Margin="44,20,24,16" IsVisible="{Binding IsLevelPage}">
+                                <controls:HandBubble DockPanel.Dock="Top" Name="Bubble" Padding="16,12" Margin="0,8,0,0"
+                                                     MinHeight="48">
+                                    <TextBlock Name="BubbleText" />
+                                </controls:HandBubble>
+
+                                <Grid DockPanel.Dock="Bottom" ColumnDefinitions="*,Auto,Auto" Margin="0,12,0,0"
+                                      IsVisible="{Binding IsPredict}">
+                                    <TextBlock Classes="question" Text="{Binding Question}" />
+                                    <Button Grid.Column="1" Classes="notebook-action mint" Margin="0,0,8,0"
+                                            Command="{Binding AnswerCommand}" CommandParameter="permitir" Content="✓ PASA" />
+                                    <Button Grid.Column="2" Classes="notebook-action pink" Command="{Binding AnswerCommand}"
+                                            CommandParameter="bloquear" Content="✕ SE BLOQUEA" />
+                                </Grid>
+
+                                <Button DockPanel.Dock="Bottom" Classes="notebook-action mint" Margin="0,12,0,0"
+                                        HorizontalAlignment="Right" Command="{Binding CheckCommand}"
+                                        ToolTip.Tip="Comprobar (Ctrl+Enter)" IsVisible="{Binding IsWriting}">
+                                    <StackPanel Orientation="Horizontal" Spacing="7">
+                                        <controls:AnimatedIcon Kind="Play" />
+                                        <TextBlock Text="COMPROBAR" VerticalAlignment="Center" />
+                                    </StackPanel>
+                                </Button>
+
+                                <StackPanel DockPanel.Dock="Bottom" Classes="diagnostics"
+                                            Classes.warning="{Binding HasWarnings}" Classes.error="{Binding HasCodeErrors}"
+                                            IsVisible="{Binding DiagnosticsText.Length}">
+                                    <TextBlock Text="{Binding DiagnosticsText}" />
+                                    <TextBlock Text="{Binding DiagnosticsDetail}" IsVisible="{Binding HasDiagnosticsDetail}" />
+                                </StackPanel>
+
+                                <StackPanel DockPanel.Dock="Bottom" Margin="0,12,0,0">
+                                    <TextBlock FontSize="11" FontWeight="Bold" LetterSpacing="1" Margin="0,0,0,6"
+                                               Foreground="{DynamicResource InkLavenderBrush}" Text="PRUEBAS" />
+                                    <ItemsControl Name="TestList" ItemsSource="{Binding Tests}">
+                                        <ItemsControl.ItemsPanel>
+                                            <ItemsPanelTemplate>
+                                                <WrapPanel />
+                                            </ItemsPanelTemplate>
+                                        </ItemsControl.ItemsPanel>
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate x:DataType="vm:ChallengeTestCard">
+                                                <StackPanel Orientation="Horizontal" Spacing="8" Margin="0,0,18,8">
+                                                    <controls:Doodle Kind="Box" Width="15" Height="15" VerticalAlignment="Center"
+                                                                     Stroke="{DynamicResource NotebookInkBrush}" />
+                                                    <TextBlock Classes="test-text" Text="{Binding Title}" />
+                                                </StackPanel>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                </StackPanel>
+
+                                <Panel Margin="0,16,0,0">
+                                    <Border Classes="editor-box">
+                                        <Border CornerRadius="6" ClipToBounds="True">
+                                            <ae:TextEditor Name="Editor"
+                                                           ShowLineNumbers="True"
+                                                           WordWrap="False"
+                                                           Background="{DynamicResource NotebookCodeBrush}"
+                                                           Foreground="{DynamicResource NotebookCodeInkBrush}"
+                                                           LineNumbersForeground="{DynamicResource NotebookCodeMutedBrush}"
+                                                           FontFamily="Cascadia Code,Consolas,DejaVu Sans Mono,monospace"
+                                                           FontSize="14"
+                                                           Padding="8,8" />
+                                        </Border>
+                                    </Border>
+                                    <controls:WashiTape Classes="corner-tape" HorizontalAlignment="Left" Margin="-22,-6,0,0"
+                                                        RenderTransform="rotate(-36deg)" Fill="{DynamicResource PastelPinkBrush}" />
+                                    <controls:WashiTape Classes="corner-tape" HorizontalAlignment="Right" Margin="0,-6,-22,0"
+                                                        RenderTransform="rotate(36deg)" Fill="{DynamicResource PastelSkyBrush}" />
+                                </Panel>
+                            </DockPanel>
+                            <ScrollViewer Margin="44,22,24,16" VerticalScrollBarVisibility="Auto"
+                                          IsVisible="{Binding IsIndexPage}">
+                                <StackPanel>
+                                    <ItemsControl ItemsSource="{Binding IndexRight}"
+                                                  ItemTemplate="{StaticResource IndexChapterTemplate}" />
+                                    <TextBlock Classes="section" Text="Tu avance" />
+                                    <TextBlock Classes="ink" FontSize="15" Text="{Binding ProgressText}" />
+                                </StackPanel>
+                            </ScrollViewer>
+                            <StackPanel Margin="44,40,24,16" IsVisible="{Binding IsCoverPage}">
+                                <TextBlock Classes="section" Margin="0,0,0,10" Text="En este capítulo" />
+                                <ItemsControl ItemsSource="{Binding Chapter.Levels, FallbackValue={x:Null}}"
+                                              ItemTemplate="{StaticResource LevelRowTemplate}" />
+                                <TextBlock Classes="muted" Margin="0,12,0,0"
+                                           Text="{Binding Chapter.ProgressText, StringFormat='{}{0} con sello', FallbackValue=''}" />
+                                <Button Classes="notebook-action mint" HorizontalAlignment="Left" Margin="0,26,0,0"
+                                        Content="EMPEZAR" Click="OnStartChapterClick" />
+                            </StackPanel>
+                        </Panel>
+                    </Border>
+                    <controls:CorrectionLayer Grid.Column="2" Name="Correction" />
+                    <Path Grid.Column="0" Classes="page-corner" HorizontalAlignment="Left" VerticalAlignment="Bottom"
+                          RenderTransformOrigin="0%,100%"
+                          Data="M 0 0 L 26 26 L 0 26 Z" ToolTip.Tip="Página anterior"
+                          IsVisible="{Binding CanGoBack}" PointerPressed="OnPreviousCornerPressed" />
+                    <Path Grid.Column="2" Classes="page-corner" HorizontalAlignment="Right" VerticalAlignment="Bottom"
+                          RenderTransformOrigin="100%,100%"
+                          Data="M 26 0 L 26 26 L 0 26 Z" ToolTip.Tip="Página siguiente"
+                          IsVisible="{Binding CanGoForward}" PointerPressed="OnNextCornerPressed" />
+                </Grid>
+            </Border>
+            <controls:PageTurn Grid.Column="1" Name="PageTurn" />
+
+            <Button Grid.Column="2" Classes="page-arrow" ToolTip.Tip="Página siguiente (→)"
+                    IsEnabled="{Binding CanGoForward}" Click="OnNextClick">
+                <controls:AnimatedIcon Kind="ChevronRight" />
+            </Button>
+        </Grid>
+
+    </Panel>
+</UserControl>

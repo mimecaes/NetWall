@@ -131,6 +131,21 @@
         </SolidColorBrush.Transitions>
     </SolidColorBrush>
 
+    <SolidColorBrush x:Key="ChallengePaperBrush" Color="#15151D">
+        <SolidColorBrush.Transitions>
+            <Transitions>
+                <ColorTransition Property="Color" Duration="0:0:0.3" Easing="{StaticResource Motion.EaseInOut}" />
+            </Transitions>
+        </SolidColorBrush.Transitions>
+    </SolidColorBrush>
+    <SolidColorBrush x:Key="ChallengeLineBrush" Color="#1A7F77DD">
+        <SolidColorBrush.Transitions>
+            <Transitions>
+                <ColorTransition Property="Color" Duration="0:0:0.3" Easing="{StaticResource Motion.EaseInOut}" />
+            </Transitions>
+        </SolidColorBrush.Transitions>
+    </SolidColorBrush>
+
     <!-- 16-color terminal palette used by the output panel; ThemeManager fills it per theme. -->
     <SolidColorBrush x:Key="Ansi0Brush" Color="#45475A">
         <SolidColorBrush.Transitions>
