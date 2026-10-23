@@ -399,12 +399,39 @@ public partial class MainWindow : Window
 
     private void OnThemeApplied(object? sender, EventArgs e) => CodeEditor.TextArea.TextView.Redraw();
 
-    private void OnThemeMenuItemClick(object? sender, RoutedEventArgs e)
+    private void OnThemeDotClick(object? sender, RoutedEventArgs e)
     {
-        if (sender is MenuItem { Tag: string tagValue } && Enum.TryParse<AppTheme>(tagValue, out var theme))
+        if (sender is Button { Tag: string tagValue } && Enum.TryParse<AppTheme>(tagValue, out var theme))
         {
             ThemeManager.Apply(theme);
+            MarkActiveTheme();
         }
+    }
+
+    private void MarkActiveTheme()
+    {
+        NebulaDot.Classes.Set("active", ThemeManager.Current == AppTheme.Nebula);
+        DraculaDot.Classes.Set("active", ThemeManager.Current == AppTheme.Dracula);
+        AuroraDot.Classes.Set("active", ThemeManager.Current == AppTheme.Aurora);
+    }
+
+    private void OnSettingsOpened(object? sender, EventArgs e)
+    {
+        SettingsMain.IsVisible = true;
+        SettingsExtensions.IsVisible = false;
+        MarkActiveTheme();
+    }
+
+    private void OnShowExtensionsClick(object? sender, RoutedEventArgs e)
+    {
+        SettingsMain.IsVisible = false;
+        SettingsExtensions.IsVisible = true;
+    }
+
+    private void OnHideExtensionsClick(object? sender, RoutedEventArgs e)
+    {
+        SettingsExtensions.IsVisible = false;
+        SettingsMain.IsVisible = true;
     }
 
     private void OnPetColorMenuItemClick(object? sender, RoutedEventArgs e)

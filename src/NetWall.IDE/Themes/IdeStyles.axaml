@@ -495,6 +495,61 @@
         <Setter Property="BorderThickness" Value="0" />
     </Style>
 
+    <Style Selector="Grid.settings-row">
+        <Setter Property="Margin" Value="2,0,2,2" />
+        <Setter Property="MinHeight" Value="38" />
+    </Style>
+    <Style Selector="Grid.settings-row > controls|AnimatedIcon">
+        <Setter Property="Margin" Value="10,0,0,0" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+    </Style>
+    <Style Selector="Button.settings-button">
+        <Setter Property="HorizontalAlignment" Value="Stretch" />
+        <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="CornerRadius" Value="6" />
+        <Setter Property="Padding" Value="10,0" />
+        <Setter Property="Margin" Value="2,0,2,2" />
+        <Setter Property="MinHeight" Value="38" />
+        <Setter Property="Cursor" Value="Hand" />
+    </Style>
+    <Style Selector="Button.settings-button:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Background" Value="{DynamicResource HoverBrush}" />
+    </Style>
+    <Style Selector="Button.settings-button controls|AnimatedIcon">
+        <Setter Property="VerticalAlignment" Value="Center" />
+    </Style>
+    <Style Selector="TextBlock.settings-label">
+        <Setter Property="FontSize" Value="13" />
+        <Setter Property="Margin" Value="10,0,0,0" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+        <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
+    </Style>
+    <Style Selector="TextBlock.settings-hint">
+        <Setter Property="FontSize" Value="11.5" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+        <Setter Property="Foreground" Value="{DynamicResource TextMutedBrush}" />
+    </Style>
+    <Style Selector="Button.theme-dot">
+        <Setter Property="Width" Value="26" />
+        <Setter Property="Height" Value="26" />
+        <Setter Property="Padding" Value="4" />
+        <Setter Property="CornerRadius" Value="13" />
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderBrush" Value="Transparent" />
+        <Setter Property="BorderThickness" Value="2" />
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+    </Style>
+    <Style Selector="Button.theme-dot:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Background" Value="{DynamicResource HoverBrush}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+    </Style>
+    <Style Selector="Button.theme-dot.active /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="BorderBrush" Value="{DynamicResource TextPrimaryBrush}" />
+    </Style>
+
     <Style Selector="ToggleSwitch.extension-toggle">
         <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
     </Style>

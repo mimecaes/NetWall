@@ -25,6 +25,8 @@ public static class ThemeManager
 
     public static SyntaxPalette CurrentSyntax { get; private set; } = SyntaxPalette.Empty;
 
+    public static AppTheme Current { get; private set; }
+
     public static event EventHandler? ThemeApplied;
 
     public static void Apply(AppTheme theme)
@@ -66,6 +68,7 @@ public static class ThemeManager
         }
 
         CurrentSyntax = SyntaxPalette.FromResources(themeDictionary, prefix);
+        Current = theme;
 
         app.RequestedThemeVariant = ThemeVariant.Dark;
         ThemeApplied?.Invoke(null, EventArgs.Empty);
