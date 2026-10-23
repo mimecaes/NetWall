@@ -37,7 +37,7 @@ public static partial class HelpySnippets
             "${0|El valor inicial. Tiene que ser del tipo que elegiste.};"),
         ["red"] = ("Presiona Tab para declarar una red.",
             "declarar ${nombre|El nombre de la red, como oficina o servidores.}: Red = " +
-            "${192.168.1.0/24|La red en formato CIDR: dirección/prefijo. Un /24 tiene 256 direcciones.};"),
+            "\"${192.168.1.0/24|La red en formato CIDR: dirección/prefijo. Un /24 tiene 256 direcciones.}\";"),
     };
 
     public static string? HintFor(string trigger) => Templates.TryGetValue(trigger, out var entry) ? entry.Hint : null;

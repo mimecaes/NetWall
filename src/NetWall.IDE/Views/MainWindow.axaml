@@ -231,7 +231,7 @@
                                                 </Button>
 
                                                 <Grid ColumnDefinitions="Auto,*,Auto" Classes="settings-row">
-                                                    <controls:HelpySprite Width="30" Height="30" Margin="3,0,0,0"
+                                                    <controls:HelpySprite Name="SettingsHelpy" Width="30" Height="30" Margin="3,0,0,0"
                                                                           VerticalAlignment="Center" />
                                                     <StackPanel Grid.Column="1" VerticalAlignment="Center">
                                                         <TextBlock Classes="settings-label" Text="Ayuda de Helpy" />

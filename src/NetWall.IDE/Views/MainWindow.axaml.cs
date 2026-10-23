@@ -550,6 +550,8 @@ public partial class MainWindow : Window
         {
             Pet.SetColor(color);
             SimulationView.SetHelpyColor(color);
+            SnippetHelpy.SetColor(color);
+            SettingsHelpy.SetColor(color);
         }
     }
 
