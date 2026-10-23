@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
 using System.Threading.Tasks;
@@ -12,6 +13,7 @@ using Avalonia.VisualTree;
 using AvaloniaEdit.Document;
 using NetWall.IDE.Controls;
 using NetWall.IDE.Models;
+using NetWall.IDE.Services;
 using NetWall.IDE.Themes;
 using NetWall.IDE.ViewModels;
 using NetWall.IDE.Views.Dialogs;
@@ -29,6 +31,9 @@ public partial class MainWindow : Window
     private double _gripStartHeight;
     private bool _exitingSimulation;
     private bool _exitingChallenge;
+    private IReadOnlyList<HelpyField> _fields = [];
+    private int _helpyVersion;
+    private bool _celebrating;
 
     public MainWindow()
     {
@@ -39,6 +44,7 @@ public partial class MainWindow : Window
         CodeEditor.TextArea.TextView.BackgroundRenderers.Add(_indentGuideRenderer);
         CodeEditor.TextArea.TextView.BackgroundRenderers.Add(_indentRainbowRenderer);
         CodeEditor.TextArea.TextView.LineTransformers.Add(_syntaxColorizer);
+        CodeEditor.TextArea.AddHandler(KeyDownEvent, OnEditorKeyDown, RoutingStrategies.Tunnel);
         TerminalScrollViewer.AddHandler(AnsiTextBlock.LinkClickedEvent, OnTerminalLinkClicked);
         ThemeManager.ThemeApplied += OnThemeApplied;
         Closed += (_, _) => ThemeManager.ThemeApplied -= OnThemeApplied;
@@ -264,6 +270,10 @@ public partial class MainWindow : Window
             CodeEditor.Text = ViewModel?.SelectedTab?.Content ?? string.Empty;
             _suppressEditorTextChanged = false;
         }
+        else if (e.PropertyName == nameof(MainViewModel.IsHelpModeEnabled))
+        {
+            UpdateHelpy();
+        }
     }
 
     private void OnTerminalUpdated() =>
@@ -314,6 +324,8 @@ public partial class MainWindow : Window
             tab.Line = CodeEditor.TextArea.Caret.Line;
             tab.Column = CodeEditor.TextArea.Caret.Column;
         }
+
+        UpdateHelpy();
     }
 
     private async void OnRequestOpenFolder()
@@ -430,12 +442,137 @@ public partial class MainWindow : Window
 
     private void OnThemeApplied(object? sender, EventArgs e) => CodeEditor.TextArea.TextView.Redraw();
 
-    private void OnThemeMenuItemClick(object? sender, RoutedEventArgs e)
+    private void OnEditorKeyDown(object? sender, KeyEventArgs e)
     {
-        if (sender is MenuItem { Tag: string tagValue } && Enum.TryParse<AppTheme>(tagValue, out var theme))
+        if (e.Key != Key.Tab || e.KeyModifiers != KeyModifiers.None || ViewModel is not { IsHelpModeEnabled: true }
+            || !CodeEditor.TextArea.StackedInputHandlers.IsEmpty)
+        {
+            return;
+        }
+
+        var document = CodeEditor.Document;
+        var caret = CodeEditor.CaretOffset;
+        var line = document.GetLineByOffset(caret);
+        var word = document.GetText(line.Offset, caret - line.Offset).TrimStart();
+        if (HelpySnippets.Find(word) is not { } snippet)
+        {
+            return;
+        }
+
+        using (document.RunUpdate())
+        {
+            document.Remove(caret - word.Length, word.Length);
+            snippet.Insert(CodeEditor.TextArea);
+        }
+
+        _fields = snippet.Elements.OfType<HelpyField>().ToList();
+        if (_fields.FirstOrDefault()?.Context is { } context)
+        {
+            context.Deactivated += OnSnippetDeactivated;
+        }
+
+        e.Handled = true;
+        UpdateHelpy();
+    }
+
+    private async void OnSnippetDeactivated(object? sender, AvaloniaEdit.Snippets.SnippetEventArgs e)
+    {
+        _fields = [];
+        if (e.Reason != AvaloniaEdit.Snippets.DeactivateReason.ReturnPressed)
+        {
+            UpdateHelpy();
+            return;
+        }
+
+        ShowHelpy("¡Listo! Si quieres otra, escribe la palabra y presiona Tab.", HelpyMood.Happy);
+        var version = _helpyVersion;
+        _celebrating = true;
+        await Task.Delay(2200);
+        _celebrating = false;
+        if (version == _helpyVersion)
+        {
+            UpdateHelpy();
+        }
+    }
+
+    private void UpdateHelpy()
+    {
+        if (ViewModel is not { IsHelpModeEnabled: true })
+        {
+            HideHelpy();
+            return;
+        }
+
+        var caret = CodeEditor.CaretOffset;
+        if (_fields.Count > 0)
+        {
+            if (_fields.FirstOrDefault(field => field.Contains(caret)) is { } field)
+            {
+                ShowHelpy(field.Tip, HelpyMood.Talking);
+            }
+
+            return;
+        }
+
+        var line = CodeEditor.Document.GetLineByOffset(caret);
+        var word = CodeEditor.Document.GetText(line.Offset, caret - line.Offset).TrimStart();
+        if (HelpySnippets.HintFor(word) is { } hint)
+        {
+            ShowHelpy(hint, HelpyMood.Idle);
+        }
+        else if (!_celebrating)
+        {
+            HideHelpy();
+        }
+    }
+
+    private void ShowHelpy(string text, HelpyMood mood)
+    {
+        _helpyVersion++;
+        SnippetTip.Text = text;
+        SnippetHelpy.Mood = mood;
+        SnippetHelper.Classes.Set("shown", true);
+    }
+
+    private void HideHelpy()
+    {
+        SnippetHelper.Classes.Set("shown", false);
+        SnippetHelpy.Mood = HelpyMood.Idle;
+    }
+
+    private void OnThemeDotClick(object? sender, RoutedEventArgs e)
+    {
+        if (sender is Button { Tag: string tagValue } && Enum.TryParse<AppTheme>(tagValue, out var theme))
         {
             ThemeManager.Apply(theme);
+            MarkActiveTheme();
         }
+    }
+
+    private void MarkActiveTheme()
+    {
+        NebulaDot.Classes.Set("active", ThemeManager.Current == AppTheme.Nebula);
+        DraculaDot.Classes.Set("active", ThemeManager.Current == AppTheme.Dracula);
+        AuroraDot.Classes.Set("active", ThemeManager.Current == AppTheme.Aurora);
+    }
+
+    private void OnSettingsOpened(object? sender, EventArgs e)
+    {
+        SettingsMain.IsVisible = true;
+        SettingsExtensions.IsVisible = false;
+        MarkActiveTheme();
+    }
+
+    private void OnShowExtensionsClick(object? sender, RoutedEventArgs e)
+    {
+        SettingsMain.IsVisible = false;
+        SettingsExtensions.IsVisible = true;
+    }
+
+    private void OnHideExtensionsClick(object? sender, RoutedEventArgs e)
+    {
+        SettingsExtensions.IsVisible = false;
+        SettingsMain.IsVisible = true;
     }
 
     private void OnPetColorMenuItemClick(object? sender, RoutedEventArgs e)
@@ -445,6 +582,8 @@ public partial class MainWindow : Window
             Pet.SetColor(color);
             SimulationView.SetHelpyColor(color);
             ChallengeView.SetHelpyColor(color);
+            SnippetHelpy.SetColor(color);
+            SettingsHelpy.SetColor(color);
         }
     }
 

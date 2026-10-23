@@ -176,93 +176,121 @@
                         </Button>
                     </StackPanel>
                 </Border>
+            </StackPanel>
 
-                <Border Classes="toolbar-pill">
-                    <StackPanel Orientation="Horizontal" Spacing="2">
+                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6">
+                    <Border Classes="toolbar-pill">
+                        <StackPanel Orientation="Horizontal" Spacing="2">
+                            <Button Classes="icon toolbar-icon" Click="OnChallengeModeClick">
+                                <ToolTip.Tip>
+                                    <TextBlock Text="Modo retos" />
+                                </ToolTip.Tip>
+                                <controls:AnimatedIcon Classes="icon" Kind="GraduationCap" />
+                            </Button>
+                            <Button Classes="icon toolbar-icon" Click="OnSimulationModeClick">
+                                <ToolTip.Tip>
+                                    <TextBlock Text="Modo simulación" />
+                                </ToolTip.Tip>
+                                <controls:AnimatedIcon Classes="icon" Kind="BrickWall" />
+                            </Button>
+                        </StackPanel>
+                    </Border>
+
+                    <Border Classes="toolbar-pill">
                         <Button Classes="icon toolbar-icon">
                             <ToolTip.Tip>
-                                <TextBlock Text="Theme" />
+                                <TextBlock Text="Settings" />
                             </ToolTip.Tip>
-                    <controls:AnimatedIcon Classes="icon" Kind="Palette" />
-                    <Button.Flyout>
-                        <MenuFlyout Placement="BottomEdgeAlignedLeft">
-                            <MenuItem Header="Nebula" Tag="Nebula" Click="OnThemeMenuItemClick">
-                                <MenuItem.Icon>
-                                    <Ellipse Width="12" Height="12" Fill="#7F77DD" />
-                                </MenuItem.Icon>
-                            </MenuItem>
-                            <MenuItem Header="Dracula" Tag="Dracula" Click="OnThemeMenuItemClick">
-                                <MenuItem.Icon>
-                                    <Ellipse Width="12" Height="12" Fill="#FF79C6" />
-                                </MenuItem.Icon>
-                            </MenuItem>
-                            <MenuItem Header="Aurora" Tag="Aurora" Click="OnThemeMenuItemClick">
-                                <MenuItem.Icon>
-                                    <Ellipse Width="12" Height="12" Fill="#E4548F" />
-                                </MenuItem.Icon>
-                            </MenuItem>
-                        </MenuFlyout>
-                    </Button.Flyout>
-                </Button>
-
-                        <Button Classes="icon toolbar-icon">
-                            <ToolTip.Tip>
-                                <TextBlock Text="Extensions" />
-                            </ToolTip.Tip>
-                            <controls:AnimatedIcon Classes="icon" Kind="Puzzle" />
+                            <controls:AnimatedIcon Classes="icon" Kind="Settings" />
                             <Button.Flyout>
-                                <Flyout Placement="BottomEdgeAlignedLeft">
+                                <Flyout Placement="BottomEdgeAlignedRight" Opened="OnSettingsOpened">
                                     <Border Classes="extensions-panel">
-                                        <StackPanel Spacing="0" Width="340">
-                                            <Grid ColumnDefinitions="*,Auto" Height="40" Margin="12,0" VerticalAlignment="Center">
-                                                <TextBlock Grid.Column="0" Text="EXTENSIONS" Classes="sidebar-header" VerticalAlignment="Center" />
-                                                <TextBlock Grid.Column="1" Classes="sidebar-header"
-                                                           Text="{Binding ExtensionsCountText}"
-                                                           VerticalAlignment="Center" />
-                                            </Grid>
+                                        <Panel Width="340">
+                                            <StackPanel Name="SettingsMain">
+                                                <TextBlock Text="CONFIGURACIÓN" Classes="sidebar-header" Margin="12,8,12,10" />
 
-                                            <Border Classes="extension-search-border" Margin="8" Padding="8,6">
-                                                <Grid ColumnDefinitions="Auto,*">
-                                                    <controls:AnimatedIcon Grid.Column="0" Classes="icon-sm" Kind="Search"
-                                                                           Margin="0,0,8,0" VerticalAlignment="Center" />
-                                                    <TextBox Grid.Column="1" Classes="extension-search-input"
-                                                             Watermark="Buscar extensión..."
-                                                             Text="{Binding ExtensionSearchText, Mode=TwoWay}"
-                                                             BorderThickness="0" Background="Transparent"
-                                                             Foreground="{DynamicResource TextPrimaryBrush}"
-                                                             FontSize="12" />
+                                                <Grid ColumnDefinitions="Auto,*,Auto" Classes="settings-row">
+                                                    <controls:AnimatedIcon Classes="icon" Kind="Palette" />
+                                                    <TextBlock Grid.Column="1" Classes="settings-label" Text="Tema" />
+                                                    <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="4">
+                                                        <Button Name="NebulaDot" Classes="theme-dot" Tag="Nebula" ToolTip.Tip="Nebula"
+                                                                Click="OnThemeDotClick">
+                                                            <Ellipse Fill="#7F77DD" />
+                                                        </Button>
+                                                        <Button Name="DraculaDot" Classes="theme-dot" Tag="Dracula" ToolTip.Tip="Dracula"
+                                                                Click="OnThemeDotClick">
+                                                            <Ellipse Fill="#FF79C6" />
+                                                        </Button>
+                                                        <Button Name="AuroraDot" Classes="theme-dot" Tag="Aurora" ToolTip.Tip="Aurora"
+                                                                Click="OnThemeDotClick">
+                                                            <Ellipse Fill="#E4548F" />
+                                                        </Button>
+                                                    </StackPanel>
                                                 </Grid>
-                                            </Border>
 
-                                            <ScrollViewer MaxHeight="320" Margin="8,0,8,8">
-                                                <ItemsControl ItemsSource="{Binding FilteredExtensions}"
-                                                              ItemTemplate="{StaticResource ExtensionCardTemplate}" />
-                                            </ScrollViewer>
-                                        </StackPanel>
+                                                <Button Classes="settings-button" Click="OnShowExtensionsClick">
+                                                    <Grid ColumnDefinitions="Auto,*,Auto,Auto">
+                                                        <controls:AnimatedIcon Classes="icon" Kind="Puzzle" />
+                                                        <TextBlock Grid.Column="1" Classes="settings-label" Text="Extensiones" />
+                                                        <TextBlock Grid.Column="2" Classes="settings-hint" Text="{Binding ExtensionsCountText}" />
+                                                        <controls:AnimatedIcon Grid.Column="3" Classes="icon-sm" Kind="ChevronRight"
+                                                                               Margin="6,0,0,0" />
+                                                    </Grid>
+                                                </Button>
+
+                                                <Grid ColumnDefinitions="Auto,*,Auto" Classes="settings-row">
+                                                    <controls:HelpySprite Name="SettingsHelpy" Width="30" Height="30" Margin="3,0,0,0"
+                                                                          VerticalAlignment="Center" />
+                                                    <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                                        <TextBlock Classes="settings-label" Text="Ayuda de Helpy" />
+                                                        <TextBlock Classes="settings-hint" Margin="10,1,0,0"
+                                                                   Text="Escribe regla, declarar o red y presiona Tab" />
+                                                    </StackPanel>
+                                                    <ToggleSwitch Grid.Column="2" Classes="extension-toggle"
+                                                                  IsChecked="{Binding IsHelpModeEnabled, Mode=TwoWay}"
+                                                                  OnContent="{x:Null}" OffContent="{x:Null}"
+                                                                  VerticalAlignment="Center" Margin="12,0,0,0" />
+                                                </Grid>
+                                            </StackPanel>
+
+                                            <StackPanel Name="SettingsExtensions" IsVisible="False">
+                                                <Grid ColumnDefinitions="Auto,*,Auto" Height="40" Margin="4,0,12,0" VerticalAlignment="Center">
+                                                    <Button Grid.Column="0" Classes="icon" Width="26" Height="26" ToolTip.Tip="Volver"
+                                                            Click="OnHideExtensionsClick">
+                                                        <controls:AnimatedIcon Classes="icon-sm" Kind="ChevronLeft" />
+                                                    </Button>
+                                                    <TextBlock Grid.Column="1" Text="EXTENSIONES" Classes="sidebar-header"
+                                                               Margin="6,0,0,0" VerticalAlignment="Center" />
+                                                    <TextBlock Grid.Column="2" Classes="sidebar-header"
+                                                               Text="{Binding ExtensionsCountText}"
+                                                               VerticalAlignment="Center" />
+                                                </Grid>
+
+                                                <Border Classes="extension-search-border" Margin="8" Padding="8,6">
+                                                    <Grid ColumnDefinitions="Auto,*">
+                                                        <controls:AnimatedIcon Grid.Column="0" Classes="icon-sm" Kind="Search"
+                                                                               Margin="0,0,8,0" VerticalAlignment="Center" />
+                                                        <TextBox Grid.Column="1" Classes="extension-search-input"
+                                                                 Watermark="Buscar extensión..."
+                                                                 Text="{Binding ExtensionSearchText, Mode=TwoWay}"
+                                                                 BorderThickness="0" Background="Transparent"
+                                                                 Foreground="{DynamicResource TextPrimaryBrush}"
+                                                                 FontSize="12" />
+                                                    </Grid>
+                                                </Border>
+
+                                                <ScrollViewer MaxHeight="320" Margin="8,0,8,8">
+                                                    <ItemsControl ItemsSource="{Binding FilteredExtensions}"
+                                                                  ItemTemplate="{StaticResource ExtensionCardTemplate}" />
+                                                </ScrollViewer>
+                                            </StackPanel>
+                                        </Panel>
                                     </Border>
                                 </Flyout>
                             </Button.Flyout>
                         </Button>
-                    </StackPanel>
-                </Border>
-            </StackPanel>
-
-                <Border Grid.Column="1" Classes="toolbar-pill">
-                    <StackPanel Orientation="Horizontal" Spacing="2">
-                        <Button Classes="icon toolbar-icon" Click="OnChallengeModeClick">
-                            <ToolTip.Tip>
-                                <TextBlock Text="Modo retos" />
-                            </ToolTip.Tip>
-                            <controls:AnimatedIcon Classes="icon" Kind="GraduationCap" />
-                        </Button>
-                        <Button Classes="icon toolbar-icon" Click="OnSimulationModeClick">
-                            <ToolTip.Tip>
-                                <TextBlock Text="Modo simulación" />
-                            </ToolTip.Tip>
-                            <controls:AnimatedIcon Classes="icon" Kind="BrickWall" />
-                        </Button>
-                    </StackPanel>
-                </Border>
+                    </Border>
+                </StackPanel>
             </Grid>
         </Border>
 
@@ -562,6 +590,16 @@
                             <TextBlock Text="Selecciona un archivo del explorador o crea uno nuevo"
                                        Foreground="{DynamicResource TextMutedBrush}" HorizontalAlignment="Center" />
                             <Button Content="New File" Command="{Binding NewFileCommand}" HorizontalAlignment="Center" />
+                        </StackPanel>
+
+                        <StackPanel Name="SnippetHelper" Classes="snippet-helper" Orientation="Horizontal" Spacing="8"
+                                    HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="0,0,28,14"
+                                    IsHitTestVisible="False">
+                            <Border Classes="snippet-bubble" VerticalAlignment="Center">
+                                <TextBlock Name="SnippetTip" FontSize="12.5" TextWrapping="Wrap" MaxWidth="280"
+                                           Foreground="{DynamicResource TextPrimaryBrush}" />
+                            </Border>
+                            <controls:HelpySprite Name="SnippetHelpy" Width="72" Height="72" />
                         </StackPanel>
                     </Grid>
                 </Grid>

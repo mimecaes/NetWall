@@ -58,6 +58,9 @@ public partial class MainViewModel : ViewModelBase
     [ObservableProperty]
     public partial string ExtensionSearchText { get; set; } = string.Empty;
 
+    [ObservableProperty]
+    public partial bool IsHelpModeEnabled { get; set; }
+
     private void LoadRecentProjects()
     {
         RecentProjects.Clear();
