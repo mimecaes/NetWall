@@ -275,6 +275,12 @@
         <Style Selector="Button.notebook-action:pointerover">
             <Setter Property="RenderTransform" Value="translateY(-3px)" />
         </Style>
+        <Style Selector="Button.page-tab">
+            <Setter Property="Height" Value="44" />
+            <Setter Property="Margin" Value="0" />
+            <Setter Property="Padding" Value="14,8,14,0" />
+            <Setter Property="VerticalContentAlignment" Value="Top" />
+        </Style>
         <Style Selector="Button.notebook-action:pointerover /template/ ContentPresenter#PART_ContentPresenter">
             <Setter Property="Background" Value="{DynamicResource PastelButterBrush}" />
             <Setter Property="Foreground" Value="{DynamicResource PastelInkBrush}" />
@@ -623,6 +629,22 @@
 
                     <controls:HelpySprite Grid.Column="2" Name="Helpy" Fidgets="True" Width="84" Height="84" Margin="34,-66,0,0"
                                           HorizontalAlignment="Left" VerticalAlignment="Top" />
+                    <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="6" Margin="128,-30,0,0"
+                                HorizontalAlignment="Left" VerticalAlignment="Top" IsVisible="{Binding IsLevelPage}">
+                        <Button Classes="notebook-action page-tab" Command="{Binding HintCommand}" ToolTip.Tip="Pídele una pista a Helpy">
+                            <StackPanel Orientation="Horizontal" Spacing="7">
+                                <controls:AnimatedIcon Kind="Lightbulb" />
+                                <TextBlock Text="Pista" VerticalAlignment="Center" />
+                            </StackPanel>
+                        </Button>
+                        <Button Classes="notebook-action page-tab tab-lavender" Command="{Binding ResetCommand}"
+                                ToolTip.Tip="Volver al código del inicio" IsVisible="{Binding IsWriting}">
+                            <StackPanel Orientation="Horizontal" Spacing="7">
+                                <controls:AnimatedIcon Kind="RotateCcw" />
+                                <TextBlock Text="Reiniciar" VerticalAlignment="Center" />
+                            </StackPanel>
+                        </Button>
+                    </StackPanel>
                     <Border Grid.Column="2" Name="RightPage" Classes="page">
                         <Panel>
                             <controls:NotebookPaper />
@@ -632,44 +654,23 @@
                                     <TextBlock Name="BubbleText" />
                                 </controls:HandBubble>
 
-                                <Grid DockPanel.Dock="Bottom" ColumnDefinitions="Auto,*,Auto,Auto" Margin="0,12,0,0"
+                                <Grid DockPanel.Dock="Bottom" ColumnDefinitions="*,Auto,Auto" Margin="0,12,0,0"
                                       IsVisible="{Binding IsPredict}">
-                                    <Button Classes="notebook-action" Command="{Binding HintCommand}" ToolTip.Tip="Pídele una pista a Helpy">
-                                        <StackPanel Orientation="Horizontal" Spacing="7">
-                                            <controls:AnimatedIcon Kind="Lightbulb" />
-                                            <TextBlock Text="Pista" VerticalAlignment="Center" />
-                                        </StackPanel>
-                                    </Button>
-                                    <TextBlock Grid.Column="1" Classes="question" Text="{Binding Question}" />
-                                    <Button Grid.Column="2" Classes="notebook-action mint" Margin="0,0,8,0"
+                                    <TextBlock Classes="question" Text="{Binding Question}" />
+                                    <Button Grid.Column="1" Classes="notebook-action mint" Margin="0,0,8,0"
                                             Command="{Binding AnswerCommand}" CommandParameter="permitir" Content="✓ PASA" />
-                                    <Button Grid.Column="3" Classes="notebook-action pink" Command="{Binding AnswerCommand}"
+                                    <Button Grid.Column="2" Classes="notebook-action pink" Command="{Binding AnswerCommand}"
                                             CommandParameter="bloquear" Content="✕ SE BLOQUEA" />
                                 </Grid>
 
-                                <Grid DockPanel.Dock="Bottom" ColumnDefinitions="Auto,Auto,*,Auto" Margin="0,12,0,0"
-                                      IsVisible="{Binding IsWriting}">
-                                    <Button Classes="notebook-action" Command="{Binding HintCommand}" ToolTip.Tip="Pídele una pista a Helpy">
-                                        <StackPanel Orientation="Horizontal" Spacing="7">
-                                            <controls:AnimatedIcon Kind="Lightbulb" />
-                                            <TextBlock Text="Pista" VerticalAlignment="Center" />
-                                        </StackPanel>
-                                    </Button>
-                                    <Button Grid.Column="1" Classes="notebook-action tab-lavender" Command="{Binding ResetCommand}"
-                                            ToolTip.Tip="Volver al código del inicio">
-                                        <StackPanel Orientation="Horizontal" Spacing="7">
-                                            <controls:AnimatedIcon Kind="RotateCcw" />
-                                            <TextBlock Text="Reiniciar" VerticalAlignment="Center" />
-                                        </StackPanel>
-                                    </Button>
-                                    <Button Grid.Column="3" Classes="notebook-action mint" Command="{Binding CheckCommand}"
-                                            ToolTip.Tip="Comprobar (Ctrl+Enter)">
-                                        <StackPanel Orientation="Horizontal" Spacing="7">
-                                            <controls:AnimatedIcon Kind="Play" />
-                                            <TextBlock Text="COMPROBAR" VerticalAlignment="Center" />
-                                        </StackPanel>
-                                    </Button>
-                                </Grid>
+                                <Button DockPanel.Dock="Bottom" Classes="notebook-action mint" Margin="0,12,0,0"
+                                        HorizontalAlignment="Right" Command="{Binding CheckCommand}"
+                                        ToolTip.Tip="Comprobar (Ctrl+Enter)" IsVisible="{Binding IsWriting}">
+                                    <StackPanel Orientation="Horizontal" Spacing="7">
+                                        <controls:AnimatedIcon Kind="Play" />
+                                        <TextBlock Text="COMPROBAR" VerticalAlignment="Center" />
+                                    </StackPanel>
+                                </Button>
 
                                 <StackPanel DockPanel.Dock="Bottom" Classes="diagnostics"
                                             Classes.warning="{Binding HasWarnings}" Classes.error="{Binding HasCodeErrors}"
@@ -739,10 +740,6 @@
                             </StackPanel>
                         </Panel>
                     </Border>
-                    <Ellipse Grid.Column="2" Width="13" Height="9" Margin="61,-5,0,0" Fill="#C9C3D6"
-                             HorizontalAlignment="Left" VerticalAlignment="Top" />
-                    <Ellipse Grid.Column="2" Width="13" Height="9" Margin="90,-5,0,0" Fill="#C9C3D6"
-                             HorizontalAlignment="Left" VerticalAlignment="Top" />
                     <controls:CorrectionLayer Grid.Column="2" Name="Correction" />
                     <Path Grid.Column="0" Classes="page-corner" HorizontalAlignment="Left" VerticalAlignment="Bottom"
                           RenderTransformOrigin="0%,100%"
