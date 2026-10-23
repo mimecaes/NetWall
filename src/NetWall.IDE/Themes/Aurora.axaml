@@ -29,6 +29,8 @@
     <Color x:Key="Aurora.TopBarStop2">#24E8B85C</Color>
 
     <Color x:Key="Aurora.EditorBackground">#1B1830</Color>
+    <Color x:Key="Aurora.ChallengePaper">#1A1730</Color>
+    <Color x:Key="Aurora.ChallengeLine">#1FE4548F</Color>
 
     <!-- Syntax highlighting: magenta, teal and gold from the Aurora palette plus derived tones. -->
     <Color x:Key="Aurora.Syntax.Keyword">#E4548F</Color>

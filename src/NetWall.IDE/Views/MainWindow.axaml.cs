@@ -28,6 +28,7 @@ public partial class MainWindow : Window
     private double? _gripStartY;
     private double _gripStartHeight;
     private bool _exitingSimulation;
+    private bool _exitingChallenge;
 
     public MainWindow()
     {
@@ -123,11 +124,41 @@ public partial class MainWindow : Window
 
     private void OnExitSimulationClick(object? sender, RoutedEventArgs e) => _ = ExitSimulationAsync();
 
+    private async void OnChallengeModeClick(object? sender, RoutedEventArgs e)
+    {
+        if (ViewModel is not { } viewModel)
+        {
+            return;
+        }
+
+        ChallengeView.SetHelpyColor(Pet.Color);
+        await ChallengeCurtain.PlayAsync(Pet.Color, viewModel.EnterChallengeMode);
+    }
+
+    private void OnExitChallengeClick(object? sender, RoutedEventArgs e) => _ = ExitChallengeAsync();
+
+    private async Task ExitChallengeAsync()
+    {
+        if (_exitingChallenge || ViewModel is not { IsChallengeMode: true } viewModel)
+        {
+            return;
+        }
+
+        _exitingChallenge = true;
+        await ChallengeCurtain.PlayExitAsync(Pet.Color, viewModel.ExitChallengeMode);
+        _exitingChallenge = false;
+    }
+
     private void OnWindowKeyDown(object? sender, KeyEventArgs e)
     {
         if (e.Key == Key.Escape && ViewModel is { IsSimulationMode: true })
         {
             _ = ExitSimulationAsync();
+            e.Handled = true;
+        }
+        else if (e.Key == Key.Escape && ViewModel is { IsChallengeMode: true })
+        {
+            _ = ExitChallengeAsync();
             e.Handled = true;
         }
     }
@@ -413,6 +444,7 @@ public partial class MainWindow : Window
         {
             Pet.SetColor(color);
             SimulationView.SetHelpyColor(color);
+            ChallengeView.SetHelpyColor(color);
         }
     }
 

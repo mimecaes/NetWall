@@ -105,12 +105,52 @@ def printSimulation(path: Path, custom: bool) -> int:
     return 0
 
 
+def challengeValue(value) -> object:
+    return value if isinstance(value, (bool, int, float, str)) else str(value)
+
+
+def printChallenge(path: Path) -> int:
+    loader = Loader()
+    program = loader.load(path)
+    diagnostics = loader.diagnostics + check(program, loader.files)
+    errors = any(d.type in ERROR_TYPES for d in diagnostics)
+    if not errors:
+        diagnostics += analyze(program)
+
+    result = {
+        "errors": errors,
+        "diagnostics": [
+            {"type": d.type, "line": d.line, "message": d.message, "file": Path(d.file).name}
+            for d in diagnostics
+        ],
+    }
+    if not errors:
+        request = json.load(sys.stdin)
+        packets = [packetFrom(packet) for packet in request.get("packets", [])]
+        if None in packets:
+            print(json.dumps({"errors": True, "diagnostics": []}))
+            return 1
+
+        result["declarations"] = [
+            {"name": d.name, "type": d.dataType, "value": challengeValue(d.value)}
+            for d in program.declarations
+        ]
+        result.update(simulationData(program, program.rules, packets))
+
+    print(json.dumps(result, ensure_ascii=False))
+    return 1 if errors else 0
+
+
 def main() -> int:
     sys.stdout.reconfigure(encoding="utf-8")
 
     if len(sys.argv) < 2:
         print("uso: python cli.py <archivo.nw>")
         return 2
+
+    if "--retos" in sys.argv[2:]:
+        sys.stdin.reconfigure(encoding="utf-8")
+        return printChallenge(Path(sys.argv[1]).resolve())
 
     if "--simulacion" in sys.argv[2:] or "--simulacion-personalizada" in sys.argv[2:]:
         sys.stdin.reconfigure(encoding="utf-8")

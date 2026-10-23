@@ -557,6 +557,9 @@
         <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
         <Setter Property="BorderThickness" Value="0,0,0,1" />
     </Style>
+    <Style Selector="Border.simulation-header Button.icon:disabled /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Background" Value="Transparent" />
+    </Style>
     <Style Selector="Border.simulation-chip">
         <Setter Property="Background" Value="{DynamicResource ActiveBrush}" />
         <Setter Property="CornerRadius" Value="10" />
