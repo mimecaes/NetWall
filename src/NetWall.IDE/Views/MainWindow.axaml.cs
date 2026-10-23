@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
 using System.Threading.Tasks;
@@ -29,6 +30,9 @@ public partial class MainWindow : Window
     private double? _gripStartY;
     private double _gripStartHeight;
     private bool _exitingSimulation;
+    private IReadOnlyList<HelpyField> _fields = [];
+    private int _helpyVersion;
+    private bool _celebrating;
 
     public MainWindow()
     {
@@ -235,6 +239,10 @@ public partial class MainWindow : Window
             CodeEditor.Text = ViewModel?.SelectedTab?.Content ?? string.Empty;
             _suppressEditorTextChanged = false;
         }
+        else if (e.PropertyName == nameof(MainViewModel.IsHelpModeEnabled))
+        {
+            UpdateHelpy();
+        }
     }
 
     private void OnTerminalUpdated() =>
@@ -285,6 +293,8 @@ public partial class MainWindow : Window
             tab.Line = CodeEditor.TextArea.Caret.Line;
             tab.Column = CodeEditor.TextArea.Caret.Column;
         }
+
+        UpdateHelpy();
     }
 
     private async void OnRequestOpenFolder()
@@ -424,7 +434,79 @@ public partial class MainWindow : Window
             snippet.Insert(CodeEditor.TextArea);
         }
 
+        _fields = snippet.Elements.OfType<HelpyField>().ToList();
+        if (_fields.FirstOrDefault()?.Context is { } context)
+        {
+            context.Deactivated += OnSnippetDeactivated;
+        }
+
         e.Handled = true;
+        UpdateHelpy();
+    }
+
+    private async void OnSnippetDeactivated(object? sender, AvaloniaEdit.Snippets.SnippetEventArgs e)
+    {
+        _fields = [];
+        if (e.Reason != AvaloniaEdit.Snippets.DeactivateReason.ReturnPressed)
+        {
+            UpdateHelpy();
+            return;
+        }
+
+        ShowHelpy("¡Listo! Si quieres otra, escribe la palabra y presiona Tab.", HelpyMood.Happy);
+        var version = _helpyVersion;
+        _celebrating = true;
+        await Task.Delay(2200);
+        _celebrating = false;
+        if (version == _helpyVersion)
+        {
+            UpdateHelpy();
+        }
+    }
+
+    private void UpdateHelpy()
+    {
+        if (ViewModel is not { IsHelpModeEnabled: true })
+        {
+            HideHelpy();
+            return;
+        }
+
+        var caret = CodeEditor.CaretOffset;
+        if (_fields.Count > 0)
+        {
+            if (_fields.FirstOrDefault(field => field.Contains(caret)) is { } field)
+            {
+                ShowHelpy(field.Tip, HelpyMood.Talking);
+            }
+
+            return;
+        }
+
+        var line = CodeEditor.Document.GetLineByOffset(caret);
+        var word = CodeEditor.Document.GetText(line.Offset, caret - line.Offset).TrimStart();
+        if (HelpySnippets.HintFor(word) is { } hint)
+        {
+            ShowHelpy(hint, HelpyMood.Idle);
+        }
+        else if (!_celebrating)
+        {
+            HideHelpy();
+        }
+    }
+
+    private void ShowHelpy(string text, HelpyMood mood)
+    {
+        _helpyVersion++;
+        SnippetTip.Text = text;
+        SnippetHelpy.Mood = mood;
+        SnippetHelper.Classes.Set("shown", true);
+    }
+
+    private void HideHelpy()
+    {
+        SnippetHelper.Classes.Set("shown", false);
+        SnippetHelpy.Mood = HelpyMood.Idle;
     }
 
     private void OnThemeDotClick(object? sender, RoutedEventArgs e)
