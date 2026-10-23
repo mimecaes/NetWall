@@ -229,6 +229,20 @@
                                                                                Margin="6,0,0,0" />
                                                     </Grid>
                                                 </Button>
+
+                                                <Grid ColumnDefinitions="Auto,*,Auto" Classes="settings-row">
+                                                    <controls:HelpySprite Width="30" Height="30" Margin="3,0,0,0"
+                                                                          VerticalAlignment="Center" />
+                                                    <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                                        <TextBlock Classes="settings-label" Text="Ayuda de Helpy" />
+                                                        <TextBlock Classes="settings-hint" Margin="10,1,0,0"
+                                                                   Text="Escribe regla, declarar o red y presiona Tab" />
+                                                    </StackPanel>
+                                                    <ToggleSwitch Grid.Column="2" Classes="extension-toggle"
+                                                                  IsChecked="{Binding IsHelpModeEnabled, Mode=TwoWay}"
+                                                                  OnContent="{x:Null}" OffContent="{x:Null}"
+                                                                  VerticalAlignment="Center" Margin="12,0,0,0" />
+                                                </Grid>
                                             </StackPanel>
 
                                             <StackPanel Name="SettingsExtensions" IsVisible="False">

@@ -12,6 +12,7 @@ using Avalonia.VisualTree;
 using AvaloniaEdit.Document;
 using NetWall.IDE.Controls;
 using NetWall.IDE.Models;
+using NetWall.IDE.Services;
 using NetWall.IDE.Themes;
 using NetWall.IDE.ViewModels;
 using NetWall.IDE.Views.Dialogs;
@@ -38,6 +39,7 @@ public partial class MainWindow : Window
         CodeEditor.TextArea.TextView.BackgroundRenderers.Add(_indentGuideRenderer);
         CodeEditor.TextArea.TextView.BackgroundRenderers.Add(_indentRainbowRenderer);
         CodeEditor.TextArea.TextView.LineTransformers.Add(_syntaxColorizer);
+        CodeEditor.TextArea.AddHandler(KeyDownEvent, OnEditorKeyDown, RoutingStrategies.Tunnel);
         TerminalScrollViewer.AddHandler(AnsiTextBlock.LinkClickedEvent, OnTerminalLinkClicked);
         ThemeManager.ThemeApplied += OnThemeApplied;
         Closed += (_, _) => ThemeManager.ThemeApplied -= OnThemeApplied;
@@ -398,6 +400,32 @@ public partial class MainWindow : Window
     }
 
     private void OnThemeApplied(object? sender, EventArgs e) => CodeEditor.TextArea.TextView.Redraw();
+
+    private void OnEditorKeyDown(object? sender, KeyEventArgs e)
+    {
+        if (e.Key != Key.Tab || e.KeyModifiers != KeyModifiers.None || ViewModel is not { IsHelpModeEnabled: true }
+            || !CodeEditor.TextArea.StackedInputHandlers.IsEmpty)
+        {
+            return;
+        }
+
+        var document = CodeEditor.Document;
+        var caret = CodeEditor.CaretOffset;
+        var line = document.GetLineByOffset(caret);
+        var word = document.GetText(line.Offset, caret - line.Offset).TrimStart();
+        if (HelpySnippets.Find(word) is not { } snippet)
+        {
+            return;
+        }
+
+        using (document.RunUpdate())
+        {
+            document.Remove(caret - word.Length, word.Length);
+            snippet.Insert(CodeEditor.TextArea);
+        }
+
+        e.Handled = true;
+    }
 
     private void OnThemeDotClick(object? sender, RoutedEventArgs e)
     {
