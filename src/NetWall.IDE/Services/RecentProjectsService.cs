@@ -71,6 +71,18 @@ public class RecentProjectsService
         }
     }
 
+    public void RemoveRecent(string folderPath)
+    {
+        try
+        {
+            var projects = LoadRecent().Where(p => p.Path != folderPath).ToList();
+            File.WriteAllText(RecentProjectsPath, JsonSerializer.Serialize(projects, JsonOptions));
+        }
+        catch
+        {
+        }
+    }
+
     private static JsonSerializerOptions JsonOptions => new()
     {
         WriteIndented = true,

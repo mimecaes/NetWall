@@ -787,10 +787,21 @@ public partial class MainViewModel : ViewModelBase
     [RelayCommand]
     private void OpenRecentProject(RecentProject? project)
     {
-        if (project?.Path is { Length: > 0 })
+        if (project?.Path is not { Length: > 0 })
         {
-            LoadFolder(project.Path);
+            return;
         }
+
+        if (!Directory.Exists(project.Path))
+        {
+            _recentProjectsService.RemoveRecent(project.Path);
+            LoadRecentProjects();
+            AppendTerminalLine($"La carpeta '{project.Name}' ya no existe en {project.Path}; la quité de recientes.",
+                TerminalLineKind.Error);
+            return;
+        }
+
+        LoadFolder(project.Path);
     }
 
     public void LoadFolder(string path)

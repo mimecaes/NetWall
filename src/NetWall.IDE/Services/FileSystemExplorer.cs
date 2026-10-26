@@ -24,7 +24,7 @@ public static class FileSystemExplorer
             files = Directory.EnumerateFiles(directoryPath)
                 .OrderBy(Path.GetFileName, StringComparer.OrdinalIgnoreCase);
         }
-        catch (UnauthorizedAccessException)
+        catch (Exception e) when (e is UnauthorizedAccessException or IOException)
         {
             return result;
         }
