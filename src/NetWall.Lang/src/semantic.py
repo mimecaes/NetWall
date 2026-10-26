@@ -1,5 +1,5 @@
 import ipaddress
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional, Set, Tuple
 
 from errors import Diagnostic, lineReference
 from nodes import Declaration, Identifier, Network, Port, Program, Rule
@@ -77,16 +77,23 @@ def checkHost(value, symbols: Dict[str, Declaration], order: Dict[str, int], fil
     return value, message
 
 
+def markUsed(value, used: Set[str]):
+    if isinstance(value, Identifier):
+        used.add(value.name)
+
+
 def check(program: Program, files: List[str]) -> List[Diagnostic]:
     diagnostics: List[Diagnostic] = []
     symbols: Dict[str, Declaration] = {}
     order = {file: index for index, file in enumerate(files)}
+    used: Set[str] = set()
 
     for declaration in program.declarations:
         previous = symbols.get(declaration.name)
         if previous is not None:
             message = f"'{declaration.name}' ya fue declarada ({lineReference(previous.file, previous.line, declaration.file)})"
         else:
+            markUsed(declaration.value, used)
             message = checkDeclaration(declaration, symbols)
             symbols[declaration.name] = declaration
 
@@ -117,6 +124,9 @@ def check(program: Program, files: List[str]) -> List[Diagnostic]:
             message = checkPort(rule.port)
             if message is not None:
                 diagnostics.append(Diagnostic(file=rule.file, line=rule.port.line, type="error_semantico", message=message))
+
+        markUsed(rule.source, used)
+        markUsed(rule.destination, used)
 
         line = rule.fieldLines.get("origen", rule.line)
         rule.source, message = checkAddress(rule.source, symbols, order, rule.file, line)
@@ -150,6 +160,9 @@ def check(program: Program, files: List[str]) -> List[Diagnostic]:
             if message is not None:
                 diagnostics.append(Diagnostic(file=packet.file, line=packet.port.line, type="error_semantico", message=message))
 
+        markUsed(packet.source, used)
+        markUsed(packet.destination, used)
+
         line = packet.fieldLines.get("origen", packet.line)
         packet.source, message = checkHost(packet.source, symbols, order, packet.file, line, "origen")
         if message is not None:
@@ -159,5 +172,13 @@ def check(program: Program, files: List[str]) -> List[Diagnostic]:
         packet.destination, message = checkHost(packet.destination, symbols, order, packet.file, line, "destino")
         if message is not None:
             diagnostics.append(Diagnostic(file=packet.file, line=line, type="error_semantico", message=message))
+
+    mainFile = files[-1] if files else None
+    for declaration in symbols.values():
+        if declaration.file == mainFile and declaration.name not in used:
+            diagnostics.append(Diagnostic(
+                file=declaration.file, line=declaration.line, type="advertencia_no_usada",
+                message=f"la variable '{declaration.name}' se declara pero nunca se usa",
+            ))
 
     return diagnostics

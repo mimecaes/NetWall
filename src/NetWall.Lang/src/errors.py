@@ -8,6 +8,7 @@ VALID_TYPES = {
     "advertencia_alcanzabilidad",
     "contradiccion",
     "redundancia",
+    "advertencia_no_usada",
 }
 
 
