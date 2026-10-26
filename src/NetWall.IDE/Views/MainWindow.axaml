@@ -12,7 +12,7 @@
         x:Class="NetWall.IDE.Views.MainWindow"
         x:Name="Root"
         x:DataType="vm:MainViewModel"
-        Icon="/Assets/avalonia-logo.ico"
+        Icon="/Assets/netwall.ico"
         Title="NetWall.IDE"
         Width="1280" Height="800"
         MinWidth="960" MinHeight="600"
@@ -530,7 +530,7 @@
                                     <Ellipse Width="140" Height="140" Fill="{DynamicResource AccentBrush}"
                                              Opacity="0.16" Effect="blur(28)" />
                                     <Border HorizontalAlignment="Center" VerticalAlignment="Center">
-                                        <Image Width="120" Height="120"
+                                        <Image Width="120" Height="120" RenderOptions.BitmapInterpolationMode="HighQuality"
                                                Source="avares://NetWall.IDE/Assets/Icons/applogo.png" />
                                     </Border>
                                 </Panel>
