@@ -34,6 +34,7 @@ public partial class MainWindow : Window
     private IReadOnlyList<HelpyField> _fields = [];
     private int _helpyVersion;
     private bool _celebrating;
+    private GridLength _sidebarWidth = new(260);
 
     public MainWindow()
     {
@@ -226,7 +227,27 @@ public partial class MainWindow : Window
             vm.RequestRevealLine += OnRequestRevealLine;
             vm.ExtensionToggled += OnExtensionToggled;
             _indentRainbowRenderer.Opacity = vm.IsIndentRainbowEnabled ? 1.0 : 0.0;
+            UpdateSidebarColumn();
         }
+    }
+
+    private void UpdateSidebarColumn()
+    {
+        var column = WorkbenchGrid.ColumnDefinitions[0];
+        if (ViewModel?.IsSidebarVisible == false)
+        {
+            if (column.Width.Value > 0)
+            {
+                _sidebarWidth = column.Width;
+            }
+
+            column.MinWidth = 0;
+            column.Width = new GridLength(0);
+            return;
+        }
+
+        column.MinWidth = 160;
+        column.Width = _sidebarWidth;
     }
 
     private void OnExtensionToggled(ExtensionInfo extension)
@@ -273,6 +294,10 @@ public partial class MainWindow : Window
         else if (e.PropertyName == nameof(MainViewModel.IsHelpModeEnabled))
         {
             UpdateHelpy();
+        }
+        else if (e.PropertyName == nameof(MainViewModel.IsSidebarVisible))
+        {
+            UpdateSidebarColumn();
         }
     }
 

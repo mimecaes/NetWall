@@ -309,9 +309,14 @@
         </Border>
 
         <Panel>
-        <Grid ColumnDefinitions="Auto,Auto,*">
+        <Grid Name="WorkbenchGrid">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="260" MinWidth="160" MaxWidth="520" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" MinWidth="320" />
+            </Grid.ColumnDefinitions>
 
-            <Border Grid.Column="0" Width="260"
+            <Border Grid.Column="0"
                     Background="{DynamicResource PanelBackgroundBrush}"
                     BorderBrush="{DynamicResource BorderBrush}"
                     BorderThickness="0,0,1,0"
