@@ -322,9 +322,7 @@ public partial class ChallengeViewModel : ViewModelBase
 
     public string ProgressText => $"{SealCount} de {Levels.Count} retos";
 
-    public void Open() =>
-        Select(Levels.FirstOrDefault(level => level is { IsUnlocked: true, Seal: 0 })
-               ?? Levels.LastOrDefault(level => level.IsUnlocked));
+    public void Open() => OpenPage(Pages[0]);
 
     public void Close()
     {
