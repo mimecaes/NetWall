@@ -65,6 +65,7 @@
             <Setter Property="Foreground" Value="{DynamicResource NotebookInkBrush}" />
             <Setter Property="TextWrapping" Value="Wrap" />
             <Setter Property="FontSize" Value="13" />
+            <Setter Property="LineHeight" Value="26" />
         </Style>
         <Style Selector="TextBlock.muted">
             <Setter Property="Foreground" Value="{DynamicResource NotebookMutedBrush}" />
@@ -74,25 +75,23 @@
             <Setter Property="FontFamily" Value="avares://NetWall.IDE/Assets/Fonts#Caveat" />
             <Setter Property="FontWeight" Value="Bold" />
             <Setter Property="FontSize" Value="34" />
-            <Setter Property="Margin" Value="0,6,0,0" />
             <Setter Property="TextWrapping" Value="Wrap" />
             <Setter Property="Foreground" Value="{DynamicResource NotebookTitleBrush}" />
         </Style>
         <Style Selector="controls|HandUnderline.title-underline">
             <Setter Property="Height" Value="10" />
-            <Setter Property="Margin" Value="0,-6,0,14" />
+            <Setter Property="Margin" Value="0,-8,0,0" />
         </Style>
         <Style Selector="TextBlock.section">
             <Setter Property="FontSize" Value="12.5" />
             <Setter Property="FontWeight" Value="SemiBold" />
-            <Setter Property="Margin" Value="0,16,0,8" />
+            <Setter Property="Margin" Value="0,26,0,0" />
             <Setter Property="Foreground" Value="{DynamicResource InkPinkBrush}" />
         </Style>
         <Style Selector="Border.type-badge">
             <Setter Property="CornerRadius" Value="12" />
             <Setter Property="Padding" Value="12,3" />
             <Setter Property="HorizontalAlignment" Value="Left" />
-            <Setter Property="Margin" Value="0,0,0,10" />
             <Setter Property="BorderBrush" Value="White" />
             <Setter Property="BorderThickness" Value="2.5" />
             <Setter Property="BoxShadow" Value="0 2 5 0 #33000000" />
@@ -228,21 +227,22 @@
             <Setter Property="VerticalAlignment" Value="Center" />
             <Setter Property="Foreground" Value="{DynamicResource NotebookInkBrush}" />
         </Style>
-        <Style Selector="StackPanel.diagnostics">
-            <Setter Property="Margin" Value="4,6,0,0" />
+        <Style Selector="controls|RuledStack.diagnostics">
+            <Setter Property="Margin" Value="4,0,0,0" />
             <Setter Property="RenderTransform" Value="rotate(-1deg)" />
         </Style>
-        <Style Selector="StackPanel.diagnostics TextBlock">
+        <Style Selector="controls|RuledStack.diagnostics TextBlock">
             <Setter Property="FontFamily" Value="avares://NetWall.IDE/Assets/Fonts#Caveat" />
             <Setter Property="FontSize" Value="18" />
             <Setter Property="FontWeight" Value="SemiBold" />
             <Setter Property="TextWrapping" Value="Wrap" />
+            <Setter Property="LineHeight" Value="26" />
             <Setter Property="Foreground" Value="{DynamicResource InkMintBrush}" />
         </Style>
-        <Style Selector="StackPanel.diagnostics.warning TextBlock">
+        <Style Selector="controls|RuledStack.diagnostics.warning TextBlock">
             <Setter Property="Foreground" Value="{DynamicResource InkButterBrush}" />
         </Style>
-        <Style Selector="StackPanel.diagnostics.error TextBlock">
+        <Style Selector="controls|RuledStack.diagnostics.error TextBlock">
             <Setter Property="Foreground" Value="{DynamicResource InkPinkBrush}" />
         </Style>
         <Style Selector="Button.notebook-action">
@@ -392,8 +392,9 @@
             <Setter Property="Stroke" Value="{DynamicResource PastelInkBrush}" />
         </Style>
         <Style Selector="Button.index-row, Button.index-chapter">
-            <Setter Property="Padding" Value="4,2" />
-            <Setter Property="Margin" Value="0,0,0,2" />
+            <Setter Property="Padding" Value="4,0" />
+            <Setter Property="Height" Value="26" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
             <Setter Property="HorizontalAlignment" Value="Stretch" />
             <Setter Property="HorizontalContentAlignment" Value="Stretch" />
             <Setter Property="Background" Value="Transparent" />
@@ -403,6 +404,7 @@
         </Style>
         <Style Selector="Button.index-chapter">
             <Setter Property="HorizontalAlignment" Value="Left" />
+            <Setter Property="Height" Value="22" />
             <Setter Property="Padding" Value="0" />
         </Style>
         <Style Selector="Button.index-row:pointerover /template/ ContentPresenter#PART_ContentPresenter">
@@ -437,12 +439,12 @@
                 <Grid ColumnDefinitions="58,*,Auto">
                     <TextBlock Classes="index-id" Text="{Binding Challenge.Id}" />
                     <TextBlock Grid.Column="1" Classes="index-title" Text="{Binding Challenge.Title}" />
-                    <controls:WaxSeal Grid.Column="2" Width="38" Height="38" Margin="0,-4" Level="{Binding Seal}" />
+                    <controls:WaxSeal Grid.Column="2" Width="34" Height="34" Margin="0,-6" Level="{Binding Seal}" />
                 </Grid>
             </Button>
         </DataTemplate>
         <DataTemplate x:Key="IndexChapterTemplate" x:DataType="vm:ChallengeChapter">
-            <StackPanel Margin="0,0,0,14">
+            <controls:RuledStack Margin="0,0,0,26">
                 <Button Classes="index-chapter" IsEnabled="{Binding IsUnlocked}" Click="OnChapterRowClick">
                     <Panel>
                         <Border CornerRadius="10" Background="{Binding Brush}" />
@@ -454,9 +456,9 @@
                         </TextBlock>
                     </Panel>
                 </Button>
-                <ItemsControl Margin="4,6,0,0" ItemsSource="{Binding Levels}"
+                <ItemsControl Margin="4,0,0,0" ItemsSource="{Binding Levels}"
                               ItemTemplate="{StaticResource LevelRowTemplate}" />
-            </StackPanel>
+            </controls:RuledStack>
         </DataTemplate>
     </UserControl.Resources>
 
@@ -499,8 +501,8 @@
                     <Border Grid.Column="0" Name="LeftPage" Classes="page">
                         <Panel>
                             <controls:NotebookPaper IsLeft="True" />
-                            <DockPanel Margin="32,22,30,16" IsVisible="{Binding IsLevelPage}">
-                                <StackPanel DockPanel.Dock="Top">
+                            <DockPanel Margin="32,26,30,16" IsVisible="{Binding IsLevelPage}">
+                                <controls:RuledStack DockPanel.Dock="Top">
                                     <Panel HorizontalAlignment="Left">
                                         <Border CornerRadius="10"
                                                 Background="{Binding Current.Brush, FallbackValue={x:Null}}" />
@@ -521,15 +523,15 @@
                                     <ItemsControl ItemsSource="{Binding Learn}">
                                         <ItemsControl.ItemTemplate>
                                             <DataTemplate x:DataType="x:String">
-                                                <Grid ColumnDefinitions="Auto,*" Margin="0,0,0,6">
-                                                    <controls:Doodle Kind="Paw" Width="12" Height="12" Margin="0,3,9,0"
+                                                <Grid ColumnDefinitions="Auto,*">
+                                                    <controls:Doodle Kind="Paw" Width="12" Height="12" Margin="0,7,9,0"
                                                                      VerticalAlignment="Top" Stroke="{DynamicResource InkPinkBrush}" />
                                                     <TextBlock Grid.Column="1" Classes="ink" Text="{Binding}" />
                                                 </Grid>
                                             </DataTemplate>
                                         </ItemsControl.ItemTemplate>
                                     </ItemsControl>
-                                </StackPanel>
+                                </controls:RuledStack>
 
                                 <Grid DockPanel.Dock="Bottom" ColumnDefinitions="*,Auto,Auto" Margin="0,10,0,0">
                                     <controls:Doodle Grid.Column="1" Width="30" Height="30" Margin="0,0,30,6" Opacity="0.55"
@@ -566,21 +568,21 @@
                                     </Border>
                                 </ScrollViewer>
                             </DockPanel>
-                            <ScrollViewer Margin="32,22,30,16" VerticalScrollBarVisibility="Auto"
+                            <ScrollViewer Margin="32,26,30,16" VerticalScrollBarVisibility="Auto"
                                           IsVisible="{Binding IsIndexPage}">
-                                <StackPanel>
+                                <controls:RuledStack>
                                     <StackPanel HorizontalAlignment="Left">
                                         <TextBlock Classes="page-title" FontSize="46" Text="Índice" />
                                         <controls:HandUnderline Classes="title-underline"
                                                                 Stroke="{DynamicResource PastelLavenderBrush}" />
                                     </StackPanel>
-                                    <TextBlock Classes="ink" Margin="0,0,0,16"
+                                    <TextBlock Classes="ink" Margin="0,0,0,26"
                                                Text="Elige un tema para ir a su página. Los temas en gris se abren al completar el anterior." />
                                     <ItemsControl ItemsSource="{Binding IndexLeft}"
                                                   ItemTemplate="{StaticResource IndexChapterTemplate}" />
-                                </StackPanel>
+                                </controls:RuledStack>
                             </ScrollViewer>
-                            <StackPanel Margin="32,40,30,16" IsVisible="{Binding IsCoverPage}">
+                            <controls:RuledStack Margin="32,26,30,16" IsVisible="{Binding IsCoverPage}">
                                 <TextBlock FontFamily="avares://NetWall.IDE/Assets/Fonts#Caveat" FontSize="28" FontWeight="Bold"
                                            Foreground="{DynamicResource InkPinkBrush}"
                                            Text="{Binding Chapter.Title, FallbackValue=''}" />
@@ -589,12 +591,12 @@
                                     <controls:HandUnderline Classes="title-underline"
                                                             Stroke="{Binding Chapter.Brush, FallbackValue={x:Null}}" />
                                 </StackPanel>
-                                <TextBlock Classes="ink" FontSize="15" LineHeight="23"
+                                <TextBlock Classes="ink" FontSize="15"
                                            Text="{Binding Chapter.Description, FallbackValue=''}" />
                                 <controls:Doodle Width="130" Height="130" Margin="0,40,0,0" HorizontalAlignment="Center"
                                                  Opacity="0.5" RenderTransform="rotate(-8deg)" Kind="{Binding CoverDoodle}"
                                                  Stroke="{DynamicResource InkLavenderBrush}" />
-                            </StackPanel>
+                            </controls:RuledStack>
                             <controls:Doodle Width="34" Height="34" HorizontalAlignment="Right" VerticalAlignment="Top"
                                              Margin="0,18,36,0" Opacity="0.5" RenderTransform="rotate(-12deg)"
                                              Kind="{Binding DoodleTop}" Stroke="{DynamicResource InkLavenderBrush}" />
@@ -672,15 +674,8 @@
                                     </StackPanel>
                                 </Button>
 
-                                <StackPanel DockPanel.Dock="Bottom" Classes="diagnostics"
-                                            Classes.warning="{Binding HasWarnings}" Classes.error="{Binding HasCodeErrors}"
-                                            IsVisible="{Binding DiagnosticsText.Length}">
-                                    <TextBlock Text="{Binding DiagnosticsText}" />
-                                    <TextBlock Text="{Binding DiagnosticsDetail}" IsVisible="{Binding HasDiagnosticsDetail}" />
-                                </StackPanel>
-
-                                <StackPanel DockPanel.Dock="Bottom" Margin="0,12,0,0">
-                                    <TextBlock FontSize="11" FontWeight="Bold" LetterSpacing="1" Margin="0,0,0,6"
+                                <controls:RuledStack DockPanel.Dock="Bottom" FromBottom="True" Margin="0,12,0,0">
+                                    <TextBlock FontSize="11" FontWeight="Bold" LetterSpacing="1"
                                                Foreground="{DynamicResource InkLavenderBrush}" Text="PRUEBAS" />
                                     <ItemsControl Name="TestList" ItemsSource="{Binding Tests}">
                                         <ItemsControl.ItemsPanel>
@@ -690,7 +685,7 @@
                                         </ItemsControl.ItemsPanel>
                                         <ItemsControl.ItemTemplate>
                                             <DataTemplate x:DataType="vm:ChallengeTestCard">
-                                                <StackPanel Orientation="Horizontal" Spacing="8" Margin="0,0,18,8">
+                                                <StackPanel Orientation="Horizontal" Spacing="8" Height="26" Margin="0,0,18,0">
                                                     <controls:Doodle Kind="Box" Width="15" Height="15" VerticalAlignment="Center"
                                                                      Stroke="{DynamicResource NotebookInkBrush}" />
                                                     <TextBlock Classes="test-text" Text="{Binding Title}" />
@@ -698,7 +693,13 @@
                                             </DataTemplate>
                                         </ItemsControl.ItemTemplate>
                                     </ItemsControl>
-                                </StackPanel>
+                                    <controls:RuledStack Classes="diagnostics"
+                                                         Classes.warning="{Binding HasWarnings}" Classes.error="{Binding HasCodeErrors}"
+                                                         IsVisible="{Binding DiagnosticsText.Length}">
+                                        <TextBlock Text="{Binding DiagnosticsText}" />
+                                        <TextBlock Text="{Binding DiagnosticsDetail}" IsVisible="{Binding HasDiagnosticsDetail}" />
+                                    </controls:RuledStack>
+                                </controls:RuledStack>
 
                                 <Panel Margin="0,16,0,0">
                                     <Border Classes="editor-box">
@@ -720,24 +721,24 @@
                                                         RenderTransform="rotate(36deg)" Fill="{DynamicResource PastelSkyBrush}" />
                                 </Panel>
                             </DockPanel>
-                            <ScrollViewer Margin="44,22,24,16" VerticalScrollBarVisibility="Auto"
+                            <ScrollViewer Margin="44,26,24,16" VerticalScrollBarVisibility="Auto"
                                           IsVisible="{Binding IsIndexPage}">
-                                <StackPanel>
+                                <controls:RuledStack>
                                     <ItemsControl ItemsSource="{Binding IndexRight}"
                                                   ItemTemplate="{StaticResource IndexChapterTemplate}" />
-                                    <TextBlock Classes="section" Text="Tu avance" />
+                                    <TextBlock Classes="section" Margin="0" Text="Tu avance" />
                                     <TextBlock Classes="ink" FontSize="15" Text="{Binding ProgressText}" />
-                                </StackPanel>
+                                </controls:RuledStack>
                             </ScrollViewer>
-                            <StackPanel Margin="44,40,24,16" IsVisible="{Binding IsCoverPage}">
-                                <TextBlock Classes="section" Margin="0,0,0,10" Text="En este capítulo" />
+                            <controls:RuledStack Margin="44,26,24,16" IsVisible="{Binding IsCoverPage}">
+                                <TextBlock Classes="section" Margin="0" Text="En este capítulo" />
                                 <ItemsControl ItemsSource="{Binding Chapter.Levels, FallbackValue={x:Null}}"
                                               ItemTemplate="{StaticResource LevelRowTemplate}" />
-                                <TextBlock Classes="muted" Margin="0,12,0,0"
+                                <TextBlock Classes="muted" Margin="0,26,0,0"
                                            Text="{Binding Chapter.ProgressText, StringFormat='{}{0} con sello', FallbackValue=''}" />
                                 <Button Classes="notebook-action mint" HorizontalAlignment="Left" Margin="0,26,0,0"
                                         Content="EMPEZAR" Click="OnStartChapterClick" />
-                            </StackPanel>
+                            </controls:RuledStack>
                         </Panel>
                     </Border>
                     <controls:CorrectionLayer Grid.Column="2" Name="Correction" />

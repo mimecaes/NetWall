@@ -212,25 +212,6 @@
         <Setter Property="StrokeJoin" Value="Round" />
     </Style>
 
-    <Style Selector="Panel.welcome-logo">
-        <Setter Property="Opacity" Value="0" />
-        <Style.Animations>
-            <Animation Duration="0:0:0.6" FillMode="Forward" Easing="CubicEaseOut" Delay="0:0:0.0">
-                <KeyFrame Cue="0%">
-                    <Setter Property="Opacity" Value="0" />
-                    <Setter Property="TranslateTransform.Y" Value="20" />
-                </KeyFrame>
-                <KeyFrame Cue="100%">
-                    <Setter Property="Opacity" Value="1" />
-                    <Setter Property="TranslateTransform.Y" Value="0" />
-                </KeyFrame>
-            </Animation>
-        </Style.Animations>
-        <Setter Property="RenderTransform">
-            <TranslateTransform Y="0" />
-        </Setter>
-    </Style>
-
     <Style Selector="TextBlock.welcome-title">
         <Setter Property="Opacity" Value="0" />
         <Style.Animations>
@@ -269,7 +250,7 @@
         </Setter>
     </Style>
 
-    <Style Selector="Button.welcome-button">
+    <Style Selector=":is(Control).welcome-button">
         <Setter Property="Opacity" Value="0" />
         <Style.Animations>
             <Animation Duration="0:0:0.6" FillMode="Forward" Easing="CubicEaseOut" Delay="0:0:0.18">
@@ -328,18 +309,134 @@
         <Setter Property="HorizontalAlignment" Value="Stretch" />
         <Setter Property="HorizontalContentAlignment" Value="Stretch" />
     </Style>
-
+    <Style Selector="Button.recent-project-button:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Background" Value="Transparent" />
+    </Style>
     <Style Selector="Border.recent-project-item">
+        <Setter Property="CornerRadius" Value="8" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+        <Setter Property="Background" Value="{DynamicResource BackgroundBrush}" />
+        <Setter Property="ClipToBounds" Value="True" />
         <Setter Property="Transitions">
             <Transitions>
-                <BrushTransition Property="Background" Duration="0:0:0.15" Easing="{StaticResource Motion.EaseOut}" />
-                <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.15" Easing="{StaticResource Motion.EaseOut}" />
+                <BrushTransition Property="BorderBrush" Duration="0:0:0.15" Easing="{StaticResource Motion.EaseOut}" />
             </Transitions>
         </Setter>
     </Style>
-    <Style Selector="Button.recent-project-button:pointerover Border.recent-project-item">
+    <Style Selector="Panel.recent-row:pointerover Border.recent-project-item">
+        <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}" />
+    </Style>
+    <Style Selector="Border.recent-project-item > Panel">
+        <Setter Property="Background" Value="Transparent" />
+    </Style>
+    <Style Selector="Panel.recent-row:pointerover Border.recent-project-item > Panel">
         <Setter Property="Background" Value="{DynamicResource HoverBrush}" />
-        <Setter Property="RenderTransform" Value="translateY(-2px)" />
+    </Style>
+    <Style Selector="Border.recent-bar">
+        <Setter Property="Width" Value="3" />
+        <Setter Property="HorizontalAlignment" Value="Left" />
+        <Setter Property="Background" Value="{DynamicResource AccentBrush}" />
+        <Setter Property="Opacity" Value="0" />
+        <Setter Property="RenderTransform" Value="translateX(-3px)" />
+        <Setter Property="Transitions">
+            <Transitions>
+                <DoubleTransition Property="Opacity" Duration="0:0:0.15" />
+                <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.18" Easing="{StaticResource Motion.EaseOut}" />
+            </Transitions>
+        </Setter>
+    </Style>
+    <Style Selector="Panel.recent-row:pointerover Border.recent-bar">
+        <Setter Property="Opacity" Value="1" />
+        <Setter Property="RenderTransform" Value="translateX(0px)" />
+    </Style>
+    <Style Selector="controls|AnimatedIcon.recent-icon">
+        <Setter Property="Margin" Value="0,0,12,0" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+    </Style>
+    <Style Selector="controls|AnimatedIcon.recent-arrow">
+        <Setter Property="VerticalAlignment" Value="Center" />
+        <Setter Property="Stroke" Value="{DynamicResource TextDisabledBrush}" />
+        <Setter Property="RenderTransform" Value="translateX(0px)" />
+        <Setter Property="Transitions">
+            <Transitions>
+                <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.18" Easing="{StaticResource Motion.EaseOut}" />
+            </Transitions>
+        </Setter>
+    </Style>
+    <Style Selector="Panel.recent-row:pointerover controls|AnimatedIcon.recent-icon, Panel.recent-row:pointerover controls|AnimatedIcon.recent-arrow">
+        <Setter Property="Stroke" Value="{DynamicResource AccentBrush}" />
+    </Style>
+    <Style Selector="Panel.recent-row:pointerover controls|AnimatedIcon.recent-arrow">
+        <Setter Property="RenderTransform" Value="translateX(4px)" />
+    </Style>
+    <Style Selector="TextBlock.recent-name">
+        <Setter Property="FontSize" Value="12.5" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
+    </Style>
+    <Style Selector="TextBlock.recent-path">
+        <Setter Property="FontSize" Value="10.5" />
+        <Setter Property="TextTrimming" Value="CharacterEllipsis" />
+        <Setter Property="Foreground" Value="{DynamicResource TextMutedBrush}" />
+    </Style>
+    <Style Selector="TextBlock.recent-full">
+        <Setter Property="IsVisible" Value="False" />
+    </Style>
+    <Style Selector="Panel.recent-row:pointerover TextBlock.recent-short">
+        <Setter Property="IsVisible" Value="False" />
+    </Style>
+    <Style Selector="Panel.recent-row:pointerover TextBlock.recent-full">
+        <Setter Property="IsVisible" Value="True" />
+    </Style>
+    <Style Selector="TextBlock.recent-date">
+        <Setter Property="FontSize" Value="11" />
+        <Setter Property="Margin" Value="12,0" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+        <Setter Property="Foreground" Value="{DynamicResource TextMutedBrush}" />
+        <Setter Property="Transitions">
+            <Transitions>
+                <DoubleTransition Property="Opacity" Duration="0:0:0.12" />
+            </Transitions>
+        </Setter>
+    </Style>
+    <Style Selector="Panel.recent-row:pointerover TextBlock.recent-date">
+        <Setter Property="Opacity" Value="0" />
+    </Style>
+    <Style Selector="Button.recent-remove">
+        <Setter Property="Width" Value="24" />
+        <Setter Property="Height" Value="24" />
+        <Setter Property="Margin" Value="0,0,38,0" />
+        <Setter Property="HorizontalAlignment" Value="Right" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+        <Setter Property="Opacity" Value="0" />
+        <Setter Property="IsHitTestVisible" Value="False" />
+        <Setter Property="Transitions">
+            <Transitions>
+                <DoubleTransition Property="Opacity" Duration="0:0:0.12" />
+            </Transitions>
+        </Setter>
+    </Style>
+    <Style Selector="Panel.recent-row:pointerover Button.recent-remove">
+        <Setter Property="Opacity" Value="1" />
+        <Setter Property="IsHitTestVisible" Value="True" />
+    </Style>
+
+    <Style Selector="Button.welcome-secondary">
+        <Setter Property="Background" Value="{DynamicResource BackgroundBrush}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="CornerRadius" Value="6" />
+        <Setter Property="Padding" Value="14,10" />
+        <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
+    </Style>
+    <Style Selector="Button.welcome-secondary:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Background" Value="{DynamicResource HoverBrush}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}" />
+        <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
+    </Style>
+    <Style Selector="Button.welcome-secondary:pointerover controls|AnimatedIcon">
+        <Setter Property="Stroke" Value="{DynamicResource AccentBrush}" />
     </Style>
 
     <Style Selector="TextBlock.welcome-feature">

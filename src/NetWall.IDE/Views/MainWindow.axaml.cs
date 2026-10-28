@@ -34,6 +34,7 @@ public partial class MainWindow : Window
     private IReadOnlyList<HelpyField> _fields = [];
     private int _helpyVersion;
     private bool _celebrating;
+    private GridLength _sidebarWidth = new(260);
 
     public MainWindow()
     {
@@ -181,6 +182,16 @@ public partial class MainWindow : Window
         _exitingSimulation = false;
     }
 
+    protected override void OnPropertyChanged(AvaloniaPropertyChangedEventArgs change)
+    {
+        base.OnPropertyChanged(change);
+        if ((change.Property == WindowStateProperty || change.Property == OffScreenMarginProperty)
+            && Content is Control content)
+        {
+            content.Margin = WindowState == WindowState.Maximized ? OffScreenMargin : default;
+        }
+    }
+
     private void OnWindowSizeChanged(object? sender, SizeChangedEventArgs e)
     {
         if (ViewModel is { } viewModel)
@@ -225,8 +236,29 @@ public partial class MainWindow : Window
             vm.TerminalUpdated += OnTerminalUpdated;
             vm.RequestRevealLine += OnRequestRevealLine;
             vm.ExtensionToggled += OnExtensionToggled;
+            vm.RequestCatGallery += () => _ = CatGallery.ShowAsync();
             _indentRainbowRenderer.Opacity = vm.IsIndentRainbowEnabled ? 1.0 : 0.0;
+            UpdateSidebarColumn();
         }
+    }
+
+    private void UpdateSidebarColumn()
+    {
+        var column = WorkbenchGrid.ColumnDefinitions[0];
+        if (ViewModel?.IsSidebarVisible == false)
+        {
+            if (column.Width.Value > 0)
+            {
+                _sidebarWidth = column.Width;
+            }
+
+            column.MinWidth = 0;
+            column.Width = new GridLength(0);
+            return;
+        }
+
+        column.MinWidth = 160;
+        column.Width = _sidebarWidth;
     }
 
     private void OnExtensionToggled(ExtensionInfo extension)
@@ -273,6 +305,10 @@ public partial class MainWindow : Window
         else if (e.PropertyName == nameof(MainViewModel.IsHelpModeEnabled))
         {
             UpdateHelpy();
+        }
+        else if (e.PropertyName == nameof(MainViewModel.IsSidebarVisible))
+        {
+            UpdateSidebarColumn();
         }
     }
 
@@ -584,6 +620,7 @@ public partial class MainWindow : Window
             ChallengeView.SetHelpyColor(color);
             SnippetHelpy.SetColor(color);
             SettingsHelpy.SetColor(color);
+            CatGallery.SetHelpyColor(color);
         }
     }
 
