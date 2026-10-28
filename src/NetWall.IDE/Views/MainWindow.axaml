@@ -244,7 +244,7 @@
                                                     <StackPanel Grid.Column="1" VerticalAlignment="Center">
                                                         <TextBlock Classes="settings-label" Text="Ayuda de Helpy" />
                                                         <TextBlock Classes="settings-hint" Margin="10,1,0,0"
-                                                                   Text="Escribe regla, declarar o red y presiona Tab" />
+                                                                   Text="Escribe regla, Int o Red y presiona Tab" />
                                                     </StackPanel>
                                                     <ToggleSwitch Grid.Column="2" Classes="extension-toggle"
                                                                   IsChecked="{Binding IsHelpModeEnabled, Mode=TwoWay}"

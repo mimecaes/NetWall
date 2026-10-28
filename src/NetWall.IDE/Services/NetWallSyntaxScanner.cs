@@ -15,7 +15,6 @@ public static class NetWallSyntaxScanner
     private static readonly Dictionary<string, SyntaxToken> ReservedWords = new()
     {
         // Declarations and control flow.
-        ["declarar"] = SyntaxToken.Keyword,
         ["regla"] = SyntaxToken.Keyword,
         ["funcion"] = SyntaxToken.Keyword,
         ["importar"] = SyntaxToken.Keyword,
@@ -51,7 +50,7 @@ public static class NetWallSyntaxScanner
         ["rango"] = SyntaxToken.Function,
     };
 
-    private const string Punctuation = "{}(),;:.";
+    private const string Punctuation = "{}(),;.";
 
     public static bool IsReserved(string word) => ReservedWords.ContainsKey(word);
 

@@ -31,12 +31,17 @@ public static partial class HelpySnippets
             "    protocolo = ${tcp|El protocolo: tcp para web, correo o ssh; udp para dns o video.},\n" +
             "    puerto = ${80|El puerto del servicio: 80 web, 443 web segura, 22 ssh, 25 correo.}\n" +
             "};"),
-        ["declarar"] = ("Presiona Tab para declarar una variable.",
-            "declarar ${nombre|El nombre de la variable, en minúsculas y con _ entre palabras.}: " +
-            "${Int|El tipo: Int para enteros, Float para decimales, String para texto.} = " +
-            "${0|El valor inicial. Tiene que ser del tipo que elegiste.};"),
-        ["red"] = ("Presiona Tab para declarar una red.",
-            "declarar ${nombre|El nombre de la red, como oficina o servidores.}: Red = " +
+        ["Int"] = ("Presiona Tab para crear una variable de números enteros.",
+            "Int ${nombre|El nombre de la variable, en minúsculas y con _ entre palabras.} = " +
+            "${0|Un número entero, sin decimales, como 22 o 8080.};"),
+        ["Float"] = ("Presiona Tab para crear una variable con decimales.",
+            "Float ${nombre|El nombre de la variable, en minúsculas y con _ entre palabras.} = " +
+            "${0.0|Un número con decimales, escrito con punto, como 2.5.};"),
+        ["String"] = ("Presiona Tab para crear una variable de texto.",
+            "String ${nombre|El nombre de la variable, en minúsculas y con _ entre palabras.} = " +
+            "\"${texto|El texto, entre comillas. No puede llevar comillas adentro.}\";"),
+        ["Red"] = ("Presiona Tab para crear una red.",
+            "Red ${nombre|El nombre de la red, como oficina o servidores.} = " +
             "\"${192.168.1.0/24|La red en formato CIDR: dirección/prefijo. Un /24 tiene 256 direcciones.}\";"),
     };
 

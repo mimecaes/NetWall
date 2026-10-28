@@ -453,13 +453,12 @@ public partial class CodeAssistantViewModel : ViewModelBase
             var spans = NetWallSyntaxScanner.ScanLine(line);
             string Word(int i) => line.Substring(spans[i].Start, spans[i].Length);
 
-            for (var i = 0; i + 5 < spans.Count; i++)
+            for (var i = 0; i + 3 < spans.Count; i++)
             {
-                if (Word(i) == "declarar" && spans[i + 1].Token == SyntaxToken.Identifier
-                    && Word(i + 2) == ":" && Word(i + 3) == "Red" && Word(i + 4) == "="
-                    && spans[i + 5].Token is SyntaxToken.String or SyntaxToken.Identifier)
+                if (Word(i) == "Red" && spans[i + 1].Token == SyntaxToken.Identifier && Word(i + 2) == "="
+                    && spans[i + 3].Token is SyntaxToken.String or SyntaxToken.Identifier)
                 {
-                    networks[Word(i + 1)] = Word(i + 5).Trim('"');
+                    networks[Word(i + 1)] = Word(i + 3).Trim('"');
                 }
             }
         }
@@ -541,7 +540,7 @@ public partial class CodeAssistantViewModel : ViewModelBase
             "Red" => FormatAddress(value),
             _ => value,
         };
-        return $"declarar {VariableName.Trim()}: {VariableType} = {formatted};\n";
+        return $"{VariableType} {VariableName.Trim()} = {formatted};\n";
     }
 
     private string GeneratePacket()
