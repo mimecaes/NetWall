@@ -400,6 +400,8 @@ public partial class MainViewModel : ViewModelBase
 
     public event Action? RequestOpenFolder;
 
+    public event Action? RequestCatGallery;
+
     public event Action? RequestCodeAssistant;
 
     public event Func<FileTreeNode, Task<bool>>? RequestDeleteConfirmation;
@@ -785,6 +787,18 @@ public partial class MainViewModel : ViewModelBase
     private void OpenFolder() => RequestOpenFolder?.Invoke();
 
     [RelayCommand]
+    private void RemoveRecentProject(RecentProject? project)
+    {
+        if (project is null)
+        {
+            return;
+        }
+
+        _recentProjectsService.RemoveRecent(project.Path);
+        LoadRecentProjects();
+    }
+
+    [RelayCommand]
     private void OpenRecentProject(RecentProject? project)
     {
         if (project?.Path is not { Length: > 0 })
@@ -1072,6 +1086,12 @@ public partial class MainViewModel : ViewModelBase
         TerminalInput = string.Empty;
         if (command.Length == 0)
         {
+            return;
+        }
+
+        if (command == "gato$")
+        {
+            RequestCatGallery?.Invoke();
             return;
         }
 

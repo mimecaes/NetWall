@@ -182,6 +182,16 @@ public partial class MainWindow : Window
         _exitingSimulation = false;
     }
 
+    protected override void OnPropertyChanged(AvaloniaPropertyChangedEventArgs change)
+    {
+        base.OnPropertyChanged(change);
+        if ((change.Property == WindowStateProperty || change.Property == OffScreenMarginProperty)
+            && Content is Control content)
+        {
+            content.Margin = WindowState == WindowState.Maximized ? OffScreenMargin : default;
+        }
+    }
+
     private void OnWindowSizeChanged(object? sender, SizeChangedEventArgs e)
     {
         if (ViewModel is { } viewModel)
@@ -226,6 +236,7 @@ public partial class MainWindow : Window
             vm.TerminalUpdated += OnTerminalUpdated;
             vm.RequestRevealLine += OnRequestRevealLine;
             vm.ExtensionToggled += OnExtensionToggled;
+            vm.RequestCatGallery += () => _ = CatGallery.ShowAsync();
             _indentRainbowRenderer.Opacity = vm.IsIndentRainbowEnabled ? 1.0 : 0.0;
             UpdateSidebarColumn();
         }
@@ -609,6 +620,7 @@ public partial class MainWindow : Window
             ChallengeView.SetHelpyColor(color);
             SnippetHelpy.SetColor(color);
             SettingsHelpy.SetColor(color);
+            CatGallery.SetHelpyColor(color);
         }
     }
 
