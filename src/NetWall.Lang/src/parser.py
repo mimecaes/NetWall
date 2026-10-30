@@ -5,7 +5,7 @@ from lexer import SYMBOLS, Token
 from nodes import Declaration, Identifier, Import, Network, Packet, Port, Program, Rule
 
 TYPES = {"String", "Int", "Float", "Red"}
-STATEMENT_KEYWORDS = {"importar", "declarar", "regla", "principal"}
+STATEMENT_KEYWORDS = {"importar", "regla", "principal"} | TYPES
 
 TOKEN_DESCRIPTIONS = {name: f"'{symbol}'" for symbol, name in SYMBOLS.items()}
 TOKEN_DESCRIPTIONS.update({
@@ -77,6 +77,9 @@ class Parser:
         t = self._current()
         return t is not None and t.type == tokenType and (value is None or t.value == value)
 
+    def _peekIsIdent(self) -> bool:
+        return self.pos + 1 < len(self.tokens) and self.tokens[self.pos + 1].type == "IDENT"
+
     def _expectOneOf(self, *values: str) -> Token:
         t = self._current()
         if t is None or t.type != "KEYWORD" or t.value not in values:
@@ -104,10 +107,8 @@ class Parser:
 
     def _parseDeclaration(self) -> Declaration: 
         line = self._current().line if self._current() is not None else 0
-        self._expect("KEYWORD", "declarar")
-        name = self._expect("IDENT").value
-        self._expect("COLON")
         dataType = self._parseType()
+        name = self._expect("IDENT").value
         self._expect("EQUALS")
         value = self._parseValue()
         self._expect("SEMICOLON")
@@ -250,7 +251,7 @@ class Parser:
     def _parseStatement(self, program: Program):
         if self._check("KEYWORD", "importar"):
             self._parseImport(program)
-        elif self._check("KEYWORD", "declarar"):
+        elif self._current().type == "KEYWORD" and self._current().value in TYPES:
             program.declarations.append(self._parseDeclaration())
         elif self._check("KEYWORD", "regla"):
             program.rules.append(self._parseRule())
@@ -258,8 +259,13 @@ class Parser:
             if self.isModule:
                 self._report(self._current().line, "error_sintactico", "un archivo importado no puede tener un bloque 'principal'")
             self._parseMain(program)
+        elif self._check("IDENT") and self._peekIsIdent():
+            # two names in a row: a misspelled type such as "int x = 5;"
+            line = self._current().line
+            self._report(line, "error_sintactico", "se esperaba un tipo")
+            self._skipLine(line)
         else:
-            self._error("se esperaba 'importar', 'declarar', 'regla' o 'principal'")
+            self._error("se esperaba una instrucción")
 
     def _synchronize(self):
         while self._current() is not None:
@@ -270,6 +276,11 @@ class Parser:
             if t.type == "KEYWORD" and t.value in STATEMENT_KEYWORDS:
                 return
             self._advance()
+
+    def _skipLine(self, line: int):
+        while self._current() is not None and self._current().line == line:
+            if self._advance().type == "SEMICOLON":
+                return
 
     def _synchronizeInBlock(self, blockDepth: int):
         while self._current() is not None:
