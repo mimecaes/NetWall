@@ -1,11 +1,11 @@
 import ipaddress
-from typing import Dict, List, Optional, Set, Tuple
+from typing import Dict, List, Optional, Set, Tuple, Union
 
 from errors import Diagnostic, lineReference
 from nodes import Declaration, Identifier, Network, Port, Program, Rule
 
 
-VALUE_TYPES = {str: "String", int: "Int", float: "Float"}
+VALUE_TYPES = {str: "String", int: "Int", float: "Float", bool: "Boolean"}
 PACKET_FIELDS = ("protocolo", "puerto", "origen", "destino")
 
 
@@ -41,6 +41,8 @@ def checkDeclaration(declaration: Declaration, symbols: Dict[str, Declaration]) 
 
     if not isCompatible(declaration.dataType, valueType):
         return f"no se puede asignar un valor {valueType} a '{declaration.name}' de tipo {declaration.dataType}"
+    if declaration.dataType == "Float" and type(declaration.value) is int:
+        declaration.value = float(declaration.value)
     return None
 
 
@@ -77,43 +79,53 @@ def checkHost(value, symbols: Dict[str, Declaration], order: Dict[str, int], fil
     return value, message
 
 
+def checkNames(program: Program, order: Dict[str, int]) -> Tuple[List[Diagnostic], Set[int]]:
+    # variables and rules share one global namespace, so the second declaration of a name is an error
+    diagnostics: List[Diagnostic] = []
+    duplicates: Set[int] = set()
+    first: Dict[str, Union[Declaration, Rule]] = {}
+    items = sorted(program.declarations + program.rules, key=lambda item: (order.get(item.file, 0), item.line))
+
+    for item in items:
+        previous = first.get(item.name)
+        if previous is None:
+            first[item.name] = item
+            continue
+        duplicates.add(id(item))
+        reference = lineReference(previous.file, previous.line, item.file)
+        if isinstance(item, Rule) and isinstance(previous, Rule):
+            message = f"la regla '{item.name}' ya fue definida ({reference})"
+        else:
+            message = f"'{item.name}' ya fue declarada ({reference})"
+        diagnostics.append(Diagnostic(file=item.file, line=item.line, type="error_semantico", message=message))
+
+    return diagnostics, duplicates
+
+
 def markUsed(value, used: Set[str]):
     if isinstance(value, Identifier):
         used.add(value.name)
 
 
 def check(program: Program, files: List[str]) -> List[Diagnostic]:
-    diagnostics: List[Diagnostic] = []
     symbols: Dict[str, Declaration] = {}
     order = {file: index for index, file in enumerate(files)}
     used: Set[str] = set()
+    diagnostics, duplicates = checkNames(program, order)
 
     for declaration in program.declarations:
-        previous = symbols.get(declaration.name)
-        if previous is not None:
-            message = f"'{declaration.name}' ya fue declarada ({lineReference(previous.file, previous.line, declaration.file)})"
-        else:
-            markUsed(declaration.value, used)
-            message = checkDeclaration(declaration, symbols)
-            symbols[declaration.name] = declaration
+        if id(declaration) in duplicates:
+            continue
+        markUsed(declaration.value, used)
+        message = checkDeclaration(declaration, symbols)
+        symbols[declaration.name] = declaration
 
         if message is not None:
             diagnostics.append(Diagnostic(
                 file=declaration.file, line=declaration.line, type="error_semantico", message=message,
             ))
 
-    seenRules: Dict[str, Rule] = {}
-
     for rule in program.rules:
-        previous = seenRules.get(rule.name)
-        if previous is not None:
-            diagnostics.append(Diagnostic(
-                file=rule.file, line=rule.line, type="error_semantico",
-                message=f"la regla '{rule.name}' ya fue definida ({lineReference(previous.file, previous.line, rule.file)})",
-            ))
-        else:
-            seenRules[rule.name] = rule
-
         if rule.action is None:
             diagnostics.append(Diagnostic(
                 file=rule.file, line=rule.line, type="error_semantico",
