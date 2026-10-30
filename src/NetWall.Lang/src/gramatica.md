@@ -12,7 +12,7 @@ modulo          ::= { importacion | declaracion | funcion_decl | regla_decl }
 
 importacion     ::= "importar" STRING ";"
 
-declaracion     ::= "declarar" IDENT ":" tipo "=" expresion ";"
+declaracion     ::= tipo IDENT "=" expresion ";"
 
 tipo            ::= "Red" | "Int" | "Float" | "String" | "Boolean"
 ```
