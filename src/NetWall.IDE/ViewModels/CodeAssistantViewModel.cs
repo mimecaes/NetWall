@@ -38,7 +38,7 @@ public partial class CodeAssistantViewModel : ViewModelBase
 
     public static IReadOnlyList<string> PacketProtocols { get; } = ["tcp", "udp"];
 
-    public static IReadOnlyList<string> Types { get; } = ["Int", "Float", "String", "Red"];
+    public static IReadOnlyList<string> Types { get; } = ["Int", "Float", "String", "Boolean", "Red"];
 
     public static IReadOnlyList<string> Policies { get; } = ["bloquear", "permitir", NoPolicy];
 
@@ -336,6 +336,9 @@ public partial class CodeAssistantViewModel : ViewModelBase
                 break;
             case "String" when value.Trim('"').Contains('"'):
                 errors.Add("el texto no puede contener comillas");
+                break;
+            case "Boolean" when value is not ("verdadero" or "falso") && !IsVariable(value):
+                errors.Add("el valor de un Boolean debe ser verdadero, falso o una variable");
                 break;
             case "Red":
                 AddAddressError(errors, value, "valor", allowAny: false);

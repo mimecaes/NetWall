@@ -24,7 +24,6 @@ public static class NetWallSyntaxScanner
         ["si"] = SyntaxToken.Keyword,
         ["sino"] = SyntaxToken.Keyword,
         ["para"] = SyntaxToken.Keyword,
-        ["hasta"] = SyntaxToken.Keyword,
 
         // Fields of a regla / struct literal.
         ["accion"] = SyntaxToken.Field,
@@ -45,12 +44,14 @@ public static class NetWallSyntaxScanner
         ["tcp"] = SyntaxToken.Constant,
         ["udp"] = SyntaxToken.Constant,
         ["cualquiera"] = SyntaxToken.Constant,
+        ["verdadero"] = SyntaxToken.Constant,
+        ["falso"] = SyntaxToken.Constant,
 
         // rango(INT, INT) is used like a built-in call.
         ["rango"] = SyntaxToken.Function,
     };
 
-    private const string Punctuation = "{}(),;.";
+    private const string Punctuation = "{}(),;";
 
     public static bool IsReserved(string word) => ReservedWords.ContainsKey(word);
 

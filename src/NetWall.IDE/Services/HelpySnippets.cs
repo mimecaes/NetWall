@@ -40,6 +40,9 @@ public static partial class HelpySnippets
         ["String"] = ("Presiona Tab para crear una variable de texto.",
             "String ${nombre|El nombre de la variable, en minúsculas y con _ entre palabras.} = " +
             "\"${texto|El texto, entre comillas. No puede llevar comillas adentro.}\";"),
+        ["Boolean"] = ("Presiona Tab para crear una variable de verdadero o falso.",
+            "Boolean ${nombre|El nombre de la variable, en minúsculas y con _ entre palabras.} = " +
+            "${verdadero|Solo puede valer verdadero o falso, sin comillas.};"),
         ["Red"] = ("Presiona Tab para crear una red.",
             "Red ${nombre|El nombre de la red, como oficina o servidores.} = " +
             "\"${192.168.1.0/24|La red en formato CIDR: dirección/prefijo. Un /24 tiene 256 direcciones.}\";"),

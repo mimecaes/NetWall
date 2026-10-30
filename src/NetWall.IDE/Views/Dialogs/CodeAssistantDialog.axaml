@@ -507,7 +507,7 @@
                     </StackPanel>
                     <StackPanel Classes="helpy-row">
                         <TextBlock Classes="helpy-label" Text="Valor" />
-                        <TextBox Text="{Binding VariableValue}" Watermark="80, 2.5, servidor web o 192.168.1.0/24" />
+                        <TextBox Text="{Binding VariableValue}" Watermark="80, 2.5, verdadero, servidor web o 192.168.1.0/24" />
                     </StackPanel>
                 </StackPanel>
 
