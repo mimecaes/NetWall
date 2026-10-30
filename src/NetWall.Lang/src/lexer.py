@@ -7,8 +7,9 @@ from errors import Diagnostic
 RESERVED_WORDS = {
     "regla", "accion", "protocolo", "puerto", "origen",
     "destino", "comentario", "politica_defecto", "funcion", "importar",
-    "simular", "principal", "si", "sino", "para", "hasta",
+    "simular", "principal", "si", "sino", "para",
     "permitir", "bloquear", "tcp", "udp", "rango", "cualquiera",
+    "verdadero", "falso",
     "Red", "Int", "Float", "String", "Boolean",
 }
 
@@ -17,7 +18,7 @@ SYMBOLS = {
     "{": "LBRACE", "}": "RBRACE",
     "(": "LPAREN", ")": "RPAREN",
     ",": "COMMA", ";": "SEMICOLON",
-    "=": "EQUALS", ".": "DOT",
+    "=": "EQUALS",
 }
 
 

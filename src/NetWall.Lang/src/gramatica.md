@@ -82,7 +82,7 @@ argumentos      ::= expresion { "," expresion }
 si_sino         ::= "si" "(" expresion ")" "{" { sentencia } "}"
                     [ "sino" "{" { sentencia } "}" ]
 
-para_stmt       ::= "para" "(" IDENT "=" INT "hasta" INT ")" "{" { sentencia } "}"
+para_stmt       ::= "para" "cada" IDENT "en" expresion "{" { sentencia } "}"
 ```
 
 ## Expresiones
@@ -91,8 +91,7 @@ para_stmt       ::= "para" "(" IDENT "=" INT "hasta" INT ")" "{" { sentencia } "
 
 ```
 expresion       ::= termino { operador termino }
-termino         ::= STRING | INT | FLOAT | IDENT | llamada_funcion
-                   | IDENT "." IDENT "(" [ argumentos ] ")"   (* ej. Red.contiene(ip) *)
+termino         ::= STRING | INT | FLOAT | BOOLEANO | IDENT | llamada_funcion
 operador ::= "?"
 ```
 <!-- pendiente: agregar operadores -->
@@ -103,13 +102,14 @@ operador ::= "?"
 IDENT   ::= letra { letra | digito | "_" }
 INT     ::= digito { digito }
 FLOAT   ::= digito { digito } "." digito { digito }
+BOOLEANO ::= "verdadero" | "falso"
 STRING  ::= '"' { cualquier_caracter_excepto('"') } '"'
 ```
 
 ## Terminación de construcciones
 
 - Instrucción suelta fuera de llaves → termina en `;`.
-- Bloque de control (`principal`, `funcion`, `si`/`sino`, `para`) → **no** lleva `;` después del `}`.
+- Bloque de control (`principal`, `funcion`, `si`/`sino`, `para cada`) → **no** lleva `;` después del `}`.
 - Bloque `regla { }` → **sí** lleva `;` después del `}` (es una declaración, no un bloque de control).
 - Campo dentro de `regla { }` o de un struct literal → separado por `,` (excepto el último).
 
@@ -120,4 +120,4 @@ STRING  ::= '"' { cualquier_caracter_excepto('"') } '"'
 - Un `modulo` puede importar otros módulos.
 - Las reglas de los módulos importados se colocan antes que las del archivo que los importa, en el orden de los `importar`.
 - La ruta del `importar` es relativa a la carpeta del archivo que contiene el `importar`.
-- Todos los archivos comparten los mismos nombres: una variable o regla no puede declararse en dos archivos distintos.
+- Todos los archivos comparten los mismos nombres: una variable o regla no puede declararse en dos archivos distintos, y una variable y una regla no pueden llamarse igual.

@@ -4,7 +4,7 @@ from errors import Diagnostic
 from lexer import SYMBOLS, Token
 from nodes import Declaration, Identifier, Import, Network, Packet, Port, Program, Rule
 
-TYPES = {"String", "Int", "Float", "Red"}
+TYPES = {"String", "Int", "Float", "Boolean", "Red"}
 STATEMENT_KEYWORDS = {"importar", "regla", "principal"} | TYPES
 
 TOKEN_DESCRIPTIONS = {name: f"'{symbol}'" for symbol, name in SYMBOLS.items()}
@@ -103,6 +103,8 @@ class Parser:
             return float(self._advance().value)
         if t is not None and t.type == "IDENT":
             return Identifier(self._advance().value)
+        if t is not None and t.type == "KEYWORD" and t.value in ("verdadero", "falso"):
+            return self._advance().value == "verdadero"
         self._error("se esperaba un valor")
 
     def _parseDeclaration(self) -> Declaration: 

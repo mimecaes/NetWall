@@ -53,6 +53,12 @@ def displayPath(path: Path) -> str:
         return str(path)
 
 
+def formatValue(value) -> str:
+    if isinstance(value, bool):
+        return "verdadero" if value else "falso"
+    return str(value)
+
+
 def plural(count: int, singular: str, pluralForm: str) -> str:
     return f"{count} {singular if count == 1 else pluralForm}"
 
@@ -179,7 +185,7 @@ def main() -> int:
         print()
 
     for declaration in program.declarations:
-        print(declaration.value)
+        print(formatValue(declaration.value))
 
     for rule in program.rules:
         print(rule)
