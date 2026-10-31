@@ -91,4 +91,10 @@ def analyze(program: Program) -> List[Diagnostic]:
                 message=f"la regla '{rule.name}' se cruza con '{first.name}' ({lineReference(first.file, first.line, rule.file)}){extra} con acciones opuestas: en la parte común decide '{first.name}' porque va antes",
             ))
 
+    if program.defaultPolicy is None and program.mainLine is not None:
+        diagnostics.append(Diagnostic(
+            file=program.mainFile, line=program.mainLine, type="politica_no_definida",
+            message="principal no define una política por defecto: se usará bloquear",
+        ))
+
     return diagnostics
