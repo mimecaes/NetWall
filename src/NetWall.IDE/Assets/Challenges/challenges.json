@@ -12,7 +12,7 @@
           "learn": ["Qué es una variable", "Cómo se declara", "El tipo Int"],
           "statement": "Las variables guardan datos con un nombre para usarlos después. Declara la variable puerto_web de tipo Int con el valor 80.",
           "hint": "La forma es: Tipo nombre = valor; y va antes de principal.",
-          "starter": "\n\nprincipal {\n}\n",
+          "starter": "\n\nprincipal {\n    politica_defecto = bloquear;\n}\n",
           "concepts": ["variables", "Int"],
           "lesson": {"title": "Variables", "text": "Una variable guarda un dato con un nombre. Se escribe el tipo, el nombre, = y el valor, y termina con punto y coma. Las declaraciones van antes de principal.", "example": "Int intentos = 3;"},
           "tests": [
@@ -26,7 +26,7 @@
           "learn": ["Los tipos Int, Float y String", "Leer un error de tipos", "Corregir código que ya existe"],
           "statement": "Este código tiene un error: 2.5 no es un número entero, así que no cabe en un Int. Cambia el tipo de version para que el programa compile.",
           "hint": "Los números con decimales son de tipo Float.",
-          "starter": "Int version = 2.5;\nString empresa = \"Microsoft Pérez\";\n\nprincipal {\n}\n",
+          "starter": "Int version = 2.5;\nString empresa = \"Microsoft Pérez\";\n\nprincipal {\n    politica_defecto = bloquear;\n}\n",
           "concepts": ["Float", "String", "tipos"],
           "lesson": {"title": "Tipos de datos", "text": "Int guarda números enteros, Float números con decimales y String texto entre comillas. El valor tiene que coincidir con el tipo; si no, NetWall marca un error.", "example": "Float precio = 9.5;\nString ciudad = \"Heredia\";"},
           "tests": [
@@ -40,7 +40,7 @@
           "learn": ["Qué es una red", "La notación CIDR", "Cuántas direcciones tiene un /24"],
           "statement": "Una red se escribe con su dirección y una máscara. 192.168.1.0/24 son las 256 direcciones que van de 192.168.1.0 a 192.168.1.255. Declara la red lan de tipo Red con ese valor.",
           "hint": "El valor de una Red va entre comillas: \"192.168.1.0/24\".",
-          "starter": "\n\nprincipal {\n}\n",
+          "starter": "\n\nprincipal {\n    politica_defecto = bloquear;\n}\n",
           "concepts": ["Red", "CIDR", "/24"],
           "lesson": {"title": "Redes y CIDR", "text": "Una Red se escribe como dirección/máscara. La máscara dice cuántos bits quedan fijos: /24 fija los tres primeros números, así que la red tiene 256 direcciones.", "example": "Red oficina = \"10.1.2.0/24\";"},
           "tests": [
@@ -53,7 +53,7 @@
           "learn": ["Representar un solo equipo", "La máscara /32", "Redes y equipos juntos"],
           "statement": "Una red /32 tiene una sola dirección, así que representa un equipo. Declara el servidor web con la dirección 10.0.0.5/32.",
           "hint": "Es igual que una red, pero con la máscara /32.",
-          "starter": "Red lan = \"192.168.1.0/24\";\n\n\nprincipal {\n}\n",
+          "starter": "Red lan = \"192.168.1.0/24\";\n\n\nprincipal {\n    politica_defecto = bloquear;\n}\n",
           "concepts": ["/32", "host"],
           "lesson": {"title": "Un equipo es una red /32", "text": "Con /32 los 32 bits quedan fijos, así que la red tiene una sola dirección. Así se representa un servidor, una impresora o cualquier equipo.", "example": "Red impresora = \"192.168.1.50/32\";"},
           "tests": [
@@ -75,7 +75,7 @@
           "learn": ["Qué es una regla", "Los campos accion, protocolo y puerto", "Qué pasa con lo que la regla no menciona"],
           "statement": "Las reglas deciden qué tráfico pasa por el firewall. Escribe una regla que permita el tráfico tcp al puerto 80, que es el de las páginas web.",
           "hint": "Una regla se ve así: regla nombre { accion = permitir, protocolo = tcp, puerto = 80 };",
-          "starter": "Red web = \"10.0.0.5/32\";\n\n\nprincipal {\n}\n",
+          "starter": "Red web = \"10.0.0.5/32\";\n\n\nprincipal {\n    politica_defecto = bloquear;\n}\n",
           "maxRules": 1,
           "concepts": ["regla", "accion", "puerto"],
           "lesson": {"title": "Reglas", "text": "Una regla describe qué tráfico permitir o bloquear. Sus campos van separados por comas y termina con };. Un campo que no escribes coincide con todo.", "example": "regla correo {\n    accion = permitir,\n    protocolo = tcp,\n    puerto = 25\n};"},
@@ -90,7 +90,7 @@
           "learn": ["El campo origen", "El campo destino", "Usar variables Red en una regla"],
           "statement": "Una regla también puede mirar el origen del paquete. Permite la web (tcp 80) hacia web solo cuando el paquete viene de la lan.",
           "hint": "Agrega origen = lan y destino = web a tu regla.",
-          "starter": "Red lan = \"192.168.1.0/24\";\nRed web = \"10.0.0.5/32\";\n\n\nprincipal {\n}\n",
+          "starter": "Red lan = \"192.168.1.0/24\";\nRed web = \"10.0.0.5/32\";\n\n\nprincipal {\n    politica_defecto = bloquear;\n}\n",
           "maxRules": 1,
           "concepts": ["origen", "destino"],
           "lesson": {"title": "Origen y destino", "text": "origen es de dónde viene el paquete y destino hacia dónde va. Si usas una variable Red, la regla solo coincide cuando la dirección del paquete está dentro de esa red.", "example": "regla ssh_oficina {\n    accion = permitir,\n    protocolo = tcp,\n    puerto = 22,\n    origen = oficina,\n    destino = servidor\n};"},
