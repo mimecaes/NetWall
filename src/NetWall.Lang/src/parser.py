@@ -307,7 +307,8 @@ class Parser:
                 self._synchronize()
         if self.mainLine is None and not self.isModule:
             line = self.tokens[-1].line if self.tokens else 1
-            self._report(line, "error_sintactico", "falta el bloque 'principal'")
+            self._report(line, "error_semantico", "ningún archivo del proyecto contiene un bloque 'principal'")
+        program.mainLine = self.mainLine
         return program
 
 

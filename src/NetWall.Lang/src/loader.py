@@ -52,4 +52,6 @@ class Loader:
         merged.rules += program.rules
         merged.defaultPolicy = program.defaultPolicy
         merged.simulations = program.simulations
+        merged.mainLine = program.mainLine
+        merged.mainFile = file
         return merged

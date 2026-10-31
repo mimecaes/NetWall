@@ -78,7 +78,7 @@ def tokenize(text: str, file: str = "<entrada>") -> Tuple[List[Token], List[Diag
                 j += 1
             if not closed:
                 diagnostics.append(Diagnostic(
-                    file=file, line=startLine, type="error_sintactico",
+                    file=file, line=startLine, type="error_lexico",
                     message="cadena de texto sin cerrar (falta '\"')",
                 ))
                 i = j
@@ -118,7 +118,7 @@ def tokenize(text: str, file: str = "<entrada>") -> Tuple[List[Token], List[Diag
 
         #unknown character
         diagnostics.append(Diagnostic( 
-            file=file, line=line, type="error_sintactico",
+            file=file, line=line, type="error_lexico",
             message=f"carácter no reconocido: '{c}'",
         ))
         i += 1

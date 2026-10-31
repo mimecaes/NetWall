@@ -2,21 +2,24 @@ import json
 import os
 import sys
 from pathlib import Path
+from typing import List, Tuple
 
+from errors import ERROR_TYPES, Diagnostic
 from loader import Loader
+from nodes import Program
 from semantic import check
 from analyzer import analyze
 from simulator import packetFrom, simulate, simulationData
 
 
-ERROR_TYPES = {"error_sintactico", "error_semantico"}
-
 DIAGNOSTIC_COLORS = {
+    "error_lexico": "31",
     "error_sintactico": "31",
     "error_semantico": "31",
     "advertencia_alcanzabilidad": "33",
     "contradiccion": "35",
     "redundancia": "34",
+    "politica_no_definida": "33",
     "advertencia_no_usada": "33",
 }
 
@@ -69,13 +72,12 @@ def formatDiagnostic(d, path: Path, paint: Painter) -> str:
     symbol = "✖" if isError else "▲"
     gutter = " " * len(str(d.line))
 
-    location = paint.link(path, d.line, f"{displayPath(path)}:{d.line}")
-    out = [
-        f"{paint.color(color, f'{symbol} {d.type}')}: {d.message}",
-        f"{gutter} {paint.color(DIM, '┌─')} {paint.color(LOCATION, location)}",
-    ]
-    if d.relatedRule:
-        out.append(f"{gutter} {paint.color(DIM, '=')} relacionado con la regla '{d.relatedRule}'")
+    out = [f"{paint.color(color, f'{symbol} {d.type}')}: {d.message}"]
+    if d.line:
+        location = paint.link(path, d.line, f"{displayPath(path)}:{d.line}")
+        out.append(f"{gutter} {paint.color(DIM, '┌─')} {paint.color(LOCATION, location)}")
+    if d.cause:
+        out.append(f"{gutter} {paint.color(DIM, '=')} posible causa: {d.cause}")
     return "\n".join(out)
 
 
@@ -90,11 +92,26 @@ def formatSummary(errors: int, warnings: int, paint: Painter) -> str:
     return paint.color(SUCCESS, "✔ compilado sin errores")
 
 
-def printSimulation(path: Path, custom: bool) -> int:
+def compileProgram(path: Path) -> Tuple[Loader, Program, List[Diagnostic], int]:
     loader = Loader()
+    if not path.is_file():
+        message = f"no se encontró el archivo principal '{displayPath(path)}'"
+        diagnostic = Diagnostic(file=str(path), line=0, type="error_semantico", message=message)
+        return loader, Program(), [diagnostic], 1
+
     program = loader.load(path)
     diagnostics = loader.diagnostics + check(program, loader.files)
-    if any(d.type in ERROR_TYPES for d in diagnostics):
+    errors = sum(1 for d in diagnostics if d.type in ERROR_TYPES)
+    if errors:
+        diagnostics = [d for d in diagnostics if d.type in ERROR_TYPES]
+    else:
+        diagnostics += analyze(program)
+    return loader, program, diagnostics, errors
+
+
+def printSimulation(path: Path, custom: bool) -> int:
+    _, program, _, errors = compileProgram(path)
+    if errors:
         print(json.dumps({"errors": True}))
         return 1
 
@@ -117,17 +134,12 @@ def challengeValue(value) -> object:
 
 
 def printChallenge(path: Path) -> int:
-    loader = Loader()
-    program = loader.load(path)
-    diagnostics = loader.diagnostics + check(program, loader.files)
-    errors = any(d.type in ERROR_TYPES for d in diagnostics)
-    if not errors:
-        diagnostics += analyze(program)
+    _, program, diagnostics, errors = compileProgram(path)
 
     result = {
-        "errors": errors,
+        "errors": errors > 0,
         "diagnostics": [
-            {"type": d.type, "line": d.line, "message": d.message, "file": Path(d.file).name}
+            {"type": d.type, "line": d.line, "message": d.message, "cause": d.cause, "file": Path(d.file).name}
             for d in diagnostics
         ],
     }
@@ -168,14 +180,7 @@ def main() -> int:
         os.system("")
 
     path = Path(sys.argv[1]).resolve()
-    loader = Loader()
-    program = loader.load(path)
-    semanticDiagnostics = check(program, loader.files)
-
-    diagnostics = loader.diagnostics + semanticDiagnostics
-    errors = sum(1 for d in diagnostics if d.type in ERROR_TYPES)
-    if not errors:
-        diagnostics += analyze(program)
+    loader, program, diagnostics, errors = compileProgram(path)
     warnings = len(diagnostics) - errors
 
     order = {file: index for index, file in enumerate(loader.files)}

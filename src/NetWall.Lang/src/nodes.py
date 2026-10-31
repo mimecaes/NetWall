@@ -99,3 +99,5 @@ class Program:
     imports: List[Import] = field(default_factory=list)
     defaultPolicy: Optional[str] = None
     simulations: List[Packet] = field(default_factory=list)
+    mainLine: Optional[int] = None
+    mainFile: str = ""
