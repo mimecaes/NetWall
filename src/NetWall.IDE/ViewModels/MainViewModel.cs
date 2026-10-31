@@ -1039,7 +1039,7 @@ public partial class MainViewModel : ViewModelBase
                 return;
             }
 
-            command = $"python \"{cliPath}\" \"{SelectedTab.FilePath}\"";
+            command = $"python \"{cliPath}\" ejecutar \"{SelectedTab.FilePath}\"";
         }
         else
         {

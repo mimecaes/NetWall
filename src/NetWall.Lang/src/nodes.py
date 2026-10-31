@@ -40,7 +40,11 @@ class Rule:
     file: str = ""
 
     def __str__(self) -> str:
-        text = f"{self.name}: {self.action} {self.protocol} {self.port} de {self.source} a {self.destination}"
+        protocol, port, source, destination = (
+            "cualquiera" if value is None else value
+            for value in (self.protocol, self.port, self.source, self.destination)
+        )
+        text = f"{self.name}: {self.action} {protocol} {port} de {source} a {destination}"
         if self.comment is not None:
             text += f' "{self.comment}"'
         return text

@@ -9,8 +9,11 @@ from loader import Loader
 from nodes import Program
 from semantic import check
 from analyzer import analyze
-from simulator import packetFrom, simulate, simulationData
+from simulator import DEFAULT_POLICY, packetFrom, simulate, simulationData
 
+
+MODES = ("compilar", "ejecutar")
+USAGE = "uso: python cli.py compilar|ejecutar <archivo.nw>"
 
 DIAGNOSTIC_COLORS = {
     "error_lexico": "31",
@@ -54,12 +57,6 @@ def displayPath(path: Path) -> str:
         return os.path.relpath(path)
     except ValueError: 
         return str(path)
-
-
-def formatValue(value) -> str:
-    if isinstance(value, bool):
-        return "verdadero" if value else "falso"
-    return str(value)
 
 
 def plural(count: int, singular: str, pluralForm: str) -> str:
@@ -160,52 +157,57 @@ def printChallenge(path: Path) -> int:
     return 1 if errors else 0
 
 
-def main() -> int:
-    sys.stdout.reconfigure(encoding="utf-8")
-
-    if len(sys.argv) < 2:
-        print("uso: python cli.py <archivo.nw>")
-        return 2
-
-    if "--retos" in sys.argv[2:]:
-        sys.stdin.reconfigure(encoding="utf-8")
-        return printChallenge(Path(sys.argv[1]).resolve())
-
-    if "--simulacion" in sys.argv[2:] or "--simulacion-personalizada" in sys.argv[2:]:
-        sys.stdin.reconfigure(encoding="utf-8")
-        return printSimulation(Path(sys.argv[1]).resolve(), "--simulacion-personalizada" in sys.argv[2:])
-
+def printProgram(path: Path, execute: bool) -> int:
     paint = Painter(useColor())
     if paint.enabled and os.name == "nt" and sys.stdout.isatty():
         os.system("")
 
-    path = Path(sys.argv[1]).resolve()
     loader, program, diagnostics, errors = compileProgram(path)
     warnings = len(diagnostics) - errors
 
     order = {file: index for index, file in enumerate(loader.files)}
     diagnostics.sort(key=lambda d: (order.get(d.file, 0), d.line))
-    for d in diagnostics:
-        print(formatDiagnostic(d, Path(d.file), paint))
-        print()
+    lines = ["\n\n".join(formatDiagnostic(d, Path(d.file), paint) for d in diagnostics)] if diagnostics else []
 
-    for declaration in program.declarations:
-        print(formatValue(declaration.value))
+    # with errors there is no list of rules and principal block doesn't run
+    if not errors:
+        if program.rules:
+            lines.append("reglas (orden final):")
+            lines += [f"  {rule}" for rule in program.rules]
+        if execute:
+            if program.defaultPolicy is not None:
+                lines.append(f"política por defecto: {program.defaultPolicy}")
+            else:
+                lines.append(f"política por defecto: {DEFAULT_POLICY} (no definida)")
+            if program.simulations:
+                lines.append("")
+                lines += simulate(program)
 
-    for rule in program.rules:
-        print(rule)
-
-    if program.defaultPolicy is not None:
-        print(f"política por defecto: {program.defaultPolicy}")
-
-    if not errors and program.simulations:
-        print()
-        for result in simulate(program):
-            print(result)
-    if program.declarations or program.rules or program.defaultPolicy is not None:
+    if lines:
+        print("\n".join(lines))
         print()
     print(formatSummary(errors, warnings, paint))
     return 1 if errors else 0
+
+
+def main() -> int:
+    sys.stdout.reconfigure(encoding="utf-8")
+    args = sys.argv[1:]
+
+    if len(args) == 2 and args[0] in MODES:
+        return printProgram(Path(args[1]).resolve(), args[0] == "ejecutar")
+
+    if len(args) >= 2 and args[0] not in MODES:
+        flags = args[1:]
+        if "--retos" in flags:
+            sys.stdin.reconfigure(encoding="utf-8")
+            return printChallenge(Path(args[0]).resolve())
+        if "--simulacion" in flags or "--simulacion-personalizada" in flags:
+            sys.stdin.reconfigure(encoding="utf-8")
+            return printSimulation(Path(args[0]).resolve(), "--simulacion-personalizada" in flags)
+
+    print(USAGE)
+    return 2
 
 
 if __name__ == "__main__":
