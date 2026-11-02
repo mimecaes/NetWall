@@ -9,16 +9,24 @@ RESERVED_WORDS = {
     "destino", "comentario", "politica_defecto", "funcion", "importar",
     "simular", "principal", "si", "sino", "para",
     "permitir", "bloquear", "tcp", "udp", "rango", "cualquiera",
-    "verdadero", "falso",
-    "Red", "Int", "Float", "String", "Boolean",
+    "verdadero", "falso", "y", "o", "no",
+    "Red", "Int", "Float", "String", "Boolean", "Lista",
 }
 
 
 SYMBOLS = {
     "{": "LBRACE", "}": "RBRACE",
     "(": "LPAREN", ")": "RPAREN",
+    "[": "LBRACKET", "]": "RBRACKET",
     ",": "COMMA", ";": "SEMICOLON",
     "=": "EQUALS",
+    "<": "LESS", ">": "GREATER", "!": "NOT",
+}
+
+OPERATORS = {
+    "==": "EQUAL_EQUAL", "!=": "NOT_EQUAL",
+    "<=": "LESS_EQUAL", ">=": "GREATER_EQUAL",
+    "&&": "AND", "||": "OR",
 }
 
 
@@ -109,6 +117,11 @@ def tokenize(text: str, file: str = "<entrada>") -> Tuple[List[Token], List[Diag
                 tokens.append(Token("KEYWORD", word, line))
             else:
                 tokens.append(Token("IDENT", word, line))
+            continue
+
+        if text[i:i + 2] in OPERATORS:
+            tokens.append(Token(OPERATORS[text[i:i + 2]], text[i:i + 2], line))
+            i += 2
             continue
 
         if c in SYMBOLS:
