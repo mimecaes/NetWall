@@ -296,11 +296,17 @@ class Parser:
     def parseProgram(self) -> Program:
         program = Program()
         misplacedReported = False
+        seenStatement = False
         while self._current() is not None:
             self.statementStart = self.pos
             if self.mainLine is not None and not misplacedReported:
                 self._report(self._current().line, "error_sintactico", "el bloque 'principal' debe ser lo último del programa")
                 misplacedReported = True
+            
+            if not self._check("KEYWORD", "importar"):
+                seenStatement = True
+            elif seenStatement:
+                self._report(self._current().line, "error_sintactico", "'importar' debe ir al inicio del archivo")
             try:
                 self._parseStatement(program)
             except _ParseError:
