@@ -6,9 +6,9 @@ literales entre comillas.
 ## Estructura general
 
 ```
-programa        ::= { importacion | declaracion | funcion_decl | regla_decl } bloque_principal
+programa        ::= { importacion } { declaracion | funcion_decl | regla_decl } bloque_principal
 
-modulo          ::= { importacion | declaracion | funcion_decl | regla_decl }
+modulo          ::= { importacion } { declaracion | funcion_decl | regla_decl }
 
 importacion     ::= "importar" STRING ";"
 
@@ -118,6 +118,7 @@ STRING  ::= '"' { cualquier_caracter_excepto('"') } '"'
 - El archivo que se compila es un `programa` y debe terminar con `bloque_principal`.
 - Un archivo importado con `importar` es un `modulo`: no lleva `bloque_principal`.
 - Un `modulo` puede importar otros módulos.
+- Todos los `importar` van al inicio del archivo, antes de cualquier otra instrucción; solo pueden estar precedidos por comentarios. Si no, se reporta `'importar' debe ir al inicio del archivo`.
 - Las reglas de los módulos importados se colocan antes que las del archivo que los importa, en el orden de los `importar`.
 - La ruta del `importar` es relativa a la carpeta del archivo que contiene el `importar`.
 - Todos los archivos comparten los mismos nombres: una variable o regla no puede declararse en dos archivos distintos, y una variable y una regla no pueden llamarse igual.
