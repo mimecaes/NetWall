@@ -45,12 +45,14 @@ class Loader:
             module = self.load(target, isModule=True)
             merged.declarations += module.declarations
             merged.rules += module.rules
+            merged.functions += module.functions
             merged.statements += module.statements
 
         self.loading.pop()
         self.files.append(file)
         merged.declarations += program.declarations
         merged.rules += program.rules
+        merged.functions += program.functions
         merged.statements += program.statements
         merged.defaultPolicy = program.defaultPolicy
         merged.simulations = program.simulations

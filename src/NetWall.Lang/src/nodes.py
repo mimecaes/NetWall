@@ -128,11 +128,19 @@ class Import:
 
 
 @dataclass
+class Parameter:
+    name: str
+    dataType: str
+    line: int
+
+
+@dataclass
 class FunctionDef:
     name: str
-    parameters: List[str]
+    parameters: List[Parameter]
     body: list
     line: int
+    file: str = ""
 
 
 @dataclass
