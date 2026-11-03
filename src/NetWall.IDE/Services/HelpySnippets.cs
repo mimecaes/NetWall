@@ -46,6 +46,11 @@ public static partial class HelpySnippets
         ["Lista"] = ("Presiona Tab para crear una lista.",
             "Lista ${nombre|El nombre de la lista, como puertos_web o redes_internas.} = " +
             "[${22, 80|Los valores separados por coma, todos del mismo tipo: solo números o solo redes.}];"),
+        ["funcion"] = ("Presiona Tab para crear una plantilla de reglas.",
+            "funcion ${nombre|El nombre de la plantilla, como permitir_tcp.}(" +
+            "${Int p|Los parámetros: Tipo nombre, separados por coma. Puede quedar vacío.}) {\n" +
+            "    ${// reglas|Escribe aquí las reglas, llamadas y mostrar que genera. Úsala con nombre(valores);}\n" +
+            "}"),
         ["mostrar"] = ("Presiona Tab para imprimir un mensaje.",
             "mostrar(\"${mensaje|Lo que quieres ver en la salida. Agrega más valores separados por coma, como tamano(red_oficina).}\");"),
         ["Red"] = ("Presiona Tab para crear una red.",
