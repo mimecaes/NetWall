@@ -6,9 +6,9 @@ literales entre comillas.
 ## Estructura general
 
 ```
-programa        ::= { importacion } { declaracion | funcion_decl | regla_decl } bloque_principal
+programa        ::= { importacion } { declaracion | funcion_decl | regla_decl | mostrar_stmt } bloque_principal
 
-modulo          ::= { importacion } { declaracion | funcion_decl | regla_decl }
+modulo          ::= { importacion } { declaracion | funcion_decl | regla_decl | mostrar_stmt }
 
 importacion     ::= "importar" STRING ";"
 
@@ -50,6 +50,7 @@ bloque_principal ::= "principal" "{" { sentencia_principal } "}"
 
 sentencia_principal ::= politica_stmt
                        | simular_stmt
+                       | mostrar_stmt
 
 politica_stmt   ::= "politica_defecto" "=" accion_valor ";"
 
@@ -73,6 +74,29 @@ llamada_funcion ::= IDENT "(" [ argumentos ] ")"
 argumentos      ::= expresion { "," expresion }
 ```
 
+## Funciones predefinidas y mostrar
+
+```
+mostrar_stmt    ::= "mostrar" "(" [ argumentos ] ")" ";"
+```
+
+- `mostrar` y las funciones predefinidas son nombres (`IDENT`), no palabras reservadas, pero no pueden usarse como nombre de una variable, una regla ni una función: `'{f}' es una función predefinida y no puede redefinirse`.
+- `mostrar` a nivel superior se imprime al compilar, con el prefijo `[compilación]`. Dentro de `principal` se imprime al ejecutar, en orden junto a los `simular`.
+- `mostrar` no devuelve un valor: no puede usarse dentro de una expresión.
+- Las demás funciones devuelven un valor y se usan dentro de una expresión. Escritas solas como instrucción dan `el resultado de '{f}' no se usa`.
+
+| Función | Parámetros | Devuelve |
+|---|---|---|
+| `tamano(r)` | Red | Int |
+| `contiene(r, x)` | Red, y Red o String | Boolean |
+| `interseccion(a, b)` | Red, Red | Boolean |
+| `mascara(r)` | Red | String |
+| `direccion_red(r)` | Red | String |
+| `broadcast(r)` | Red | String |
+| `binario(ip)` | String | String |
+
+Donde se espera una Red se acepta una variable `Red`, una red escrita entre comillas o `cualquiera`. Todo texto que recibe una de estas funciones debe ser una dirección o una red válida.
+
 ## Control de flujo
 
 <!-- falta agregar el resto -->
@@ -93,7 +117,7 @@ expresion       ::= expr_y { ( "o" | "||" ) expr_y }
 expr_y          ::= expr_rel { ( "y" | "&&" ) expr_rel }
 expr_rel        ::= expr_no { operador_rel expr_no }
 expr_no         ::= ( "no" | "!" ) expr_no | primario
-primario        ::= STRING | INT | FLOAT | BOOLEANO | IDENT | llamada_funcion
+primario        ::= STRING | INT | FLOAT | BOOLEANO | "cualquiera" | IDENT | llamada_funcion
                    | "(" expresion ")" | lista
 lista           ::= "[" [ expresion { "," expresion } ] "]"
 operador_rel    ::= "==" | "!=" | "<" | ">" | "<=" | ">="
@@ -104,7 +128,8 @@ operador_rel    ::= "==" | "!=" | "<" | ">" | "<=" | ">="
 - `<`, `>`, `<=`, `>=`: solo Int y Float.
 - `y`, `o`, `no` (y `&&`, `||`, `!`): solo Boolean. `y` y `o` se evalúan en cortocircuito.
 - Una `lista` tiene todos sus elementos del mismo tipo (Int y Float no se mezclan) y puede estar vacía. No puede usarse en un campo de regla.
-- Una cadena se convierte en red solo cuando se asigna directamente a una variable `Red`.
+- Una cadena se convierte en red solo cuando se asigna directamente a una variable `Red` o se pasa a una función predefinida que espera una Red.
+- `cualquiera` es un valor de tipo Red (0.0.0.0/0).
 
 ## Léxico (tokens)
 

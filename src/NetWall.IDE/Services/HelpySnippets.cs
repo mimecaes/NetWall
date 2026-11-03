@@ -46,6 +46,8 @@ public static partial class HelpySnippets
         ["Lista"] = ("Presiona Tab para crear una lista.",
             "Lista ${nombre|El nombre de la lista, como puertos_web o redes_internas.} = " +
             "[${22, 80|Los valores separados por coma, todos del mismo tipo: solo números o solo redes.}];"),
+        ["mostrar"] = ("Presiona Tab para imprimir un mensaje.",
+            "mostrar(\"${mensaje|Lo que quieres ver en la salida. Agrega más valores separados por coma, como tamano(red_oficina).}\");"),
         ["Red"] = ("Presiona Tab para crear una red.",
             "Red ${nombre|El nombre de la red, como oficina o servidores.} = " +
             "\"${192.168.1.0/24|La red en formato CIDR: dirección/prefijo. Un /24 tiene 256 direcciones.}\";"),

@@ -56,11 +56,16 @@ public static class NetWallSyntaxScanner
         ["rango"] = SyntaxToken.Function,
     };
 
+    private static readonly HashSet<string> PredefinedFunctions =
+        ["mostrar", "tamano", "contiene", "interseccion", "mascara", "direccion_red", "broadcast", "binario"];
+
     private const string Punctuation = "{}()[],;";
     private const string SingleOperators = "=<>!";
     private static readonly HashSet<string> DoubleOperators = ["==", "!=", "<=", ">=", "&&", "||"];
 
     public static bool IsReserved(string word) => ReservedWords.ContainsKey(word);
+
+    public static bool IsPredefined(string word) => PredefinedFunctions.Contains(word);
 
     public static List<SyntaxSpan> ScanLine(string text)
     {
@@ -133,7 +138,7 @@ public static class NetWallSyntaxScanner
                 var word = text[start..i];
                 if (!ReservedWords.TryGetValue(word, out var token))
                 {
-                    token = previousWord == "funcion" || NextNonSpace(text, i) == '('
+                    token = previousWord == "funcion" || IsPredefined(word) || NextNonSpace(text, i) == '('
                         ? SyntaxToken.Function
                         : SyntaxToken.Identifier;
                 }

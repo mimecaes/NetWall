@@ -579,6 +579,10 @@ public partial class CodeAssistantViewModel : ViewModelBase
         {
             errors.Add($"'{name}' es una palabra reservada");
         }
+        else if (NetWallSyntaxScanner.IsPredefined(name))
+        {
+            errors.Add($"'{name}' es una función predefinida");
+        }
     }
 
     private static void AddAddressError(List<string> errors, string text, string fieldName, bool allowAny = true)
@@ -638,7 +642,8 @@ public partial class CodeAssistantViewModel : ViewModelBase
     private static bool IsIdentifier(string text) =>
         text.Length > 0 && char.IsLetter(text[0]) && text.All(c => char.IsLetterOrDigit(c) || c == '_');
 
-    private static bool IsVariable(string text) => IsIdentifier(text) && !NetWallSyntaxScanner.IsReserved(text);
+    private static bool IsVariable(string text) =>
+        IsIdentifier(text) && !NetWallSyntaxScanner.IsReserved(text) && !NetWallSyntaxScanner.IsPredefined(text);
 
     private static bool IsHost(string text) => IsNetwork(text) && (!text.Contains('/') || text.EndsWith("/32"));
 
