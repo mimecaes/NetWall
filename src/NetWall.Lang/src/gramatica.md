@@ -14,7 +14,7 @@ importacion     ::= "importar" STRING ";"
 
 declaracion     ::= tipo IDENT "=" expresion ";"
 
-tipo            ::= "Red" | "Int" | "Float" | "String" | "Boolean"
+tipo            ::= "Red" | "Int" | "Float" | "String" | "Boolean" | "Lista"
 ```
 
 ## Reglas de firewall
@@ -32,7 +32,7 @@ campo           ::= "accion" "=" accion_valor
 
 accion_valor    ::= "permitir" | "bloquear"
 protocolo_valor ::= "tcp" | "udp"
-puerto_valor    ::= INT | "rango" "(" INT "," INT ")"
+puerto_valor    ::= INT | IDENT | "rango" "(" INT "," INT ")"
 valor           ::= STRING | IDENT | "cualquiera"
 ```
 
@@ -50,7 +50,6 @@ bloque_principal ::= "principal" "{" { sentencia_principal } "}"
 
 sentencia_principal ::= politica_stmt
                        | simular_stmt
-                       | sentencia
 
 politica_stmt   ::= "politica_defecto" "=" accion_valor ";"
 
@@ -87,14 +86,25 @@ para_stmt       ::= "para" "cada" IDENT "en" expresion "{" { sentencia } "}"
 
 ## Expresiones
 
-<!-- pendiente: agregar el resto -->
+Precedencia de mayor a menor: `no` / `!`, relacionales, `y` / `&&`, `o` / `||`. Los operadores del mismo nivel se agrupan de izquierda a derecha.
 
 ```
-expresion       ::= termino { operador termino }
-termino         ::= STRING | INT | FLOAT | BOOLEANO | IDENT | llamada_funcion
-operador ::= "?"
+expresion       ::= expr_y { ( "o" | "||" ) expr_y }
+expr_y          ::= expr_rel { ( "y" | "&&" ) expr_rel }
+expr_rel        ::= expr_no { operador_rel expr_no }
+expr_no         ::= ( "no" | "!" ) expr_no | primario
+primario        ::= STRING | INT | FLOAT | BOOLEANO | IDENT | llamada_funcion
+                   | "(" expresion ")" | lista
+lista           ::= "[" [ expresion { "," expresion } ] "]"
+operador_rel    ::= "==" | "!=" | "<" | ">" | "<=" | ">="
 ```
-<!-- pendiente: agregar operadores -->
+
+- Todas las operaciones devuelven Boolean.
+- `==` y `!=`: Int y Float entre sí, o dos operandos del mismo tipo String, Boolean o Red. Dos Red son iguales si tienen la misma dirección de red y el mismo prefijo.
+- `<`, `>`, `<=`, `>=`: solo Int y Float.
+- `y`, `o`, `no` (y `&&`, `||`, `!`): solo Boolean. `y` y `o` se evalúan en cortocircuito.
+- Una `lista` tiene todos sus elementos del mismo tipo (Int y Float no se mezclan) y puede estar vacía. No puede usarse en un campo de regla.
+- Una cadena se convierte en red solo cuando se asigna directamente a una variable `Red`.
 
 ## Léxico (tokens)
 
@@ -105,6 +115,8 @@ FLOAT   ::= digito { digito } "." digito { digito }
 BOOLEANO ::= "verdadero" | "falso"
 STRING  ::= '"' { cualquier_caracter_excepto('"') } '"'
 ```
+
+Símbolos: `{ } ( ) [ ] , ; =` y los operadores `== != < > <= >= && || !`. Un `&` o un `|` solos no son válidos.
 
 ## Terminación de construcciones
 

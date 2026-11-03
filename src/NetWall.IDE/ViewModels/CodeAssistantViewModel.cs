@@ -38,7 +38,7 @@ public partial class CodeAssistantViewModel : ViewModelBase
 
     public static IReadOnlyList<string> PacketProtocols { get; } = ["tcp", "udp"];
 
-    public static IReadOnlyList<string> Types { get; } = ["Int", "Float", "String", "Boolean", "Red"];
+    public static IReadOnlyList<string> Types { get; } = ["Int", "Float", "String", "Boolean", "Red", "Lista"];
 
     public static IReadOnlyList<string> Policies { get; } = ["bloquear", "permitir", NoPolicy];
 
@@ -287,9 +287,9 @@ public partial class CodeAssistantViewModel : ViewModelBase
     {
         AddNameError(errors, RuleName);
 
-        if (HasSinglePort && ParsePort(Port) is null)
+        if (HasSinglePort && FormatPort(Port) is null)
         {
-            errors.Add("el puerto debe ser un número entre 0 y 65535");
+            errors.Add("el puerto debe ser un número entre 0 y 65535 o una variable Int");
         }
 
         if (HasPortRange)
@@ -343,14 +343,17 @@ public partial class CodeAssistantViewModel : ViewModelBase
             case "Red":
                 AddAddressError(errors, value, "valor", allowAny: false);
                 break;
+            case "Lista" when !(value.StartsWith('[') && value.EndsWith(']')) && !IsVariable(value):
+                errors.Add("el valor de una Lista va entre corchetes, como [22, 80]");
+                break;
         }
     }
 
     private void ValidatePacket(List<string> errors)
     {
-        if (ParsePort(PacketPort) is null)
+        if (FormatPort(PacketPort) is null)
         {
-            errors.Add("el puerto debe ser un número entre 0 y 65535");
+            errors.Add("el puerto debe ser un número entre 0 y 65535 o una variable Int");
         }
 
         AddHostError(errors, PacketSource, "origen");
@@ -509,7 +512,7 @@ public partial class CodeAssistantViewModel : ViewModelBase
 
         if (HasSinglePort)
         {
-            fields.Add($"puerto = {ParsePort(Port)}");
+            fields.Add($"puerto = {FormatPort(Port)}");
         }
         else if (HasPortRange)
         {
@@ -551,7 +554,7 @@ public partial class CodeAssistantViewModel : ViewModelBase
         var fields = new List<string>
         {
             $"protocolo = {PacketProtocol}",
-            $"puerto = {ParsePort(PacketPort)}",
+            $"puerto = {FormatPort(PacketPort)}",
             $"origen = {FormatAddress(PacketSource)}",
             $"destino = {FormatAddress(PacketDestination)}",
         };
@@ -619,6 +622,10 @@ public partial class CodeAssistantViewModel : ViewModelBase
 
     private static int? ParsePort(string text) =>
         int.TryParse(text.Trim(), out var port) && port is >= 0 and <= 65535 ? port : null;
+
+    // There is just a single port, a number or the name of an Int variable.
+    private static string? FormatPort(string text) =>
+        ParsePort(text)?.ToString() ?? (IsVariable(text.Trim()) ? text.Trim() : null);
 
     private static bool IsInt(string text) => text.Length > 0 && text.All(char.IsDigit);
 

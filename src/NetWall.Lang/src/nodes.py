@@ -15,7 +15,7 @@ class Network:
 @dataclass
 class Port:
     type: str  # if between value or range
-    value: Optional[int] = None
+    value: Optional[Union[int, "Identifier"]] = None  # an Identifier until the semantic check resolves it
     fromValue: Optional[int] = None
     toValue: Optional[int] = None
     line: int = 0
@@ -56,6 +56,41 @@ class Identifier:
 
     def __str__(self) -> str:
         return self.name
+
+
+@dataclass
+class BinaryOp:
+    operator: str  # as written: 'y' or '&&', 'o' or '||', '==', '<', ...
+    left: object
+    right: object
+
+
+@dataclass
+class UnaryOp:
+    operator: str  # 'no' or '!'
+    operand: object
+
+
+@dataclass
+class ListLiteral:
+    elements: list
+
+
+def formatValue(value) -> str:
+    if isinstance(value, bool):
+        return "verdadero" if value else "falso"
+    if isinstance(value, str):
+        return f'"{value}"'
+    return str(value)
+
+
+@dataclass
+class ListValue:
+    elements: list
+    elementType: Optional[str]  # None for an empty list
+
+    def __str__(self) -> str:
+        return "[" + ", ".join(formatValue(element) for element in self.elements) + "]"
 
 
 @dataclass

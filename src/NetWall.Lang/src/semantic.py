@@ -2,14 +2,25 @@ import ipaddress
 from typing import Dict, List, Optional, Set, Tuple, Union
 
 from errors import Diagnostic, lineReference
-from nodes import Declaration, Identifier, Network, Port, Program, Rule
+from nodes import BinaryOp, Declaration, Identifier, ListLiteral, ListValue, Network, Port, Program, Rule, UnaryOp
 
 
 VALUE_TYPES = {str: "String", int: "Int", float: "Float", bool: "Boolean"}
 PACKET_FIELDS = ("protocolo", "puerto", "origen", "destino")
+NUMERIC_TYPES = {"Int", "Float"}
+EQUALITY_TYPES = {"String", "Boolean", "Red"}
+LOGICAL_OPERATORS = {"y", "&&", "o", "||"}
+EQUALITY_OPERATORS = {"==", "!="}
 
 
-def isCompatible(dataType: str, valueType: str) -> bool: #float can be assigned to int but not vice versa
+class ExpressionError(Exception):
+    # message is None when the expression uses a declaration that already has an error, so it doesn't report it again
+    def __init__(self, message: Optional[str] = None):
+        super().__init__(message)
+        self.message = message
+
+
+def isCompatible(dataType: str, valueType: str) -> bool: #int can be assigned to float but not vice versa
     return dataType == valueType or (dataType == "Float" and valueType == "Int")
 
 
@@ -21,29 +32,123 @@ def parseNetwork(cidr: str) -> Optional[Network]:
     return Network(cidr=cidr, baseInt=int(network.network_address), mask=network.prefixlen)
 
 
-def checkDeclaration(declaration: Declaration, symbols: Dict[str, Declaration]) -> Optional[str]:
+def lookup(name: str, symbols: Dict[str, Declaration], invalid: Set[str]) -> Declaration:
+    referenced = symbols.get(name)
+    if referenced is None:
+        raise ExpressionError(f"'{name}' no está declarada")
+    if name in invalid:
+        raise ExpressionError()
+    return referenced
+
+
+def typeOf(expression, symbols: Dict[str, Declaration], invalid: Set[str]) -> str:
+    
+    if isinstance(expression, (bool, str, int, float)):
+        return VALUE_TYPES[type(expression)]
+    if isinstance(expression, Identifier):
+        return lookup(expression.name, symbols, invalid).dataType
+    if isinstance(expression, ListLiteral):
+        types = [typeOf(element, symbols, invalid) for element in expression.elements]
+        if len(set(types)) > 1:
+            raise ExpressionError("los elementos de una lista deben ser del mismo tipo")
+        return "Lista"
+    if isinstance(expression, UnaryOp):
+        operandType = typeOf(expression.operand, symbols, invalid)
+        if operandType != "Boolean":
+            raise ExpressionError(f"el operador '{expression.operator}' no se puede aplicar a {operandType}")
+        return "Boolean"
+
+    left = typeOf(expression.left, symbols, invalid)
+    right = typeOf(expression.right, symbols, invalid)
+    operator = expression.operator
+    if operator in LOGICAL_OPERATORS:
+        valid = left == right == "Boolean"
+    elif operator in EQUALITY_OPERATORS:
+        valid = {left, right} <= NUMERIC_TYPES or (left == right and left in EQUALITY_TYPES)
+    else:
+        valid = {left, right} <= NUMERIC_TYPES
+    if not valid:
+        raise ExpressionError(f"el operador '{operator}' no se puede aplicar a {left} y {right}")
+    return "Boolean"
+
+
+def sameValue(left, right) -> bool:
+    # two networks are equal if they have the same network address and prefix
+    if isinstance(left, Network) and isinstance(right, Network):
+        return (left.baseInt, left.mask) == (right.baseInt, right.mask)
+    return left == right
+
+
+def evaluate(expression, symbols: Dict[str, Declaration], invalid: Set[str]):
+    if isinstance(expression, Identifier):
+        return symbols[expression.name].value
+    if isinstance(expression, ListLiteral):
+        elements = [evaluate(element, symbols, invalid) for element in expression.elements]
+        elementType = typeOf(expression.elements[0], symbols, invalid) if elements else None
+        return ListValue(elements, elementType)
+    if isinstance(expression, UnaryOp):
+        return not evaluate(expression.operand, symbols, invalid)
+    if not isinstance(expression, BinaryOp):
+        return expression
+
+    operator = expression.operator
+    left = evaluate(expression.left, symbols, invalid)
+    # the right operand is evaluated only if the left one doesn't decide
+    if operator in ("y", "&&"):
+        return left and evaluate(expression.right, symbols, invalid)
+    if operator in ("o", "||"):
+        return left or evaluate(expression.right, symbols, invalid)
+    right = evaluate(expression.right, symbols, invalid)
+    if operator == "==":
+        return sameValue(left, right)
+    if operator == "!=":
+        return not sameValue(left, right)
+    if operator == "<":
+        return left < right
+    if operator == ">":
+        return left > right
+    if operator == "<=":
+        return left <= right
+    return left >= right
+
+
+def checkDeclaration(declaration: Declaration, symbols: Dict[str, Declaration], invalid: Set[str]):
     value = declaration.value
 
-    if isinstance(value, Identifier):
-        referenced = symbols.get(value.name)
-        if referenced is None:
-            return f"'{value.name}' no está declarada"
-        declaration.value = referenced.value
-        valueType = referenced.dataType
-    elif declaration.dataType == "Red" and isinstance(value, str):
+    if declaration.dataType == "Red" and isinstance(value, str):
         network = parseNetwork(value)
         if network is None:
-            return f"'{value}' no es una red válida"
+            raise ExpressionError(f"'{value}' no es una red válida")
         declaration.value = network
-        return None
-    else:
-        valueType = VALUE_TYPES[type(value)]
+        return
 
+    valueType = typeOf(value, symbols, invalid)
     if not isCompatible(declaration.dataType, valueType):
-        return f"no se puede asignar un valor {valueType} a '{declaration.name}' de tipo {declaration.dataType}"
+        raise ExpressionError(f"no se puede asignar un valor {valueType} a '{declaration.name}' de tipo {declaration.dataType}")
+    declaration.value = evaluate(value, symbols, invalid)
     if declaration.dataType == "Float" and type(declaration.value) is int:
         declaration.value = float(declaration.value)
-    return None
+
+
+def declaredBefore(name: str, symbols: Dict[str, Declaration], order: Dict[str, int], file: str, line: int) -> Optional[Declaration]:
+    referenced = symbols.get(name)
+    if referenced is None or (order.get(referenced.file, 0), referenced.line) > (order.get(file, 0), line):
+        return None
+    return referenced
+
+
+def resolvePort(port: Port, symbols: Dict[str, Declaration], invalid: Set[str], order: Dict[str, int], file: str) -> Optional[str]:
+    if isinstance(port.value, Identifier):
+        name = port.value.name
+        referenced = declaredBefore(name, symbols, order, file, port.line)
+        if referenced is None:
+            return f"'{name}' no está declarada"
+        if referenced.dataType != "Int":
+            return f"'{name}' es de tipo {referenced.dataType}, se esperaba Int"
+        if name in invalid:
+            return None  # the declaration already has an error
+        port.value = referenced.value
+    return checkPort(port)
 
 
 def checkPort(port: Port) -> Optional[str]:
@@ -58,8 +163,8 @@ def checkPort(port: Port) -> Optional[str]:
 
 def checkAddress(value, symbols: Dict[str, Declaration], order: Dict[str, int], file: str, line: int) -> Tuple[object, Optional[str]]:
     if isinstance(value, Identifier):
-        referenced = symbols.get(value.name)
-        if referenced is None or (order.get(referenced.file, 0), referenced.line) > (order.get(file, 0), line):
+        referenced = declaredBefore(value.name, symbols, order, file, line)
+        if referenced is None:
             return value, f"'{value.name}' no está declarada"
         if referenced.dataType != "Red":
             return value, f"'{value.name}' es de tipo {referenced.dataType}, se esperaba Red"
@@ -105,25 +210,38 @@ def checkNames(program: Program, order: Dict[str, int]) -> Tuple[List[Diagnostic
 def markUsed(value, used: Set[str]):
     if isinstance(value, Identifier):
         used.add(value.name)
+    elif isinstance(value, Port):
+        markUsed(value.value, used)
+    elif isinstance(value, ListLiteral):
+        for element in value.elements:
+            markUsed(element, used)
+    elif isinstance(value, UnaryOp):
+        markUsed(value.operand, used)
+    elif isinstance(value, BinaryOp):
+        markUsed(value.left, used)
+        markUsed(value.right, used)
 
 
 def check(program: Program, files: List[str]) -> List[Diagnostic]:
     symbols: Dict[str, Declaration] = {}
     order = {file: index for index, file in enumerate(files)}
     used: Set[str] = set()
+    invalid: Set[str] = set()  # declarations with an error, so their uses don't report it again
     diagnostics, duplicates = checkNames(program, order)
 
     for declaration in program.declarations:
         if id(declaration) in duplicates:
             continue
         markUsed(declaration.value, used)
-        message = checkDeclaration(declaration, symbols)
+        try:
+            checkDeclaration(declaration, symbols, invalid)
+        except ExpressionError as error:
+            invalid.add(declaration.name)
+            if error.message is not None:
+                diagnostics.append(Diagnostic(
+                    file=declaration.file, line=declaration.line, type="error_semantico", message=error.message,
+                ))
         symbols[declaration.name] = declaration
-
-        if message is not None:
-            diagnostics.append(Diagnostic(
-                file=declaration.file, line=declaration.line, type="error_semantico", message=message,
-            ))
 
     for rule in program.rules:
         if rule.action is None:
@@ -133,7 +251,8 @@ def check(program: Program, files: List[str]) -> List[Diagnostic]:
             ))
 
         if rule.port is not None:
-            message = checkPort(rule.port)
+            markUsed(rule.port, used)
+            message = resolvePort(rule.port, symbols, invalid, order, rule.file)
             if message is not None:
                 diagnostics.append(Diagnostic(file=rule.file, line=rule.port.line, type="error_semantico", message=message))
 
@@ -165,10 +284,11 @@ def check(program: Program, files: List[str]) -> List[Diagnostic]:
             ))
 
         if packet.port is not None:
+            markUsed(packet.port, used)
             if packet.port.type == "range":
                 message = "el puerto de un paquete debe ser un número, no un rango"
             else:
-                message = checkPort(packet.port)
+                message = resolvePort(packet.port, symbols, invalid, order, packet.file)
             if message is not None:
                 diagnostics.append(Diagnostic(file=packet.file, line=packet.port.line, type="error_semantico", message=message))
 

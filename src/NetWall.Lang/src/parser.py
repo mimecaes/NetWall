@@ -2,10 +2,15 @@ from typing import List, Optional, Tuple
 
 from errors import Diagnostic
 from lexer import SYMBOLS, Token
-from nodes import Declaration, Identifier, Import, Network, Packet, Port, Program, Rule
+from nodes import BinaryOp, Declaration, Identifier, Import, ListLiteral, Network, Packet, Port, Program, Rule, UnaryOp
 
-TYPES = {"String", "Int", "Float", "Boolean", "Red"}
+TYPES = {"String", "Int", "Float", "Boolean", "Red", "Lista"}
 STATEMENT_KEYWORDS = {"importar", "regla", "principal"} | TYPES
+
+OR_OPERATORS = (("KEYWORD", "o"), ("OR", None))
+AND_OPERATORS = (("KEYWORD", "y"), ("AND", None))
+RELATIONAL_OPERATORS = tuple((name, None) for name in ("EQUAL_EQUAL", "NOT_EQUAL", "LESS", "GREATER", "LESS_EQUAL", "GREATER_EQUAL"))
+NOT_OPERATORS = (("KEYWORD", "no"), ("NOT", None))
 
 TOKEN_DESCRIPTIONS = {name: f"'{symbol}'" for symbol, name in SYMBOLS.items()}
 TOKEN_DESCRIPTIONS.update({
@@ -77,8 +82,14 @@ class Parser:
         t = self._current()
         return t is not None and t.type == tokenType and (value is None or t.value == value)
 
-    def _peekIsIdent(self) -> bool:
-        return self.pos + 1 < len(self.tokens) and self.tokens[self.pos + 1].type == "IDENT"
+    def _peekIsName(self) -> bool:
+        # a name, or a reserved word followed by '=' (as in "int y = 3;", where 'y' is reserved)
+        following = self.tokens[self.pos + 1:self.pos + 3]
+        if not following:
+            return False
+        if following[0].type == "IDENT":
+            return True
+        return following[0].type == "KEYWORD" and len(following) > 1 and following[1].type == "EQUALS"
 
     def _expectOneOf(self, *values: str) -> Token:
         t = self._current()
@@ -93,7 +104,51 @@ class Parser:
             self._error("se esperaba un tipo")
         return self._advance().value
 
-    def _parseValue(self):
+    def _matchOperator(self, operators) -> Optional[str]:
+        t = self._current()
+        for tokenType, value in operators:
+            if t is not None and t.type == tokenType and (value is None or t.value == value):
+                return self._advance().value
+        return None
+
+    def _parseBinary(self, operators, parseOperand):
+        # operators of the same level group from left to right
+        left = parseOperand()
+        operator = self._matchOperator(operators)
+        while operator is not None:
+            left = BinaryOp(operator, left, parseOperand())
+            operator = self._matchOperator(operators)
+        return left
+
+    def _parseExpression(self):
+        return self._parseBinary(OR_OPERATORS, self._parseAnd)
+
+    def _parseAnd(self):
+        return self._parseBinary(AND_OPERATORS, self._parseRelational)
+
+    def _parseRelational(self):
+        return self._parseBinary(RELATIONAL_OPERATORS, self._parseUnary)
+
+    def _parseUnary(self):
+        operator = self._matchOperator(NOT_OPERATORS)
+        if operator is not None:
+            return UnaryOp(operator, self._parseUnary())
+        return self._parsePrimary()
+
+    def _parseList(self) -> ListLiteral:
+        self._expect("LBRACKET")
+        elements = []
+        if not self._check("RBRACKET"):
+            elements.append(self._parseExpression())
+            while self._check("COMMA"):
+                self._advance()
+                elements.append(self._parseExpression())
+            if not self._check("RBRACKET"):
+                self._error("se esperaba ',' o ']'")
+        self._advance()
+        return ListLiteral(elements)
+
+    def _parsePrimary(self):
         t = self._current()
         if t is not None and t.type == "STRING":
             return self._advance().value
@@ -105,6 +160,13 @@ class Parser:
             return Identifier(self._advance().value)
         if t is not None and t.type == "KEYWORD" and t.value in ("verdadero", "falso"):
             return self._advance().value == "verdadero"
+        if t is not None and t.type == "LPAREN":
+            self._advance()
+            expression = self._parseExpression()
+            self._expect("RPAREN")
+            return expression
+        if t is not None and t.type == "LBRACKET":
+            return self._parseList()
         self._error("se esperaba un valor")
 
     def _parseDeclaration(self) -> Declaration: 
@@ -112,7 +174,7 @@ class Parser:
         dataType = self._parseType()
         name = self._expect("IDENT").value
         self._expect("EQUALS")
-        value = self._parseValue()
+        value = self._parseExpression()
         self._expect("SEMICOLON")
         return Declaration(name=name, dataType=dataType, value=value, line=line, file=self.file)
 
@@ -138,7 +200,10 @@ class Parser:
             toValue = int(self._expect("INT").value)
             self._expect("RPAREN")
             return Port(type="range", fromValue=fromValue, toValue=toValue, line=line)
-        self._error("se esperaba un número entero o 'rango'")
+        if self._check("IDENT"):
+            t = self._advance()
+            return Port(type="value", value=Identifier(t.value), line=t.line)
+        self._error("se esperaba un número entero, un valor Int o 'rango'")
 
     def _parseField(self, fields: dict, lines: dict):
         t = self._current()
@@ -261,7 +326,7 @@ class Parser:
             if self.isModule:
                 self._report(self._current().line, "error_sintactico", "un archivo importado no puede tener un bloque 'principal'")
             self._parseMain(program)
-        elif self._check("IDENT") and self._peekIsIdent():
+        elif self._check("IDENT") and self._peekIsName():
             # two names in a row: a misspelled type such as "int x = 5;"
             line = self._current().line
             self._report(line, "error_sintactico", "se esperaba un tipo")
