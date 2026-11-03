@@ -1,7 +1,7 @@
 from typing import Dict, List, Optional, Tuple
 
-from nodes import Network, Packet, Port, Program, Rule
-from semantic import parseNetwork
+from nodes import Network, Packet, Port, Program, Rule, Show
+from semantic import parseNetwork, showText
 
 
 DEFAULT_POLICY = "bloquear"
@@ -97,8 +97,14 @@ def simulationData(program: Program, rules: List[Rule], simulations: List[Packet
 
 
 def simulate(program: Program) -> List[str]:
+    
+    symbols = {declaration.name: declaration for declaration in program.declarations}
     results = []
-    for packet in program.simulations:
+    for statement in program.mainStatements:
+        if isinstance(statement, Show):
+            results.append(showText(statement, symbols))
+            continue
+        packet = statement
         rule, _ = trace(program.rules, packet)
         if rule is not None:
             decision = f"{RESULTS[rule.action]} por la regla '{rule.name}'"

@@ -9,6 +9,7 @@ from loader import Loader
 from nodes import Program
 from semantic import check
 from analyzer import analyze
+from expander import expand
 from simulator import DEFAULT_POLICY, packetFrom, simulate, simulationData
 
 
@@ -89,25 +90,28 @@ def formatSummary(errors: int, warnings: int, paint: Painter) -> str:
     return paint.color(SUCCESS, "✔ compilado sin errores")
 
 
-def compileProgram(path: Path) -> Tuple[Loader, Program, List[Diagnostic], int]:
+def compileProgram(path: Path) -> Tuple[Loader, Program, List[Diagnostic], int, List[str]]:
+    
     loader = Loader()
     if not path.is_file():
         message = f"no se encontró el archivo principal '{displayPath(path)}'"
         diagnostic = Diagnostic(file=str(path), line=0, type="error_semantico", message=message)
-        return loader, Program(), [diagnostic], 1
+        return loader, Program(), [diagnostic], 1, []
 
     program = loader.load(path)
     diagnostics = loader.diagnostics + check(program, loader.files)
     errors = sum(1 for d in diagnostics if d.type in ERROR_TYPES)
     if errors:
-        diagnostics = [d for d in diagnostics if d.type in ERROR_TYPES]
-    else:
-        diagnostics += analyze(program)
-    return loader, program, diagnostics, errors
+        return loader, program, [d for d in diagnostics if d.type in ERROR_TYPES], errors, []
+
+    expansion = expand(program)
+    program.rules = expansion.rules
+    diagnostics += analyze(program)
+    return loader, program, diagnostics, errors, expansion.output
 
 
 def printSimulation(path: Path, custom: bool) -> int:
-    _, program, _, errors = compileProgram(path)
+    _, program, _, errors, _ = compileProgram(path)
     if errors:
         print(json.dumps({"errors": True}))
         return 1
@@ -131,7 +135,7 @@ def challengeValue(value) -> object:
 
 
 def printChallenge(path: Path) -> int:
-    _, program, diagnostics, errors = compileProgram(path)
+    _, program, diagnostics, errors, _ = compileProgram(path)
 
     result = {
         "errors": errors > 0,
@@ -162,12 +166,17 @@ def printProgram(path: Path, execute: bool) -> int:
     if paint.enabled and os.name == "nt" and sys.stdout.isatty():
         os.system("")
 
-    loader, program, diagnostics, errors = compileProgram(path)
+    loader, program, diagnostics, errors, output = compileProgram(path)
     warnings = len(diagnostics) - errors
 
     order = {file: index for index, file in enumerate(loader.files)}
     diagnostics.sort(key=lambda d: (order.get(d.file, 0), d.line))
-    lines = ["\n\n".join(formatDiagnostic(d, Path(d.file), paint) for d in diagnostics)] if diagnostics else []
+    
+    lines = list(output)
+    if output and (diagnostics or program.rules or execute):
+        lines.append("")
+    if diagnostics:
+        lines.append("\n\n".join(formatDiagnostic(d, Path(d.file), paint) for d in diagnostics))
 
     # with errors there is no list of rules and principal block doesn't run
     if not errors:
@@ -179,7 +188,7 @@ def printProgram(path: Path, execute: bool) -> int:
                 lines.append(f"política por defecto: {program.defaultPolicy}")
             else:
                 lines.append(f"política por defecto: {DEFAULT_POLICY} (no definida)")
-            if program.simulations:
+            if program.mainStatements:
                 lines.append("")
                 lines += simulate(program)
 
