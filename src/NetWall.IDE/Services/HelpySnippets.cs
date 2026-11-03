@@ -43,6 +43,9 @@ public static partial class HelpySnippets
         ["Boolean"] = ("Presiona Tab para crear una variable de verdadero o falso.",
             "Boolean ${nombre|El nombre de la variable, en minúsculas y con _ entre palabras.} = " +
             "${verdadero|Solo puede valer verdadero o falso, sin comillas.};"),
+        ["Lista"] = ("Presiona Tab para crear una lista.",
+            "Lista ${nombre|El nombre de la lista, como puertos_web o redes_internas.} = " +
+            "[${22, 80|Los valores separados por coma, todos del mismo tipo: solo números o solo redes.}];"),
         ["Red"] = ("Presiona Tab para crear una red.",
             "Red ${nombre|El nombre de la red, como oficina o servidores.} = " +
             "\"${192.168.1.0/24|La red en formato CIDR: dirección/prefijo. Un /24 tiene 256 direcciones.}\";"),

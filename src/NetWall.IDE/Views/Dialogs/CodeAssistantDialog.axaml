@@ -469,7 +469,7 @@
                         <Grid ColumnDefinitions="Auto,10,*">
                             <ListBox Classes="segmented" ItemsSource="{x:Static vm:CodeAssistantViewModel.PortModes}"
                                      SelectedItem="{Binding PortMode}" />
-                            <TextBox Grid.Column="2" Text="{Binding Port}" Watermark="80" IsVisible="{Binding HasSinglePort}" />
+                            <TextBox Grid.Column="2" Text="{Binding Port}" Watermark="80 o una variable" IsVisible="{Binding HasSinglePort}" />
                             <Grid Grid.Column="2" ColumnDefinitions="*,Auto,*" IsVisible="{Binding HasPortRange}">
                                 <TextBox Text="{Binding PortFrom}" Watermark="1000" />
                                 <TextBlock Grid.Column="1" Classes="helpy-hint" Text="a" Margin="6,0" VerticalAlignment="Center" />
@@ -507,7 +507,7 @@
                     </StackPanel>
                     <StackPanel Classes="helpy-row">
                         <TextBlock Classes="helpy-label" Text="Valor" />
-                        <TextBox Text="{Binding VariableValue}" Watermark="80, 2.5, verdadero, servidor web o 192.168.1.0/24" />
+                        <TextBox Text="{Binding VariableValue}" Watermark="80, 2.5, verdadero, servidor web, 192.168.1.0/24 o [22, 80]" />
                     </StackPanel>
                 </StackPanel>
 
@@ -520,7 +520,7 @@
                         </StackPanel>
                         <StackPanel Grid.Column="2">
                             <TextBlock Classes="helpy-label" Text="Puerto" />
-                            <TextBox Text="{Binding PacketPort}" Watermark="80" />
+                            <TextBox Text="{Binding PacketPort}" Watermark="80 o una variable" />
                         </StackPanel>
                     </Grid>
                     <Grid Classes="helpy-row" ColumnDefinitions="*,10,*">

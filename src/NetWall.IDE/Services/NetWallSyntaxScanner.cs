@@ -38,6 +38,11 @@ public static class NetWallSyntaxScanner
         ["Float"] = SyntaxToken.Type,
         ["String"] = SyntaxToken.Type,
         ["Boolean"] = SyntaxToken.Type,
+        ["Lista"] = SyntaxToken.Type,
+
+        ["y"] = SyntaxToken.Operator,
+        ["o"] = SyntaxToken.Operator,
+        ["no"] = SyntaxToken.Operator,
 
         ["permitir"] = SyntaxToken.Constant,
         ["bloquear"] = SyntaxToken.Constant,
@@ -51,7 +56,9 @@ public static class NetWallSyntaxScanner
         ["rango"] = SyntaxToken.Function,
     };
 
-    private const string Punctuation = "{}(),;";
+    private const string Punctuation = "{}()[],;";
+    private const string SingleOperators = "=<>!";
+    private static readonly HashSet<string> DoubleOperators = ["==", "!=", "<=", ">=", "&&", "||"];
 
     public static bool IsReserved(string word) => ReservedWords.ContainsKey(word);
 
@@ -136,9 +143,18 @@ public static class NetWallSyntaxScanner
                 continue;
             }
 
-            i++;
             previousWord = null;
-            var kind = c == '=' ? SyntaxToken.Operator
+
+            // Two character operators are checked before the one character symbols.
+            if (i + 1 < end && DoubleOperators.Contains(text.Substring(i, 2)))
+            {
+                i += 2;
+                spans.Add(new SyntaxSpan(start, 2, SyntaxToken.Operator));
+                continue;
+            }
+
+            i++;
+            var kind = SingleOperators.Contains(c) ? SyntaxToken.Operator
                 : Punctuation.Contains(c) ? SyntaxToken.Punctuation
                 : SyntaxToken.Error;
             spans.Add(new SyntaxSpan(start, 1, kind));
