@@ -94,6 +94,10 @@ CAUSES = [
      "Un argumento no coincide con el tipo del parámetro."),
     (r"'.*' es una función predefinida y no puede redefinirse",
      "Se declaró una función con el nombre de una función predefinida."),
+    (r"'mostrar' no devuelve un valor",
+     "mostrar solo imprime valores. No puede usarse al declarar una variable ni dentro de otra expresión."),
+    (r"el resultado de '.*' no se usa",
+     "Las funciones predefinidas que devuelven un valor se usan al declarar una variable, dentro de mostrar o en una condición."),
     (r"la función '.*' se llama a sí misma \(.*\)",
      "Hay recursión directa o indirecta, que no se permite porque la expansión no terminaría."),
     (r"'.*' no está permitida dentro de una función",
@@ -128,7 +132,7 @@ CAUSES = [
     (r"principal no define una política por defecto: se usará bloquear",
      "Falta politica_defecto dentro de principal. Todo el tráfico que no coincida con ninguna regla se bloqueará."),
     (r"la variable '.*' se declara pero nunca se usa",
-     "La variable no se usa en ninguna regla, paquete ni otra declaración. Puede eliminarse."),
+     "La variable no se usa en ninguna regla, paquete, mostrar ni otra declaración. Puede eliminarse."),
 ]
 
 CAUSE_PATTERNS = [(re.compile(pattern), cause) for pattern, cause in CAUSES]

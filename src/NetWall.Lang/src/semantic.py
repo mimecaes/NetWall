@@ -1,8 +1,10 @@
 import ipaddress
 from typing import Dict, List, Optional, Set, Tuple, Union
 
+import predefined
 from errors import Diagnostic, lineReference
-from nodes import BinaryOp, Declaration, Identifier, ListLiteral, ListValue, Network, Port, Program, Rule, UnaryOp
+from nodes import BinaryOp, Call, Declaration, Identifier, ListLiteral, ListValue, Network, Port, Program, Rule, Show, UnaryOp, displayValue
+from predefined import BUILTIN_NAMES, SHOW, SIGNATURES
 
 
 VALUE_TYPES = {str: "String", int: "Int", float: "Float", bool: "Boolean"}
@@ -32,6 +34,13 @@ def parseNetwork(cidr: str) -> Optional[Network]:
     return Network(cidr=cidr, baseInt=int(network.network_address), mask=network.prefixlen)
 
 
+def toNetwork(text: str) -> Network:
+    network = parseNetwork(text)
+    if network is None:
+        raise ExpressionError(f"'{text}' no es una red válida")
+    return network
+
+
 def lookup(name: str, symbols: Dict[str, Declaration], invalid: Set[str]) -> Declaration:
     referenced = symbols.get(name)
     if referenced is None:
@@ -41,10 +50,37 @@ def lookup(name: str, symbols: Dict[str, Declaration], invalid: Set[str]) -> Dec
     return referenced
 
 
+def callType(call: Call, symbols: Dict[str, Declaration], invalid: Set[str]) -> str:
+    name = call.name
+    if name == SHOW:
+        raise ExpressionError(f"'{SHOW}' no devuelve un valor")
+    if name not in SIGNATURES:
+        raise ExpressionError(f"la función '{name}' no está declarada")
+    parameters, result = SIGNATURES[name]
+    if len(call.arguments) != len(parameters):
+        expected = f"{len(parameters)} argumento" + ("" if len(parameters) == 1 else "s")
+        raise ExpressionError(f"'{name}' espera {expected}, pero recibió {len(call.arguments)}")
+
+    for index, (argument, parameter) in enumerate(zip(call.arguments, parameters), start=1):
+        accepted = parameter if isinstance(parameter, tuple) else (parameter,)
+        argumentType = typeOf(argument, symbols, invalid)
+        if isinstance(argument, str):
+            toNetwork(argument)  # every text argument of these functions is an address or a network
+            if "Red" in accepted:
+                continue  # a network written between quotes
+        if argumentType not in accepted:
+            raise ExpressionError(f"el argumento {index} de '{name}' debe ser de tipo {accepted[0]}, pero es {argumentType}")
+    return result
+
+
 def typeOf(expression, symbols: Dict[str, Declaration], invalid: Set[str]) -> str:
     
     if isinstance(expression, (bool, str, int, float)):
         return VALUE_TYPES[type(expression)]
+    if isinstance(expression, Network):
+        return "Red" 
+    if isinstance(expression, Call):
+        return callType(expression, symbols, invalid)
     if isinstance(expression, Identifier):
         return lookup(expression.name, symbols, invalid).dataType
     if isinstance(expression, ListLiteral):
@@ -79,7 +115,22 @@ def sameValue(left, right) -> bool:
     return left == right
 
 
+def evaluateCall(call: Call, symbols: Dict[str, Declaration], invalid: Set[str]):
+    parameters, _ = SIGNATURES[call.name]
+    values = []
+    for argument, parameter in zip(call.arguments, parameters):
+        value = evaluate(argument, symbols, invalid)
+        if isinstance(value, str):
+            network = toNetwork(value)
+            if parameter != "String":
+                value = network
+        values.append(value)
+    return predefined.call(call.name, values)
+
+
 def evaluate(expression, symbols: Dict[str, Declaration], invalid: Set[str]):
+    if isinstance(expression, Call):
+        return evaluateCall(expression, symbols, invalid)
     if isinstance(expression, Identifier):
         return symbols[expression.name].value
     if isinstance(expression, ListLiteral):
@@ -130,6 +181,10 @@ def checkDeclaration(declaration: Declaration, symbols: Dict[str, Declaration], 
         declaration.value = float(declaration.value)
 
 
+def showText(show: Show, symbols: Dict[str, Declaration]) -> str:
+    return "".join(displayValue(evaluate(argument, symbols, set())) for argument in show.arguments)
+
+
 def declaredBefore(name: str, symbols: Dict[str, Declaration], order: Dict[str, int], file: str, line: int) -> Optional[Declaration]:
     referenced = symbols.get(name)
     if referenced is None or (order.get(referenced.file, 0), referenced.line) > (order.get(file, 0), line):
@@ -149,6 +204,37 @@ def resolvePort(port: Port, symbols: Dict[str, Declaration], invalid: Set[str], 
             return None  # the declaration already has an error
         port.value = referenced.value
     return checkPort(port)
+
+
+def undeclared(expression, symbols: Dict[str, Declaration], order: Dict[str, int], file: str, line: int) -> Optional[str]:
+    # the first name in the expression that isn't declared before that line
+    if isinstance(expression, Identifier):
+        return None if declaredBefore(expression.name, symbols, order, file, line) else expression.name
+    if isinstance(expression, Call):
+        children = expression.arguments
+    elif isinstance(expression, ListLiteral):
+        children = expression.elements
+    elif isinstance(expression, UnaryOp):
+        children = [expression.operand]
+    elif isinstance(expression, BinaryOp):
+        children = [expression.left, expression.right]
+    else:
+        return None
+    for child in children:
+        name = undeclared(child, symbols, order, file, line)
+        if name is not None:
+            return name
+    return None
+
+
+def checkShow(show: Show, symbols: Dict[str, Declaration], invalid: Set[str], order: Dict[str, int]):
+    for argument in show.arguments:
+        name = undeclared(argument, symbols, order, show.file, show.line)
+        if name is not None:
+            raise ExpressionError(f"'{name}' no está declarada")
+        typeOf(argument, symbols, invalid)
+    for argument in show.arguments:
+        evaluate(argument, symbols, invalid)
 
 
 def checkPort(port: Port) -> Optional[str]:
@@ -184,14 +270,22 @@ def checkHost(value, symbols: Dict[str, Declaration], order: Dict[str, int], fil
     return value, message
 
 
-def checkNames(program: Program, order: Dict[str, int]) -> Tuple[List[Diagnostic], Set[int]]:
+def checkNames(program: Program, order: Dict[str, int]) -> Tuple[List[Diagnostic], Set[int], Set[int]]:
     # variables and rules share one global namespace, so the second declaration of a name is an error
     diagnostics: List[Diagnostic] = []
     duplicates: Set[int] = set()
+    predefinedNames: Set[int] = set()
     first: Dict[str, Union[Declaration, Rule]] = {}
     items = sorted(program.declarations + program.rules, key=lambda item: (order.get(item.file, 0), item.line))
 
     for item in items:
+        if item.name in BUILTIN_NAMES:
+            predefinedNames.add(id(item))
+            diagnostics.append(Diagnostic(
+                file=item.file, line=item.line, type="error_semantico",
+                message=f"'{item.name}' es una función predefinida y no puede redefinirse",
+            ))
+            continue
         previous = first.get(item.name)
         if previous is None:
             first[item.name] = item
@@ -204,7 +298,7 @@ def checkNames(program: Program, order: Dict[str, int]) -> Tuple[List[Diagnostic
             message = f"'{item.name}' ya fue declarada ({reference})"
         diagnostics.append(Diagnostic(file=item.file, line=item.line, type="error_semantico", message=message))
 
-    return diagnostics, duplicates
+    return diagnostics, duplicates, predefinedNames
 
 
 def markUsed(value, used: Set[str]):
@@ -215,6 +309,9 @@ def markUsed(value, used: Set[str]):
     elif isinstance(value, ListLiteral):
         for element in value.elements:
             markUsed(element, used)
+    elif isinstance(value, Call):
+        for argument in value.arguments:
+            markUsed(argument, used)
     elif isinstance(value, UnaryOp):
         markUsed(value.operand, used)
     elif isinstance(value, BinaryOp):
@@ -227,10 +324,14 @@ def check(program: Program, files: List[str]) -> List[Diagnostic]:
     order = {file: index for index, file in enumerate(files)}
     used: Set[str] = set()
     invalid: Set[str] = set()  # declarations with an error, so their uses don't report it again
-    diagnostics, duplicates = checkNames(program, order)
+    diagnostics, duplicates, predefinedNames = checkNames(program, order)
 
     for declaration in program.declarations:
         if id(declaration) in duplicates:
+            continue
+        if id(declaration) in predefinedNames:
+            invalid.add(declaration.name)
+            symbols[declaration.name] = declaration
             continue
         markUsed(declaration.value, used)
         try:
@@ -304,6 +405,25 @@ def check(program: Program, files: List[str]) -> List[Diagnostic]:
         packet.destination, message = checkHost(packet.destination, symbols, order, packet.file, line, "destino")
         if message is not None:
             diagnostics.append(Diagnostic(file=packet.file, line=line, type="error_semantico", message=message))
+
+    for statement in program.statements:
+        if isinstance(statement, Call):
+            
+            if statement.name in SIGNATURES:
+                message = f"el resultado de '{statement.name}' no se usa"
+            else:
+                message = f"la función '{statement.name}' no está declarada"
+            diagnostics.append(Diagnostic(file=statement.file, line=statement.line, type="error_semantico", message=message))
+
+    shows = [s for s in program.statements + program.mainStatements if isinstance(s, Show)]
+    for show in shows:
+        for argument in show.arguments:
+            markUsed(argument, used)
+        try:
+            checkShow(show, symbols, invalid, order)
+        except ExpressionError as error:
+            if error.message is not None:
+                diagnostics.append(Diagnostic(file=show.file, line=show.line, type="error_semantico", message=error.message))
 
     mainFile = files[-1] if files else None
     for declaration in symbols.values():

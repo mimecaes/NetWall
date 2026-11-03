@@ -2,7 +2,8 @@ from typing import List, Optional, Tuple
 
 from errors import Diagnostic
 from lexer import SYMBOLS, Token
-from nodes import BinaryOp, Declaration, Identifier, Import, ListLiteral, Network, Packet, Port, Program, Rule, UnaryOp
+from nodes import BinaryOp, Call, Declaration, Identifier, Import, ListLiteral, Network, Packet, Port, Program, Rule, Show, UnaryOp
+from predefined import SHOW
 
 TYPES = {"String", "Int", "Float", "Boolean", "Red", "Lista"}
 STATEMENT_KEYWORDS = {"importar", "regla", "principal"} | TYPES
@@ -82,6 +83,9 @@ class Parser:
         t = self._current()
         return t is not None and t.type == tokenType and (value is None or t.value == value)
 
+    def _peekIs(self, tokenType: str) -> bool:
+        return self.pos + 1 < len(self.tokens) and self.tokens[self.pos + 1].type == tokenType
+
     def _peekIsName(self) -> bool:
         # a name, or a reserved word followed by '=' (as in "int y = 3;", where 'y' is reserved)
         following = self.tokens[self.pos + 1:self.pos + 3]
@@ -148,8 +152,29 @@ class Parser:
         self._advance()
         return ListLiteral(elements)
 
+    def _parseCall(self) -> Call:
+        t = self._expect("IDENT")
+        self._expect("LPAREN")
+        arguments = []
+        if not self._check("RPAREN"):
+            arguments.append(self._parseExpression())
+            while self._check("COMMA"):
+                self._advance()
+                arguments.append(self._parseExpression())
+            if not self._check("RPAREN"):
+                self._error("se esperaba ',' o ')'")
+        self._advance()
+        return Call(t.value, arguments, t.line, self.file)
+
+    def _parseShow(self) -> Show:
+        call = self._parseCall()
+        self._expect("SEMICOLON")
+        return Show(call.arguments, call.line, self.file)
+
     def _parsePrimary(self):
         t = self._current()
+        if t is not None and t.type == "IDENT" and self._peekIs("LPAREN"):
+            return self._parseCall()
         if t is not None and t.type == "STRING":
             return self._advance().value
         if t is not None and t.type == "INT":
@@ -160,6 +185,9 @@ class Parser:
             return Identifier(self._advance().value)
         if t is not None and t.type == "KEYWORD" and t.value in ("verdadero", "falso"):
             return self._advance().value == "verdadero"
+        if t is not None and t.type == "KEYWORD" and t.value == "cualquiera":
+            self._advance()
+            return Network(cidr="cualquiera", baseInt=0, mask=0)
         if t is not None and t.type == "LPAREN":
             self._advance()
             expression = self._parseExpression()
@@ -284,10 +312,12 @@ class Parser:
             self._error("simular una variable todavía no está soportado")
         fields, lines = self._parseFields()
         self._expect("SEMICOLON")
-        program.simulations.append(Packet(
+        packet = Packet(
             protocol=fields.get("protocolo"), port=fields.get("puerto"), source=fields.get("origen"),
             destination=fields.get("destino"), line=line, fieldLines=lines, file=self.file,
-        ))
+        )
+        program.simulations.append(packet)
+        program.mainStatements.append(packet)
 
     def _parseMain(self, program: Program):
         self.mainLine = self._advance().line
@@ -303,8 +333,10 @@ class Parser:
                     policyLine = self._parsePolicy(program, policyLine)
                 elif self._check("KEYWORD", "simular"):
                     self._parseSimulate(program)
+                elif self._check("IDENT", SHOW) and self._peekIs("LPAREN"):
+                    program.mainStatements.append(self._parseShow())
                 else:
-                    self._error("se esperaba 'politica_defecto' o 'simular'")
+                    self._error("se esperaba 'politica_defecto', 'simular' o 'mostrar'")
             except _ParseError:
                 self._synchronizeInBlock(blockDepth)
         self._advance()
@@ -321,11 +353,19 @@ class Parser:
         elif self._current().type == "KEYWORD" and self._current().value in TYPES:
             program.declarations.append(self._parseDeclaration())
         elif self._check("KEYWORD", "regla"):
-            program.rules.append(self._parseRule())
+            rule = self._parseRule()
+            program.rules.append(rule)
+            program.statements.append(rule)
         elif self._check("KEYWORD", "principal"):
             if self.isModule:
                 self._report(self._current().line, "error_sintactico", "un archivo importado no puede tener un bloque 'principal'")
             self._parseMain(program)
+        elif self._check("IDENT", SHOW) and self._peekIs("LPAREN"):
+            program.statements.append(self._parseShow())
+        elif self._check("IDENT") and self._peekIs("LPAREN"):
+            # a call to another function, the semantic check reports it
+            program.statements.append(self._parseCall())
+            self._expect("SEMICOLON")
         elif self._check("IDENT") and self._peekIsName():
             # two names in a row: a misspelled type such as "int x = 5;"
             line = self._current().line

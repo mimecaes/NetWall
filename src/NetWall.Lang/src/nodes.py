@@ -76,12 +76,31 @@ class ListLiteral:
     elements: list
 
 
-def formatValue(value) -> str:
+@dataclass
+class Call:
+    name: str
+    arguments: list
+    line: int = 0
+    file: str = ""
+
+
+@dataclass
+class Show:
+    arguments: list
+    line: int
+    file: str = ""
+
+
+def displayValue(value) -> str:
     if isinstance(value, bool):
         return "verdadero" if value else "falso"
+    return str(value)
+
+
+def formatValue(value) -> str:
     if isinstance(value, str):
         return f'"{value}"'
-    return str(value)
+    return displayValue(value)
 
 
 @dataclass
@@ -138,5 +157,7 @@ class Program:
     imports: List[Import] = field(default_factory=list)
     defaultPolicy: Optional[str] = None
     simulations: List[Packet] = field(default_factory=list)
+    statements: list = field(default_factory=list)
+    mainStatements: list = field(default_factory=list)
     mainLine: Optional[int] = None
     mainFile: str = ""
