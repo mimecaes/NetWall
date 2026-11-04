@@ -24,6 +24,8 @@ public static class NetWallSyntaxScanner
         ["si"] = SyntaxToken.Keyword,
         ["sino"] = SyntaxToken.Keyword,
         ["para"] = SyntaxToken.Keyword,
+        ["cada"] = SyntaxToken.Keyword,
+        ["en"] = SyntaxToken.Keyword,
 
         // Fields of a regla / struct literal.
         ["accion"] = SyntaxToken.Field,

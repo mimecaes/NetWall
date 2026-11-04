@@ -51,6 +51,15 @@ public static partial class HelpySnippets
             "${Int p|Los parámetros: Tipo nombre, separados por coma. Puede quedar vacío.}) {\n" +
             "    ${// reglas|Escribe aquí las reglas, llamadas y mostrar que genera. Úsala con nombre(valores);}\n" +
             "}"),
+        ["si"] = ("Presiona Tab para elegir reglas según una condición.",
+            "si (${modo_estricto|Una condición Boolean: una variable, una comparación como tamano(red) > 256, o varias unidas con y / o.}) {\n" +
+            "    ${// reglas|Las reglas, llamadas y mostrar que se incluyen si la condición es verdadera. Después puedes agregar sino con otras reglas.}\n" +
+            "}"),
+        ["para"] = ("Presiona Tab para repetir reglas con cada elemento de una lista.",
+            "para cada ${p|El nombre que toma cada elemento, como p para puertos o r para redes.} en " +
+            "${[80, 443]|Una lista entre corchetes o una variable Lista.} {\n" +
+            "    ${// reglas|Las reglas que se repiten. Cada una se llama nombre[elemento], como web[80].}\n" +
+            "}"),
         ["mostrar"] = ("Presiona Tab para imprimir un mensaje.",
             "mostrar(\"${mensaje|Lo que quieres ver en la salida. Agrega más valores separados por coma, como tamano(red_oficina).}\");"),
         ["Red"] = ("Presiona Tab para crear una red.",
