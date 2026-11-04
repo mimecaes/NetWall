@@ -105,6 +105,8 @@ def compileProgram(path: Path) -> Tuple[Loader, Program, List[Diagnostic], int, 
         return loader, program, [d for d in diagnostics if d.type in ERROR_TYPES], errors, []
 
     expansion = expand(program)
+    if expansion.diagnostics:
+        return loader, program, expansion.diagnostics, len(expansion.diagnostics), []
     program.rules = expansion.rules
     diagnostics += analyze(program)
     return loader, program, diagnostics, errors, expansion.output

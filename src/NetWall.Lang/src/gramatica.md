@@ -6,9 +6,9 @@ literales entre comillas.
 ## Estructura general
 
 ```
-programa        ::= { importacion } { declaracion | funcion_decl | regla_decl | mostrar_stmt } bloque_principal
+programa        ::= { importacion } { declaracion | funcion_decl | regla_decl | llamada_stmt | mostrar_stmt } bloque_principal
 
-modulo          ::= { importacion } { declaracion | funcion_decl | regla_decl | mostrar_stmt }
+modulo          ::= { importacion } { declaracion | funcion_decl | regla_decl | llamada_stmt | mostrar_stmt }
 
 importacion     ::= "importar" STRING ";"
 
@@ -40,8 +40,18 @@ valor           ::= STRING | IDENT | "cualquiera"
 
 ```
 funcion_decl    ::= "funcion" IDENT "(" [ parametros ] ")" "{" { sentencia } "}"
-parametros      ::= IDENT { "," IDENT }
+parametros      ::= parametro { "," parametro }
+parametro       ::= tipo IDENT
+
+llamada_stmt    ::= llamada_funcion ";"
 ```
+
+- Una función es una plantilla de reglas: no devuelve un valor. Usada dentro de una expresión da `'{f}' no devuelve un valor`.
+- Los parámetros solo existen dentro del cuerpo y ocultan una variable con el mismo nombre. Dos parámetros no pueden llamarse igual.
+- La función debe declararse antes de la llamada, en el mismo archivo o en un archivo importado. Por eso una función solo puede llamarse a sí misma de forma directa, y eso da `la función '{f}' se llama a sí misma ({f} → {f})`.
+- Dentro de una función no se permiten declaraciones, `importar`, `funcion`, `principal`, `politica_defecto` ni `simular`: `'{instrucción}' no está permitida dentro de una función`, con la primera palabra de la instrucción (por ejemplo `'Int'`).
+- Las llamadas no pueden ir dentro de `principal`.
+- Al compilar, cada llamada se reemplaza por las reglas de la función, en la posición de la llamada. Cada regla generada se llama `regla[arg1, arg2]`, con los argumentos tal como están escritos: el nombre de una variable o el valor de un literal. Dentro de una llamada anidada, un parámetro se muestra con el argumento que recibió. Si el nombre se repite, la regla recibe además `#2`, `#3`, etc. La línea de la regla generada es la de la llamada de nivel superior.
 
 ## Bloque principal
 
@@ -59,16 +69,14 @@ simular_stmt    ::= "simular" (IDENT | struct_literal) ";"
 struct_literal  ::= IDENT "{" campo { "," campo } [ "," ] "}"
 ```
 
-## Sentencias generales (dentro de funcion / si / para)
+## Sentencias del cuerpo de una función (y de si / para)
 
 ```
-sentencia       ::= declaracion
-                   | asignacion
+sentencia       ::= regla_decl
+                   | llamada_stmt
+                   | mostrar_stmt
                    | si_sino
                    | para_stmt
-                   | llamada_funcion ";"
-
-asignacion      ::= IDENT "=" expresion ";"
 
 llamada_funcion ::= IDENT "(" [ argumentos ] ")"
 argumentos      ::= expresion { "," expresion }
@@ -158,4 +166,5 @@ Símbolos: `{ } ( ) [ ] , ; =` y los operadores `== != < > <= >= && || !`. Un `&
 - Todos los `importar` van al inicio del archivo, antes de cualquier otra instrucción; solo pueden estar precedidos por comentarios. Si no, se reporta `'importar' debe ir al inicio del archivo`.
 - Las reglas de los módulos importados se colocan antes que las del archivo que los importa, en el orden de los `importar`.
 - La ruta del `importar` es relativa a la carpeta del archivo que contiene el `importar`.
-- Todos los archivos comparten los mismos nombres: una variable o regla no puede declararse en dos archivos distintos, y una variable y una regla no pueden llamarse igual.
+- Todos los archivos comparten los mismos nombres: una variable, función o regla no puede declararse en dos archivos distintos, y una variable, una función y una regla no pueden llamarse igual.
+- Las funciones de un módulo se llaman por su nombre directo, igual que las variables.

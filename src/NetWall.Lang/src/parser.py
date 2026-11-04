@@ -2,11 +2,13 @@ from typing import List, Optional, Tuple
 
 from errors import Diagnostic
 from lexer import SYMBOLS, Token
-from nodes import BinaryOp, Call, Declaration, Identifier, Import, ListLiteral, Network, Packet, Port, Program, Rule, Show, UnaryOp
+from nodes import BinaryOp, Call, Declaration, FunctionDef, Identifier, Import, ListLiteral, Network, Packet, Parameter, Port, Program, Rule, Show, UnaryOp
 from predefined import SHOW
 
 TYPES = {"String", "Int", "Float", "Boolean", "Red", "Lista"}
-STATEMENT_KEYWORDS = {"importar", "regla", "principal"} | TYPES
+STATEMENT_KEYWORDS = {"importar", "regla", "funcion", "principal"} | TYPES
+# instructions that only go at the top level or inside principal
+NOT_IN_FUNCTION = {"importar", "funcion", "principal", "politica_defecto", "simular"} | TYPES
 
 OR_OPERATORS = (("KEYWORD", "o"), ("OR", None))
 AND_OPERATORS = (("KEYWORD", "y"), ("AND", None))
@@ -341,6 +343,65 @@ class Parser:
                 self._synchronizeInBlock(blockDepth)
         self._advance()
 
+    def _parseParameter(self) -> Parameter:
+        line = self._current().line if self._current() is not None else 0
+        dataType = self._parseType()
+        name = self._expect("IDENT").value
+        return Parameter(name=name, dataType=dataType, line=line)
+
+    def _skipStatement(self, blockDepth: int):
+        # skips one instruction of a block, including the braces it opens
+        while self._current() is not None:
+            if self._check("RBRACE") and self.depth == blockDepth:
+                return
+            t = self._advance()
+            if self.depth == blockDepth and t.type in ("SEMICOLON", "RBRACE"):
+                if t.type == "RBRACE" and self._check("SEMICOLON"):
+                    self._advance()
+                return
+
+    def _parseFunctionStatement(self, body: list, blockDepth: int):
+        t = self._current()
+        if self._check("KEYWORD", "regla"):
+            body.append(self._parseRule())
+        elif self._check("IDENT", SHOW) and self._peekIs("LPAREN"):
+            body.append(self._parseShow())
+        elif self._check("IDENT") and self._peekIs("LPAREN"):
+            body.append(self._parseCall())
+            self._expect("SEMICOLON")
+        elif t.type == "KEYWORD" and t.value in NOT_IN_FUNCTION:
+            self._report(t.line, "error_semantico", f"'{t.value}' no está permitida dentro de una función")
+            self._skipStatement(blockDepth)
+        else:
+            self._error("se esperaba una instrucción")
+
+    def _parseFunction(self, program: Program):
+        line = self._advance().line
+        name = self._expect("IDENT").value
+        self._expect("LPAREN")
+        parameters = []
+        if not self._check("RPAREN"):
+            parameters.append(self._parseParameter())
+            while self._check("COMMA"):
+                self._advance()
+                parameters.append(self._parseParameter())
+            if not self._check("RPAREN"):
+                self._error("se esperaba ',' o ')'")
+        self._advance()
+        self._expect("LBRACE")
+        blockDepth = self.depth
+        body = []
+        while not self._check("RBRACE"):
+            if self._current() is None:
+                self._error("se esperaba '}'")
+            self.statementStart = self.pos
+            try:
+                self._parseFunctionStatement(body, blockDepth)
+            except _ParseError:
+                self._synchronizeInBlock(blockDepth)
+        self._advance()
+        program.functions.append(FunctionDef(name=name, parameters=parameters, body=body, line=line, file=self.file))
+
     def _parseImport(self, program: Program):
         line = self._advance().line
         path = self._expect("STRING").value
@@ -356,6 +417,8 @@ class Parser:
             rule = self._parseRule()
             program.rules.append(rule)
             program.statements.append(rule)
+        elif self._check("KEYWORD", "funcion"):
+            self._parseFunction(program)
         elif self._check("KEYWORD", "principal"):
             if self.isModule:
                 self._report(self._current().line, "error_sintactico", "un archivo importado no puede tener un bloque 'principal'")
@@ -363,7 +426,6 @@ class Parser:
         elif self._check("IDENT", SHOW) and self._peekIs("LPAREN"):
             program.statements.append(self._parseShow())
         elif self._check("IDENT") and self._peekIs("LPAREN"):
-            # a call to another function, the semantic check reports it
             program.statements.append(self._parseCall())
             self._expect("SEMICOLON")
         elif self._check("IDENT") and self._peekIsName():
