@@ -7,7 +7,7 @@ from errors import Diagnostic
 RESERVED_WORDS = {
     "regla", "accion", "protocolo", "puerto", "origen",
     "destino", "comentario", "politica_defecto", "funcion", "importar",
-    "simular", "principal", "si", "sino", "para",
+    "simular", "principal", "si", "sino", "para", "cada", "en",
     "permitir", "bloquear", "tcp", "udp", "rango", "cualquiera",
     "verdadero", "falso", "y", "o", "no",
     "Red", "Int", "Float", "String", "Boolean", "Lista",
