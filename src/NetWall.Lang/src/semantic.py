@@ -3,7 +3,7 @@ from typing import Dict, List, Optional, Set, Tuple, Union
 
 import predefined
 from errors import Diagnostic, lineReference
-from nodes import BinaryOp, Call, Declaration, FunctionDef, Identifier, ListLiteral, ListValue, Network, Port, Program, Rule, Show, UnaryOp, displayValue
+from nodes import BinaryOp, Call, Declaration, ForEach, FunctionDef, Identifier, If, ListLiteral, ListValue, Network, Port, Program, Rule, Show, UnaryOp, displayValue, formatValue
 from predefined import BUILTIN_NAMES, SHOW, SIGNATURES
 
 
@@ -13,6 +13,7 @@ NUMERIC_TYPES = {"Int", "Float"}
 EQUALITY_TYPES = {"String", "Boolean", "Red"}
 LOGICAL_OPERATORS = {"y", "&&", "o", "||"}
 EQUALITY_OPERATORS = {"==", "!="}
+UNKNOWN = "?"  # the type of "para cada" variable over a Lista parameter, known only when the call is expanded
 PARAMETER = object()  # the value of a parameter, which is known only when the call is expanded
 
 
@@ -24,7 +25,31 @@ class ExpressionError(Exception):
 
 
 def isCompatible(dataType: str, valueType: str) -> bool: #int can be assigned to float but not vice versa
-    return dataType == valueType or (dataType == "Float" and valueType == "Int")
+    return dataType == valueType or (dataType == "Float" and valueType == "Int") or UNKNOWN in (dataType, valueType)
+
+
+def valueType(value) -> str:
+    if isinstance(value, Network):
+        return "Red"
+    if isinstance(value, ListValue):
+        return "Lista"
+    return VALUE_TYPES.get(type(value), UNKNOWN)
+
+
+def sourceText(expression) -> str:
+    # an expression as it is written, for the messages
+    if isinstance(expression, Identifier):
+        return expression.name
+    if isinstance(expression, Call):
+        return f"{expression.name}(" + ", ".join(sourceText(a) for a in expression.arguments) + ")"
+    if isinstance(expression, ListLiteral):
+        return "[" + ", ".join(sourceText(e) for e in expression.elements) + "]"
+    if isinstance(expression, UnaryOp):
+        separator = "" if expression.operator == "!" else " "
+        return f"{expression.operator}{separator}{sourceText(expression.operand)}"
+    if isinstance(expression, BinaryOp):
+        return f"{sourceText(expression.left)} {expression.operator} {sourceText(expression.right)}"
+    return formatValue(expression)
 
 
 def parseNetwork(cidr: str) -> Optional[Network]:
@@ -69,7 +94,7 @@ def callType(call: Call, symbols: Dict[str, Declaration], invalid: Set[str], fun
             toNetwork(argument)  # every text argument of these functions is an address or a network
             if "Red" in accepted:
                 continue  # a network written between quotes
-        if argumentType not in accepted:
+        if argumentType not in accepted and argumentType != UNKNOWN:
             raise ExpressionError(f"el argumento {index} de '{name}' debe ser de tipo {accepted[0]}, pero es {argumentType}")
     return result
 
@@ -86,19 +111,21 @@ def typeOf(expression, symbols: Dict[str, Declaration], invalid: Set[str], funct
         return lookup(expression.name, symbols, invalid).dataType
     if isinstance(expression, ListLiteral):
         types = [typeOf(element, symbols, invalid, functions) for element in expression.elements]
-        if len(set(types)) > 1:
+        if len(set(types) - {UNKNOWN}) > 1:
             raise ExpressionError("los elementos de una lista deben ser del mismo tipo")
         return "Lista"
     if isinstance(expression, UnaryOp):
         operandType = typeOf(expression.operand, symbols, invalid, functions)
-        if operandType != "Boolean":
+        if operandType not in ("Boolean", UNKNOWN):
             raise ExpressionError(f"el operador '{expression.operator}' no se puede aplicar a {operandType}")
         return "Boolean"
 
     left = typeOf(expression.left, symbols, invalid, functions)
     right = typeOf(expression.right, symbols, invalid, functions)
     operator = expression.operator
-    if operator in LOGICAL_OPERATORS:
+    if UNKNOWN in (left, right):
+        valid = True  # checked when the call is expanded
+    elif operator in LOGICAL_OPERATORS:
         valid = left == right == "Boolean"
     elif operator in EQUALITY_OPERATORS:
         valid = {left, right} <= NUMERIC_TYPES or (left == right and left in EQUALITY_TYPES)
@@ -119,15 +146,17 @@ def sameValue(left, right) -> bool:
 def evaluateCall(call: Call, symbols: Dict[str, Declaration], invalid: Set[str]):
     parameters, _ = SIGNATURES[call.name]
     values = []
-    for argument, parameter in zip(call.arguments, parameters):
+    for index, (argument, parameter) in enumerate(zip(call.arguments, parameters), start=1):
+        accepted = parameter if isinstance(parameter, tuple) else (parameter,)
         value = evaluate(argument, symbols, invalid)
         if isinstance(value, str):
             network = toNetwork(value)
             if parameter != "String":
                 value = network
+        if valueType(value) not in accepted:
+            raise ExpressionError(f"el argumento {index} de '{call.name}' debe ser de tipo {accepted[0]}, pero es {valueType(value)}")
         values.append(value)
     return predefined.call(call.name, values)
-
 
 def evaluate(expression, symbols: Dict[str, Declaration], invalid: Set[str]):
     if isinstance(expression, Call):
@@ -136,21 +165,30 @@ def evaluate(expression, symbols: Dict[str, Declaration], invalid: Set[str]):
         return symbols[expression.name].value
     if isinstance(expression, ListLiteral):
         elements = [evaluate(element, symbols, invalid) for element in expression.elements]
-        elementType = typeOf(expression.elements[0], symbols, invalid) if elements else None
-        return ListValue(elements, elementType)
+        elementType = valueType(elements[0]) if elements else None
+        texts = [e.name if isinstance(e, Identifier) else displayValue(v) for e, v in zip(expression.elements, elements)]
+        return ListValue(elements, elementType, texts)
     if isinstance(expression, UnaryOp):
-        return not evaluate(expression.operand, symbols, invalid)
+        operand = evaluate(expression.operand, symbols, invalid)
+        if not isinstance(operand, bool):
+            raise ExpressionError(f"el operador '{expression.operator}' no se puede aplicar a {valueType(operand)}")
+        return not operand
     if not isinstance(expression, BinaryOp):
         return expression
 
     operator = expression.operator
     left = evaluate(expression.left, symbols, invalid)
     # the right operand is evaluated only if the left one doesn't decide
-    if operator in ("y", "&&"):
-        return left and evaluate(expression.right, symbols, invalid)
-    if operator in ("o", "||"):
-        return left or evaluate(expression.right, symbols, invalid)
+    if operator in LOGICAL_OPERATORS:
+        decided = left is (operator in ("o", "||"))
+        right = None if decided else evaluate(expression.right, symbols, invalid)
+        if not isinstance(left, bool) or (right is not None and not isinstance(right, bool)):
+            raise ExpressionError(f"el operador '{operator}' no se puede aplicar a {valueType(left)} y {valueType(right)}")
+        return left if decided else right
     right = evaluate(expression.right, symbols, invalid)
+    numeric = all(valueType(value) in NUMERIC_TYPES for value in (left, right))
+    if operator not in EQUALITY_OPERATORS and not numeric:
+        raise ExpressionError(f"el operador '{operator}' no se puede aplicar a {valueType(left)} y {valueType(right)}")
     if operator == "==":
         return sameValue(left, right)
     if operator == "!=":
@@ -199,7 +237,7 @@ def resolvePort(port: Port, symbols: Dict[str, Declaration], invalid: Set[str], 
         referenced = declaredBefore(name, symbols, order, file, port.line)
         if referenced is None:
             return f"'{name}' no está declarada"
-        if referenced.dataType != "Int":
+        if referenced.dataType not in ("Int", UNKNOWN):
             return f"'{name}' es de tipo {referenced.dataType}, se esperaba Int"
         if referenced.value is PARAMETER:
             return None
@@ -237,10 +275,10 @@ def checkArgument(argument, symbols: Dict[str, Declaration], invalid: Set[str], 
     return typeOf(argument, symbols, invalid, functions)
 
 
-def checkShow(show: Show, symbols: Dict[str, Declaration], invalid: Set[str], order: Dict[str, int], functions: Dict[str, FunctionDef], inFunction: bool = False):
+def checkShow(show: Show, symbols: Dict[str, Declaration], invalid: Set[str], order: Dict[str, int], functions: Dict[str, FunctionDef], deferred: bool = False):
     for argument in show.arguments:
         checkArgument(argument, symbols, invalid, order, functions, show.file, show.line)
-    if not inFunction:  # inside a function the parameters have a value only when the call is expanded
+    if not deferred:  # parameters and loop variables have a value only when they are expanded
         for argument in show.arguments:
             evaluate(argument, symbols, invalid)
 
@@ -252,7 +290,7 @@ def declaredFunction(call: Call, functions: Dict[str, FunctionDef], order: Dict[
     return function
 
 
-def checkCall(call: Call, symbols: Dict[str, Declaration], invalid: Set[str], order: Dict[str, int], functions: Dict[str, FunctionDef], inFunction: bool = False):
+def checkCall(call: Call, symbols: Dict[str, Declaration], invalid: Set[str], order: Dict[str, int], functions: Dict[str, FunctionDef], deferred: bool = False):
     # a call written as an instruction, at the top level or inside a function
     if call.name in SIGNATURES:
         raise ExpressionError(f"el resultado de '{call.name}' no se usa")
@@ -271,7 +309,7 @@ def checkCall(call: Call, symbols: Dict[str, Declaration], invalid: Set[str], or
             continue
         if not isCompatible(parameter.dataType, argumentType):
             raise ExpressionError(f"el argumento {index} de '{call.name}' debe ser de tipo {parameter.dataType}, pero es {argumentType}")
-    if not inFunction:
+    if not deferred:
         for argument in call.arguments:
             evaluate(argument, symbols, invalid)
 
@@ -291,7 +329,7 @@ def checkAddress(value, symbols: Dict[str, Declaration], order: Dict[str, int], 
         referenced = declaredBefore(value.name, symbols, order, file, line)
         if referenced is None:
             return value, f"'{value.name}' no está declarada"
-        if referenced.dataType != "Red":
+        if referenced.dataType not in ("Red", UNKNOWN):
             return value, f"'{value.name}' es de tipo {referenced.dataType}, se esperaba Red"
         if referenced.value is PARAMETER:
             return value, None
@@ -311,7 +349,7 @@ def checkHost(value, symbols: Dict[str, Declaration], order: Dict[str, int], fil
     return value, message
 
 
-def checkNames(program: Program, order: Dict[str, int]) -> Tuple[List[Diagnostic], Set[int], Set[int]]:
+def checkNames(program: Program, order: Dict[str, int]) -> Tuple[List[Diagnostic], Set[int], Set[int], Dict[str, object]]:
     # variables, functions and rules share one global namespace, so the second declaration of a name is an error
     diagnostics: List[Diagnostic] = []
     duplicates: Set[int] = set()
@@ -339,7 +377,7 @@ def checkNames(program: Program, order: Dict[str, int]) -> Tuple[List[Diagnostic
             message = f"'{item.name}' ya fue declarada ({reference})"
         diagnostics.append(Diagnostic(file=item.file, line=item.line, type="error_semantico", message=message))
 
-    return diagnostics, duplicates, predefinedNames
+    return diagnostics, duplicates, predefinedNames, first
 
 
 def markUsed(value, used: Set[str]):
@@ -402,22 +440,10 @@ def checkFunctionNames(function: FunctionDef) -> Tuple[List[Diagnostic], Set[str
             seen[parameter.name] = parameter.line
             continue
         diagnostics.append(Diagnostic(file=function.file, line=parameter.line, type="error_semantico", message=message))
-
-    rules: Dict[str, int] = {}
-    for statement in function.body:
-        if not isinstance(statement, Rule):
-            continue
-        if statement.name in rules:
-            diagnostics.append(Diagnostic(
-                file=statement.file, line=statement.line, type="error_semantico",
-                message=f"la regla '{statement.name}' ya fue definida (línea {rules[statement.name]})",
-            ))
-        else:
-            rules[statement.name] = statement.line
     return diagnostics, invalid
 
 
-def checkFunction(function: FunctionDef, symbols: Dict[str, Declaration], invalid: Set[str], order: Dict[str, int], functions: Dict[str, FunctionDef], used: Set[str]) -> List[Diagnostic]:
+def checkFunction(function: FunctionDef, symbols: Dict[str, Declaration], invalid: Set[str], order: Dict[str, int], functions: Dict[str, FunctionDef], used: Set[str], globalNames: Dict[str, object]) -> List[Diagnostic]:
     diagnostics, invalidParameters = checkFunctionNames(function)
     names = {parameter.name for parameter in function.parameters}
     scope = dict(symbols)
@@ -426,30 +452,140 @@ def checkFunction(function: FunctionDef, symbols: Dict[str, Declaration], invali
     scopeInvalid = (invalid - names) | invalidParameters
 
     localUses: Set[str] = set()
-    for statement in function.body:
-        markUsed(statement, localUses)
-        if isinstance(statement, Rule):
-            diagnostics += checkRule(statement, scope, scopeInvalid, order)
-            continue
-        try:
-            if isinstance(statement, Show):
-                checkShow(statement, scope, scopeInvalid, order, functions, inFunction=True)
-            else:
-                checkCall(statement, scope, scopeInvalid, order, functions, inFunction=True)
-        except ExpressionError as error:
-            if error.message is not None:
-                diagnostics.append(Diagnostic(file=statement.file, line=statement.line, type="error_semantico", message=error.message))
+    checker = BlockChecker(order, functions, globalNames, diagnostics)
+    checker.block(function.body, scope, scopeInvalid, localUses, deferred=True, naming="local")
     used |= localUses - names
     return diagnostics
 
 
+class BlockChecker:
+    # checks the instructions of a block
+    def __init__(self, order: Dict[str, int], functions: Dict[str, FunctionDef], globalNames: Dict[str, object], diagnostics: List[Diagnostic]):
+        self.order = order
+        self.functions = functions
+        self.globalNames = globalNames
+        self.diagnostics = diagnostics
+
+    def error(self, node, line: int, message: Optional[str]):
+        if message is not None:
+            self.diagnostics.append(Diagnostic(file=node.file, line=line, type="error_semantico", message=message))
+
+    def ruleName(self, rule: Rule, seen: Dict[str, int], naming: str):
+        # naming says where the rule is, "top" is the top level, which checkNames already checked
+        # "global" is a top-level si, where the rule keeps its name, "local" is a function or a para cada,
+        # where the generated name gets brackets
+        if naming == "top":
+            return
+        if rule.name in BUILTIN_NAMES:
+            self.error(rule, rule.line, f"'{rule.name}' es una función predefinida y no puede redefinirse")
+            return
+        previous = self.globalNames.get(rule.name) if naming == "global" else None
+        if previous is not None:
+            reference = lineReference(previous.file, previous.line, rule.file)
+            if isinstance(previous, Rule):
+                self.error(rule, rule.line, f"la regla '{rule.name}' ya fue definida ({reference})")
+            else:
+                self.error(rule, rule.line, f"'{rule.name}' ya fue declarada ({reference})")
+        elif rule.name in seen:
+            self.error(rule, rule.line, f"la regla '{rule.name}' ya fue definida (línea {seen[rule.name]})")
+        else:
+            seen[rule.name] = rule.line
+
+    def condition(self, statement: If, branch, scope, invalid: Set[str], used: Set[str], deferred: bool):
+        markUsed(branch.condition, used)
+        try:
+            conditionType = checkArgument(branch.condition, scope, invalid, self.order, self.functions, statement.file, branch.line)
+            if conditionType not in ("Boolean", UNKNOWN):
+                raise ExpressionError(f"la condición de 'si' debe ser de tipo Boolean, pero es {conditionType}")
+            if not deferred:
+                evaluate(branch.condition, scope, invalid)
+        except ExpressionError as error:
+            self.error(statement, branch.line, error.message)
+
+    def loop(self, statement: ForEach, scope, invalid: Set[str], used: Set[str], deferred: bool):
+        markUsed(statement.iterable, used)
+        elementType = UNKNOWN
+        try:
+            iterableType = checkArgument(statement.iterable, scope, invalid, self.order, self.functions, statement.file, statement.line)
+            if iterableType not in ("Lista", UNKNOWN):
+                raise ExpressionError(f"'para cada' requiere una lista, pero '{sourceText(statement.iterable)}' es de tipo {iterableType}")
+            elementType = listElementType(statement.iterable, scope, invalid, self.functions)
+            if not deferred:
+                evaluate(statement.iterable, scope, invalid)
+        except ExpressionError as error:
+            self.error(statement, statement.line, error.message)
+
+        name = statement.variable
+        previous = scope.get(name) or self.functions.get(name) or self.globalNames.get(name)
+        if name in BUILTIN_NAMES:
+            self.error(statement, statement.line, f"'{name}' es una función predefinida y no puede redefinirse")
+        elif previous is not None:
+            self.error(statement, statement.line, f"'{name}' ya fue declarada ({lineReference(previous.file, previous.line, statement.file)})")
+
+        # the variable exists only inside the block
+        local = dict(scope)
+        local[name] = Declaration(name, elementType, PARAMETER, statement.line, statement.file)
+        localUses: Set[str] = set()
+        self.block(statement.body, local, invalid - {name}, localUses, deferred=True, naming="local")
+        used |= localUses - {name}
+
+    def block(self, statements: list, scope, invalid: Set[str], used: Set[str], deferred: bool, naming: str):
+        seen: Dict[str, int] = {}
+        for statement in statements:
+            if isinstance(statement, Rule):
+                self.ruleName(statement, seen, naming)
+                markUsed(statement, used)
+                self.diagnostics.extend(checkRule(statement, scope, invalid, self.order))
+            elif isinstance(statement, If):
+                inner = "global" if naming in ("top", "global") else "local"
+                for branch in statement.branches:
+                    self.condition(statement, branch, scope, invalid, used, deferred)
+                    self.block(branch.body, scope, invalid, used, deferred, inner)
+                if statement.elseBody is not None:
+                    self.block(statement.elseBody, scope, invalid, used, deferred, inner)
+            elif isinstance(statement, ForEach):
+                self.loop(statement, scope, invalid, used, deferred)
+            else:
+                markUsed(statement, used)
+                try:
+                    if isinstance(statement, Show):
+                        checkShow(statement, scope, invalid, self.order, self.functions, deferred)
+                    else:
+                        checkCall(statement, scope, invalid, self.order, self.functions, deferred)
+                except ExpressionError as error:
+                    self.error(statement, statement.line, error.message)
+
+
+def listElementType(iterable, scope, invalid: Set[str], functions: Dict[str, FunctionDef]) -> str:
+    if isinstance(iterable, ListLiteral):
+        types = [typeOf(element, scope, invalid, functions) for element in iterable.elements]
+        known = [t for t in types if t != UNKNOWN]
+        return known[0] if known else UNKNOWN
+    if isinstance(iterable, Identifier):
+        value = scope[iterable.name].value
+        if isinstance(value, ListValue) and value.elementType is not None:
+            return value.elementType
+    return UNKNOWN
+
+
+def blockCalls(statements: list):
+    for statement in statements:
+        if isinstance(statement, Call):
+            yield statement
+        elif isinstance(statement, If):
+            for branch in statement.branches:
+                yield from blockCalls(branch.body)
+            if statement.elseBody is not None:
+                yield from blockCalls(statement.elseBody)
+        elif isinstance(statement, ForEach):
+            yield from blockCalls(statement.body)
+
 def calledFunctions(function: FunctionDef, functions: Dict[str, FunctionDef], order: Dict[str, int]) -> List[Tuple[Call, FunctionDef]]:
     found = []
-    for statement in function.body:
-        if isinstance(statement, Call):
-            target = declaredFunction(statement, functions, order)
-            if target is not None:
-                found.append((statement, target))
+    for statement in blockCalls(function.body):
+        target = declaredFunction(statement, functions, order)
+        if target is not None:
+            found.append((statement, target))
     return found
 
 
@@ -480,7 +616,7 @@ def check(program: Program, files: List[str]) -> List[Diagnostic]:
     order = {file: index for index, file in enumerate(files)}
     used: Set[str] = set()
     invalid: Set[str] = set()  # declarations with an error, so their uses don't report it again
-    diagnostics, duplicates, predefinedNames = checkNames(program, order)
+    diagnostics, duplicates, predefinedNames, globalNames = checkNames(program, order)
     functions = {f.name: f for f in program.functions if id(f) not in duplicates and id(f) not in predefinedNames}
 
     for declaration in program.declarations:
@@ -501,12 +637,10 @@ def check(program: Program, files: List[str]) -> List[Diagnostic]:
                 ))
         symbols[declaration.name] = declaration
 
-    for rule in program.rules:
-        markUsed(rule, used)
-        diagnostics += checkRule(rule, symbols, invalid, order)
+    BlockChecker(order, functions, globalNames, diagnostics).block(program.statements, symbols, invalid, used, deferred=False, naming="top")
 
     for function in functions.values():
-        diagnostics += checkFunction(function, symbols, invalid, order, functions, used)
+        diagnostics += checkFunction(function, symbols, invalid, order, functions, used, globalNames)
     diagnostics += checkRecursion(functions, order)
 
     for packet in program.simulations:
@@ -545,15 +679,12 @@ def check(program: Program, files: List[str]) -> List[Diagnostic]:
         if message is not None:
             diagnostics.append(Diagnostic(file=packet.file, line=line, type="error_semantico", message=message))
 
-    for statement in program.statements + program.mainStatements:
-        if not isinstance(statement, (Call, Show)):
+    for statement in program.mainStatements:
+        if not isinstance(statement, Show):
             continue
         markUsed(statement, used)
         try:
-            if isinstance(statement, Show):
-                checkShow(statement, symbols, invalid, order, functions)
-            else:
-                checkCall(statement, symbols, invalid, order, functions)
+            checkShow(statement, symbols, invalid, order, functions)
         except ExpressionError as error:
             if error.message is not None:
                 diagnostics.append(Diagnostic(file=statement.file, line=statement.line, type="error_semantico", message=error.message))

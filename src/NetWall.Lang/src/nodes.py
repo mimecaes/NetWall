@@ -107,6 +107,7 @@ def formatValue(value) -> str:
 class ListValue:
     elements: list
     elementType: Optional[str]  # None for an empty list
+    texts: Optional[List[str]] = None 
 
     def __str__(self) -> str:
         return "[" + ", ".join(formatValue(element) for element in self.elements) + "]"
@@ -138,6 +139,30 @@ class Parameter:
 class FunctionDef:
     name: str
     parameters: List[Parameter]
+    body: list
+    line: int
+    file: str = ""
+
+
+@dataclass
+class Branch:
+    condition: object
+    body: list
+    line: int
+
+
+@dataclass
+class If:
+    branches: List[Branch]
+    elseBody: Optional[list]
+    line: int
+    file: str = ""
+
+
+@dataclass
+class ForEach:
+    variable: str
+    iterable: object
     body: list
     line: int
     file: str = ""

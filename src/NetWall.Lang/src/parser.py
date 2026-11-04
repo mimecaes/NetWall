@@ -2,13 +2,13 @@ from typing import List, Optional, Tuple
 
 from errors import Diagnostic
 from lexer import SYMBOLS, Token
-from nodes import BinaryOp, Call, Declaration, FunctionDef, Identifier, Import, ListLiteral, Network, Packet, Parameter, Port, Program, Rule, Show, UnaryOp
+from nodes import BinaryOp, Branch, Call, Declaration, ForEach, FunctionDef, Identifier, If, Import, ListLiteral, Network, Packet, Parameter, Port, Program, Rule, Show, UnaryOp
 from predefined import SHOW
 
 TYPES = {"String", "Int", "Float", "Boolean", "Red", "Lista"}
-STATEMENT_KEYWORDS = {"importar", "regla", "funcion", "principal"} | TYPES
-# instructions that only go at the top level or inside principal
-NOT_IN_FUNCTION = {"importar", "funcion", "principal", "politica_defecto", "simular"} | TYPES
+STATEMENT_KEYWORDS = {"importar", "regla", "funcion", "si", "para", "principal"} | TYPES
+# instructions that only go at the top level or inside principal, not inside a funcion, si or para cada
+NOT_IN_BLOCK = {"importar", "funcion", "principal", "politica_defecto", "simular"} | TYPES
 
 OR_OPERATORS = (("KEYWORD", "o"), ("OR", None))
 AND_OPERATORS = (("KEYWORD", "y"), ("AND", None))
@@ -337,6 +337,9 @@ class Parser:
                     self._parseSimulate(program)
                 elif self._check("IDENT", SHOW) and self._peekIs("LPAREN"):
                     program.mainStatements.append(self._parseShow())
+                elif self._check("KEYWORD", "si") or self._check("KEYWORD", "para"):
+                    self._report(self._current().line, "error_sintactico", "se esperaba 'politica_defecto', 'simular' o 'mostrar'")
+                    self._skipStatement(blockDepth)
                 else:
                     self._error("se esperaba 'politica_defecto', 'simular' o 'mostrar'")
             except _ParseError:
@@ -350,17 +353,19 @@ class Parser:
         return Parameter(name=name, dataType=dataType, line=line)
 
     def _skipStatement(self, blockDepth: int):
-        # skips one instruction of a block, including the braces it opens
+        # skips one instruction of a block, including the braces it opens and the sino after a si
         while self._current() is not None:
             if self._check("RBRACE") and self.depth == blockDepth:
                 return
             t = self._advance()
             if self.depth == blockDepth and t.type in ("SEMICOLON", "RBRACE"):
+                if t.type == "RBRACE" and self._check("KEYWORD", "sino"):
+                    continue
                 if t.type == "RBRACE" and self._check("SEMICOLON"):
                     self._advance()
                 return
 
-    def _parseFunctionStatement(self, body: list, blockDepth: int):
+    def _parseBlockStatement(self, body: list, blockDepth: int, context: str):
         t = self._current()
         if self._check("KEYWORD", "regla"):
             body.append(self._parseRule())
@@ -369,11 +374,59 @@ class Parser:
         elif self._check("IDENT") and self._peekIs("LPAREN"):
             body.append(self._parseCall())
             self._expect("SEMICOLON")
-        elif t.type == "KEYWORD" and t.value in NOT_IN_FUNCTION:
-            self._report(t.line, "error_semantico", f"'{t.value}' no está permitida dentro de una función")
+        elif self._check("KEYWORD", "si"):
+            body.append(self._parseIf())
+        elif self._check("KEYWORD", "para"):
+            body.append(self._parseForEach())
+        elif t.type == "KEYWORD" and t.value in NOT_IN_BLOCK:
+            self._report(t.line, "error_semantico", f"'{t.value}' no está permitida dentro de {context}")
             self._skipStatement(blockDepth)
         else:
             self._error("se esperaba una instrucción")
+
+    def _parseBlock(self, context: str) -> list:
+        self._expect("LBRACE")
+        blockDepth = self.depth
+        body = []
+        while not self._check("RBRACE"):
+            if self._current() is None:
+                self._error("se esperaba '}'")
+            self.statementStart = self.pos
+            try:
+                self._parseBlockStatement(body, blockDepth, context)
+            except _ParseError:
+                self._synchronizeInBlock(blockDepth)
+        self._advance()
+        return body
+
+    def _parseBranch(self, line: int) -> Branch:
+        self._expect("LPAREN")
+        condition = self._parseExpression()
+        self._expect("RPAREN")
+        return Branch(condition=condition, body=self._parseBlock("'si'"), line=line)
+
+    def _parseIf(self) -> If:
+        line = self._advance().line
+        branches = [self._parseBranch(line)]
+        elseBody = None
+        while self._check("KEYWORD", "sino"):
+            branchLine = self._advance().line
+            if self._check("KEYWORD", "si"):
+                self._advance()
+                branches.append(self._parseBranch(branchLine))
+            else:
+                elseBody = self._parseBlock("'si'")
+                break
+        return If(branches=branches, elseBody=elseBody, line=line, file=self.file)
+
+    def _parseForEach(self) -> ForEach:
+        line = self._advance().line
+        self._expect("KEYWORD", "cada")
+        variable = self._expect("IDENT").value
+        self._expect("KEYWORD", "en")
+        iterable = self._parseExpression()
+        body = self._parseBlock("'para cada'")
+        return ForEach(variable=variable, iterable=iterable, body=body, line=line, file=self.file)
 
     def _parseFunction(self, program: Program):
         line = self._advance().line
@@ -388,18 +441,7 @@ class Parser:
             if not self._check("RPAREN"):
                 self._error("se esperaba ',' o ')'")
         self._advance()
-        self._expect("LBRACE")
-        blockDepth = self.depth
-        body = []
-        while not self._check("RBRACE"):
-            if self._current() is None:
-                self._error("se esperaba '}'")
-            self.statementStart = self.pos
-            try:
-                self._parseFunctionStatement(body, blockDepth)
-            except _ParseError:
-                self._synchronizeInBlock(blockDepth)
-        self._advance()
+        body = self._parseBlock("una función")
         program.functions.append(FunctionDef(name=name, parameters=parameters, body=body, line=line, file=self.file))
 
     def _parseImport(self, program: Program):
@@ -419,6 +461,10 @@ class Parser:
             program.statements.append(rule)
         elif self._check("KEYWORD", "funcion"):
             self._parseFunction(program)
+        elif self._check("KEYWORD", "si"):
+            program.statements.append(self._parseIf())
+        elif self._check("KEYWORD", "para"):
+            program.statements.append(self._parseForEach())
         elif self._check("KEYWORD", "principal"):
             if self.isModule:
                 self._report(self._current().line, "error_sintactico", "un archivo importado no puede tener un bloque 'principal'")
