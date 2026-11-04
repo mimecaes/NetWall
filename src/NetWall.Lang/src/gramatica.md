@@ -6,9 +6,9 @@ literales entre comillas.
 ## Estructura general
 
 ```
-programa        ::= { importacion } { declaracion | funcion_decl | regla_decl | llamada_stmt | mostrar_stmt } bloque_principal
+programa        ::= { importacion } { declaracion | funcion_decl | regla_decl | llamada_stmt | mostrar_stmt | si_sino | para_stmt } bloque_principal
 
-modulo          ::= { importacion } { declaracion | funcion_decl | regla_decl | llamada_stmt | mostrar_stmt }
+modulo          ::= { importacion } { declaracion | funcion_decl | regla_decl | llamada_stmt | mostrar_stmt | si_sino | para_stmt }
 
 importacion     ::= "importar" STRING ";"
 
@@ -49,7 +49,7 @@ llamada_stmt    ::= llamada_funcion ";"
 - Una función es una plantilla de reglas: no devuelve un valor. Usada dentro de una expresión da `'{f}' no devuelve un valor`.
 - Los parámetros solo existen dentro del cuerpo y ocultan una variable con el mismo nombre. Dos parámetros no pueden llamarse igual.
 - La función debe declararse antes de la llamada, en el mismo archivo o en un archivo importado. Por eso una función solo puede llamarse a sí misma de forma directa, y eso da `la función '{f}' se llama a sí misma ({f} → {f})`.
-- Dentro de una función no se permiten declaraciones, `importar`, `funcion`, `principal`, `politica_defecto` ni `simular`: `'{instrucción}' no está permitida dentro de una función`, con la primera palabra de la instrucción (por ejemplo `'Int'`).
+- Dentro de una función (y de un `si` o un `para cada`) no se permiten declaraciones, `importar`, `funcion`, `principal`, `politica_defecto` ni `simular`: `'{instrucción}' no está permitida dentro de una función`, con la primera palabra de la instrucción (por ejemplo `'Int'`).
 - Las llamadas no pueden ir dentro de `principal`.
 - Al compilar, cada llamada se reemplaza por las reglas de la función, en la posición de la llamada. Cada regla generada se llama `regla[arg1, arg2]`, con los argumentos tal como están escritos: el nombre de una variable o el valor de un literal. Dentro de una llamada anidada, un parámetro se muestra con el argumento que recibió. Si el nombre se repite, la regla recibe además `#2`, `#3`, etc. La línea de la regla generada es la de la llamada de nivel superior.
 
@@ -107,14 +107,26 @@ Donde se espera una Red se acepta una variable `Red`, una red escrita entre comi
 
 ## Control de flujo
 
-<!-- falta agregar el resto -->
-
 ```
 si_sino         ::= "si" "(" expresion ")" "{" { sentencia } "}"
+                    { "sino" "si" "(" expresion ")" "{" { sentencia } "}" }
                     [ "sino" "{" { sentencia } "}" ]
 
 para_stmt       ::= "para" "cada" IDENT "en" expresion "{" { sentencia } "}"
 ```
+
+- `si` y `para cada` van a nivel superior o dentro de una función, y pueden anidarse entre sí. No llevan `;` después de `}`.
+- No pueden ir dentro de `principal`: `se esperaba 'politica_defecto', 'simular' o 'mostrar'`.
+- Se resuelven al compilar. Del `si` solo se expande la primera rama cuya condición es verdadera; las demás igual se revisan.
+- La condición es de tipo Boolean: `la condición de 'si' debe ser de tipo Boolean, pero es {T}`.
+- Después de `en` va una lista o una variable `Lista`: `'para cada' requiere una lista, pero '{x}' es de tipo {T}`. Una lista vacía no produce vueltas.
+- La variable del ciclo solo existe dentro del bloque, toma el tipo de los elementos y no puede usar un nombre ya declarado (`'{x}' ya fue declarada ({ref})`).
+- Dentro de un `si` o un `para cada` no se permiten declaraciones, `importar`, `funcion`, `principal`, `politica_defecto` ni `simular`: `'{instrucción}' no está permitida dentro de 'si'` (o `dentro de 'para cada'`).
+- Nombres de las reglas:
+  - Una regla dentro de un `si` de nivel superior conserva su nombre, que no puede repetir un nombre global. Dos ramas distintas pueden definir una regla con el mismo nombre, porque solo se expande una.
+  - Dentro de un `para cada`, el nombre lleva entre corchetes el elemento de cada vuelta: `web[80]`. Con ciclos anidados van todos, de afuera hacia adentro: `w[22, 1]`.
+  - Dentro de una función, primero van los argumentos de la llamada y después los elementos de los ciclos: `r[22, 2]`.
+  - Un elemento se muestra como está escrito en la lista: el nombre de una variable o el valor de un literal.
 
 ## Expresiones
 
