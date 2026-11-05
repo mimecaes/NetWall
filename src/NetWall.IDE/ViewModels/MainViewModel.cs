@@ -1007,46 +1007,36 @@ public partial class MainViewModel : ViewModelBase
     private bool CanOpenCodeAssistant() => SelectedTab?.Language == "NetWall";
 
     [RelayCommand]
-    private async Task RunActiveFileAsync()
+    private Task CompileProjectAsync() => RunProjectAsync("compilar");
+
+    [RelayCommand]
+    private Task RunProgramAsync() => RunProjectAsync("ejecutar");
+
+    private async Task RunProjectAsync(string mode)
     {
-        if (SelectedTab is null)
-        {
-            AppendTerminalLine("No active file to run.");
-            return;
-        }
-
-        if (string.IsNullOrEmpty(SelectedTab.FilePath))
-        {
-            AppendTerminalLine("Save the file before running it.");
-            return;
-        }
-
-        if (SelectedTab.IsDirty)
-        {
-            SaveTab(SelectedTab);
-        }
-
         IsTerminalVisible = true;
-        _terminal ??= new TerminalSession(Path.GetDirectoryName(SelectedTab.FilePath) ?? RootPath);
-
-        string command;
-        if (string.Equals(Path.GetExtension(SelectedTab.FilePath), ".nw", StringComparison.OrdinalIgnoreCase))
+        if (!SaveModifiedFiles())
         {
-            var cliPath = FindNetWallCliPath();
-            if (cliPath is null)
-            {
-                AppendTerminalLine("No se encontró cli.py de NetWall.Lang.", TerminalLineKind.Error);
-                return;
-            }
-
-            command = $"python \"{cliPath}\" ejecutar \"{SelectedTab.FilePath}\"";
-        }
-        else
-        {
-            command = $"\"{SelectedTab.FilePath}\"";
+            return;
         }
 
-        var block = new TerminalRunBlock(SelectedTab.Title, command);
+        var mainFile = await FindMainFileAsync();
+        if (mainFile is null)
+        {
+            return;
+        }
+
+        var cliPath = FindNetWallCliPath();
+        if (cliPath is null)
+        {
+            AppendTerminalLine("No se encontró cli.py de NetWall.Lang.", TerminalLineKind.Error);
+            return;
+        }
+
+        _terminal ??= new TerminalSession(Path.GetDirectoryName(mainFile) ?? RootPath);
+
+        var command = $"python \"{cliPath}\" {mode} \"{mainFile}\"";
+        var block = new TerminalRunBlock(Path.GetFileName(mainFile), command);
         TerminalEntries.Add(block);
         TerminalUpdated?.Invoke();
 
@@ -1060,6 +1050,37 @@ public partial class MainViewModel : ViewModelBase
         block.Duration = stopwatch.Elapsed;
         block.Status = result.ExitCode == 0 ? RunStatus.Succeeded : RunStatus.Failed;
         TerminalUpdated?.Invoke();
+    }
+
+    private bool SaveModifiedFiles()
+    {
+        var modified = OpenTabs.Where(t => t.IsDirty && !string.IsNullOrEmpty(t.FilePath)).ToList();
+        foreach (var tab in modified)
+        {
+            SaveTab(tab);
+        }
+
+        return !modified.Any(t => t.IsDirty);
+    }
+
+    private async Task<string?> FindMainFileAsync()
+    {
+        // Without an open folder the project is the folder of the active file, not its subfolders.
+        var directory = IsFolderOpen ? RootPath : Path.GetDirectoryName(SelectedTab?.FilePath);
+        var candidates = string.IsNullOrEmpty(directory)
+            ? []
+            : await Task.Run(() => MainFileFinder.Find(directory, IsFolderOpen));
+
+        if (candidates.Count == 1)
+        {
+            return candidates[0];
+        }
+
+        var message = candidates.Count == 0
+            ? "ningún archivo del proyecto contiene un bloque 'principal'"
+            : $"más de un archivo contiene un bloque 'principal': {string.Join(", ", candidates.Select(Path.GetFileName))}";
+        AppendTerminalLine(message, TerminalLineKind.Error);
+        return null;
     }
 
     private static string? FindNetWallCliPath()
