@@ -12,8 +12,6 @@ public sealed class IndentGuideRenderer : IBackgroundRenderer
     private const byte BaseAlpha = 100;
     private const double LineWidth = 1.0;
 
-    private readonly IBrush _defaultGuideColor = new SolidColorBrush(Color.FromArgb(BaseAlpha, 128, 128, 128));
-
     public double Opacity { get; set; } = 1.0;
     public KnownLayer Layer => KnownLayer.Background;
 

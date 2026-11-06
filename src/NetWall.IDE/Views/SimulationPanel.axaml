@@ -623,7 +623,7 @@
                                    Text="{Binding ProgressText}" />
                     </Border>
                 </StackPanel>
-                <Button Grid.Column="3" Name="HelpyButton" Classes="icon sim-control" Margin="0,0,10,0"
+                <Button Grid.Column="3" Classes="icon sim-control" Margin="0,0,10,0"
                         Classes.off="{Binding !IsHelpyEnabled}" ToolTip.Tip="Mostrar u ocultar a Helpy"
                         Click="OnHelpyClick">
                     <controls:AnimatedIcon Classes="icon-sm" Kind="Cat" />

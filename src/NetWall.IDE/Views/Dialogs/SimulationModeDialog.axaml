@@ -209,7 +209,7 @@
             </StackPanel>
 
             <StackPanel Name="Options">
-                <Button Name="ProgramOption" Classes="mode-option" Click="OnProgramClick">
+                <Button Classes="mode-option" Click="OnProgramClick">
                     <Grid ColumnDefinitions="Auto,*">
                         <Panel Classes="mode-icon">
                             <Border Background="{DynamicResource Ansi2Brush}" />
@@ -217,13 +217,13 @@
                         </Panel>
                         <StackPanel Grid.Column="1" Margin="12,0,0,0" VerticalAlignment="Center" Spacing="2">
                             <TextBlock Classes="mode-title" Text="Simular el programa completo" />
-                            <TextBlock Name="ProgramHint" Classes="mode-hint"
+                            <TextBlock Classes="mode-hint"
                                        Text="Usa las reglas y los paquetes de simular de tu programa." />
                         </StackPanel>
                     </Grid>
                 </Button>
 
-                <Button Name="RulesOption" Classes="mode-option" Click="OnRulesClick">
+                <Button Classes="mode-option" Click="OnRulesClick">
                     <Grid ColumnDefinitions="Auto,*">
                         <Panel Classes="mode-icon">
                             <Border Background="{DynamicResource Ansi5Brush}" />
@@ -231,7 +231,7 @@
                         </Panel>
                         <StackPanel Grid.Column="1" Margin="12,0,0,0" VerticalAlignment="Center" Spacing="2">
                             <TextBlock Classes="mode-title" Text="Simular ciertas reglas" />
-                            <TextBlock Name="RulesHint" Classes="mode-hint"
+                            <TextBlock Classes="mode-hint"
                                        Text="Elige reglas y arma tu propia red con las redes de tu programa." />
                         </StackPanel>
                     </Grid>

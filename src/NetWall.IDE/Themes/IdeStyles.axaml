@@ -3,51 +3,6 @@
         xmlns:controls="using:NetWall.IDE.Controls"
         xmlns:ae="https://github.com/avaloniaui/avaloniaedit">
 
-    <Style Selector="TextBlock.assistant-title">
-        <Setter Property="FontSize" Value="15" />
-        <Setter Property="FontWeight" Value="SemiBold" />
-        <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
-    </Style>
-
-    <Style Selector="TextBlock.assistant-label">
-        <Setter Property="FontSize" Value="13" />
-        <Setter Property="VerticalAlignment" Value="Center" />
-        <Setter Property="Foreground" Value="{DynamicResource TextMutedBrush}" />
-    </Style>
-
-    <Style Selector="TextBlock.assistant-hint">
-        <Setter Property="FontSize" Value="12" />
-        <Setter Property="TextWrapping" Value="Wrap" />
-        <Setter Property="Foreground" Value="{DynamicResource TextMutedBrush}" />
-    </Style>
-
-    <Style Selector="TextBlock.assistant-option-title">
-        <Setter Property="FontSize" Value="13" />
-        <Setter Property="FontWeight" Value="SemiBold" />
-        <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
-    </Style>
-
-    <Style Selector="TextBlock.assistant-errors">
-        <Setter Property="FontSize" Value="12" />
-        <Setter Property="TextWrapping" Value="Wrap" />
-        <Setter Property="Foreground" Value="{DynamicResource StopRedBrush}" />
-    </Style>
-
-    <Style Selector="Button.assistant-option">
-        <Setter Property="HorizontalAlignment" Value="Stretch" />
-        <Setter Property="HorizontalContentAlignment" Value="Left" />
-        <Setter Property="Padding" Value="12,10" />
-        <Setter Property="CornerRadius" Value="6" />
-        <Setter Property="Background" Value="{DynamicResource SurfaceBackgroundBrush}" />
-        <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
-        <Setter Property="BorderThickness" Value="1" />
-    </Style>
-
-    <Style Selector="Button.assistant-option:pointerover /template/ ContentPresenter">
-        <Setter Property="Background" Value="{DynamicResource HoverBrush}" />
-        <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}" />
-    </Style>
-
     <Style Selector="Button.icon">
         <Setter Property="Width" Value="30" />
         <Setter Property="Height" Value="30" />
@@ -193,15 +148,6 @@
         <Setter Property="StrokeDashOffset" Value="0" />
     </Style>
 
-    <Style Selector="controls|AnimatedIcon.icon-lg">
-        <Setter Property="Width" Value="52" />
-        <Setter Property="Height" Value="52" />
-        <Setter Property="Stretch" Value="Uniform" />
-        <Setter Property="Stroke" Value="{DynamicResource AccentBrush}" />
-        <Setter Property="StrokeThickness" Value="1.4" />
-        <Setter Property="StrokeLineCap" Value="Round" />
-        <Setter Property="StrokeJoin" Value="Round" />
-    </Style>
     <Style Selector="controls|AnimatedIcon.icon-md">
         <Setter Property="Width" Value="20" />
         <Setter Property="Height" Value="20" />
@@ -437,14 +383,6 @@
     </Style>
     <Style Selector="Button.welcome-secondary:pointerover controls|AnimatedIcon">
         <Setter Property="Stroke" Value="{DynamicResource AccentBrush}" />
-    </Style>
-
-    <Style Selector="TextBlock.welcome-feature">
-        <Setter Property="Foreground" Value="{DynamicResource TextMutedBrush}" />
-        <Setter Property="FontSize" Value="10.5" />
-        <Setter Property="HorizontalAlignment" Value="Center" />
-        <Setter Property="TextAlignment" Value="Center" />
-        <Setter Property="TextWrapping" Value="Wrap" />
     </Style>
 
     <!-- A run of the active file: a thin bar on the left that turns green or red with the result. -->

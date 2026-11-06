@@ -330,14 +330,6 @@ public partial class ChallengeViewModel : ViewModelBase
         SaveCode();
     }
 
-    public void OpenLevel(ChallengeLevel level)
-    {
-        if (level.IsUnlocked)
-        {
-            Select(level);
-        }
-    }
-
     public void UpdateCode(string code)
     {
         Code = code;

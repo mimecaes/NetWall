@@ -497,7 +497,7 @@
                             </ItemsControl.ItemsPanel>
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate DataType="vm:EditorTabViewModel">
-                                    <Border Classes="tab-item" Classes.active="{Binding IsSelected}" x:Name="TabBorder">
+                                    <Border Classes="tab-item" Classes.active="{Binding IsSelected}">
                                         <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
                                             <controls:AnimatedIcon Classes="icon-sm" Kind="File" />
                                             <Button Classes="tab-select"
@@ -702,7 +702,7 @@
                                 <TextBlock Grid.Column="0" Text="$" Foreground="{DynamicResource RunGreenBrush}"
                                            FontFamily="Cascadia Code,Consolas,monospace" FontWeight="Bold"
                                            VerticalAlignment="Center" Margin="0,0,8,0" />
-                                <TextBox Grid.Column="1" Classes="terminal-input" Name="TerminalInputBox"
+                                <TextBox Grid.Column="1" Classes="terminal-input"
                                          Text="{Binding TerminalInput, Mode=TwoWay}"
                                          Watermark="Type a command and press Enter..."
                                          KeyDown="OnTerminalInputKeyDown" />
@@ -741,7 +741,7 @@
             </Grid>
         </Grid>
 
-        <DockPanel Name="SimulationLayer" IsVisible="{Binding IsSimulationMode}"
+        <DockPanel IsVisible="{Binding IsSimulationMode}"
                    Background="{DynamicResource BackgroundBrush}">
             <Border DockPanel.Dock="Top" Classes="simulation-header">
                 <Grid ColumnDefinitions="Auto,Auto,Auto,*,Auto">
@@ -763,7 +763,7 @@
             <views:SimulationPanel Name="SimulationView" DataContext="{Binding Simulation}" />
         </DockPanel>
 
-        <DockPanel Name="ChallengeLayer" IsVisible="{Binding IsChallengeMode}"
+        <DockPanel IsVisible="{Binding IsChallengeMode}"
                    Background="{DynamicResource BackgroundBrush}">
             <Border DockPanel.Dock="Top" Classes="simulation-header">
                 <Grid ColumnDefinitions="Auto,Auto,Auto,Auto,*,Auto,Auto,Auto">

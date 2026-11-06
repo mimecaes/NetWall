@@ -6,18 +6,14 @@ namespace NetWall.IDE.Converters;
 
 public sealed class NullToBoolConverter : IValueConverter
 {
-    public static readonly NullToBoolConverter IsNotNull = new(true);
-    public static readonly NullToBoolConverter IsNull = new(false);
+    public static readonly NullToBoolConverter IsNotNull = new();
 
-    private readonly bool _returnTrueWhenNotNull;
-
-    private NullToBoolConverter(bool returnTrueWhenNotNull)
+    private NullToBoolConverter()
     {
-        _returnTrueWhenNotNull = returnTrueWhenNotNull;
     }
 
     public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
-        => (value is not null) == _returnTrueWhenNotNull;
+        => value is not null;
 
     public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
         => throw new NotSupportedException();

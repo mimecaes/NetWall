@@ -705,24 +705,6 @@ public partial class MainViewModel : ViewModelBase
         return relative == "." ? RootName : relative.Replace('\\', '/');
     }
 
-    private static FileTreeNode? FindNode(ObservableCollection<FileTreeNode> nodes, string fullPath)
-    {
-        foreach (var node in nodes)
-        {
-            if (!node.IsFolder && string.Equals(node.FullPath, fullPath, StringComparison.OrdinalIgnoreCase))
-            {
-                return node;
-            }
-
-            if (node.IsFolder && FindNode(node.Children, fullPath) is { } found)
-            {
-                return found;
-            }
-        }
-
-        return null;
-    }
-
     private static string UniqueFileName(string directory, string baseName, string extension)
     {
         var fileName = baseName + extension;
@@ -974,17 +956,6 @@ public partial class MainViewModel : ViewModelBase
         }
 
         SaveTab(SelectedTab);
-    }
-
-    [RelayCommand]
-    private void SaveAs()
-    {
-        if (SelectedTab is null)
-        {
-            return;
-        }
-
-        RequestSaveAs?.Invoke(SelectedTab);
     }
 
     private bool CanSaveAll() => DirtyTabCount > 0;
