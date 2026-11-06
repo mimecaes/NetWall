@@ -68,4 +68,13 @@ public static class FileSystemExplorer
 
         return result;
     }
+
+    public static void MarkMainFiles(IEnumerable<FileTreeNode> nodes, IReadOnlySet<string> mainFiles)
+    {
+        foreach (var node in nodes)
+        {
+            node.IsMain = !node.IsFolder && mainFiles.Contains(node.FullPath);
+            MarkMainFiles(node.Children, mainFiles);
+        }
+    }
 }

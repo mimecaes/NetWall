@@ -188,6 +188,7 @@ public partial class MainViewModel : ViewModelBase
     public SimulationViewModel Simulation { get; } = new();
 
     private string? _simulationFile;
+    private int _mainFileSearch;
     private int _simulationRun;
 
     [ObservableProperty]
@@ -558,6 +559,8 @@ public partial class MainViewModel : ViewModelBase
                 }
             }
         }
+
+        UpdateMainFileMarks();
     }
 
     [RelayCommand]
@@ -603,6 +606,7 @@ public partial class MainViewModel : ViewModelBase
         }
 
         (node.Parent?.Children ?? RootNodes).Remove(node);
+        UpdateMainFileMarks();
 
         var prefix = node.FullPath + Path.DirectorySeparatorChar;
         var tabsToClose = OpenTabs
@@ -835,6 +839,7 @@ public partial class MainViewModel : ViewModelBase
         IsFolderOpen = true;
         _terminal = new TerminalSession(path);
         AddRecentProject(path);
+        UpdateMainFileMarks();
     }
 
     public void OpenNode(FileTreeNode? node)
@@ -942,6 +947,7 @@ public partial class MainViewModel : ViewModelBase
             tab.Title = Path.GetFileName(path);
             tab.IsDirty = false;
             AppendTerminalLine($"Saved '{path}'.");
+            UpdateMainFileMarks();
         }
         catch (Exception ex)
         {
@@ -1074,6 +1080,21 @@ public partial class MainViewModel : ViewModelBase
         return string.IsNullOrEmpty(directory)
             ? []
             : await Task.Run(() => MainFileFinder.Find(directory, IsFolderOpen));
+    }
+
+    private async void UpdateMainFileMarks()
+    {
+        if (!IsFolderOpen)
+        {
+            return;
+        }
+
+        var run = ++_mainFileSearch;
+        var candidates = await FindMainCandidatesAsync();
+        if (run == _mainFileSearch)
+        {
+            FileSystemExplorer.MarkMainFiles(RootNodes, candidates.ToHashSet(StringComparer.OrdinalIgnoreCase));
+        }
     }
 
     private IEnumerable<string> RelativeToProject(IEnumerable<string> paths) =>

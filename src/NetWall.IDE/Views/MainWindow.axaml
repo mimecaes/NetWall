@@ -392,7 +392,7 @@
                                             </controls:AnimatedIcon.Kind>
                                         </controls:AnimatedIcon>
 
-                                        <Grid ColumnDefinitions="Auto,Auto" VerticalAlignment="Center">
+                                        <Grid ColumnDefinitions="Auto,Auto,Auto" VerticalAlignment="Center">
                                             <TextBlock Grid.Column="0" Text="{Binding Name}" IsVisible="{Binding !IsEditing}"
                                                        Classes="tree-name"
                                                        Foreground="{DynamicResource TextPrimaryBrush}" FontSize="13" VerticalAlignment="Center" />
@@ -402,6 +402,10 @@
                                             <Ellipse Grid.Column="1" Width="6" Height="6" Margin="6,0,0,0"
                                                      Fill="{DynamicResource TextPrimaryBrush}" VerticalAlignment="Center"
                                                      IsVisible="{Binding IsDirty}" />
+                                            <controls:AnimatedIcon Grid.Column="2" Classes="icon-sm" Kind="Star" Margin="6,0,0,0"
+                                                                   Stroke="{DynamicResource AccentBrush}" VerticalAlignment="Center"
+                                                                   IsVisible="{Binding IsMain}"
+                                                                   ToolTip.Tip="Archivo principal" />
                                         </Grid>
 
                                         <StackPanel.ContextMenu>
