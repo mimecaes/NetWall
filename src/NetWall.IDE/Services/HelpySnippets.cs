@@ -62,6 +62,19 @@ public static partial class HelpySnippets
             "}"),
         ["mostrar"] = ("Presiona Tab para imprimir un mensaje.",
             "mostrar(\"${mensaje|Lo que quieres ver en la salida. Agrega más valores separados por coma, como tamano(red_oficina).}\");"),
+        ["importar"] = ("Presiona Tab para usar las reglas y variables de otro archivo.",
+            "importar \"${archivo.nw|La ruta del archivo, relativa a este. Las importaciones van al inicio y ese archivo no puede tener principal.}\";"),
+        ["principal"] = ("Presiona Tab para crear el punto de entrada del programa.",
+            "principal {\n" +
+            "    politica_defecto = ${bloquear|Lo que pasa con el tráfico que no coincide con ninguna regla: bloquear o permitir.};\n" +
+            "}"),
+        ["simular"] = ("Presiona Tab para probar un paquete contra tus reglas. Va dentro de principal.",
+            "simular ${paquete|Un nombre para identificar la prueba.} {\n" +
+            "    protocolo = ${tcp|El protocolo del paquete: tcp o udp.},\n" +
+            "    puerto = ${80|El puerto al que va el paquete, entre 0 y 65535.},\n" +
+            "    origen = \"${192.168.1.5|La dirección IP que envía el paquete.}\",\n" +
+            "    destino = \"${10.0.0.10|La dirección IP que recibe el paquete.}\"\n" +
+            "};"),
         ["Red"] = ("Presiona Tab para crear una red.",
             "Red ${nombre|El nombre de la red, como oficina o servidores.} = " +
             "\"${192.168.1.0/24|La red en formato CIDR: dirección/prefijo. Un /24 tiene 256 direcciones.}\";"),

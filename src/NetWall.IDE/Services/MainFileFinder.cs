@@ -42,7 +42,7 @@ public static class MainFileFinder
         return false;
     }
 
-    private static bool HasMainBlock(string path)
+    public static bool HasMainBlock(string path)
     {
         try
         {

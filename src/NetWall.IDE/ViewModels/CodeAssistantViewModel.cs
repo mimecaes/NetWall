@@ -55,7 +55,8 @@ public partial class CodeAssistantViewModel : ViewModelBase
     private bool _touched;
 
     private readonly HashSet<string> _importedPaths = [];
-    private readonly bool _hasMainBlock;
+    private readonly bool _fileHasMainBlock;
+    private readonly bool _projectHasMainBlock;
 
     public CodeAssistantViewModel() : this(null, null, string.Empty)
     {
@@ -64,7 +65,8 @@ public partial class CodeAssistantViewModel : ViewModelBase
     public CodeAssistantViewModel(string? currentFile, string? projectRoot, string documentText)
     {
         ScanDocument(documentText);
-        _hasMainBlock = _keywords.Contains("principal");
+        _fileHasMainBlock = MainFileFinder.ContainsMainBlock(documentText);
+        _projectHasMainBlock = _fileHasMainBlock || OtherFileHasMainBlock(currentFile, projectRoot);
         ImportFiles = FindImportFiles(currentFile, projectRoot);
 
         var networks = new Dictionary<string, string>();
@@ -259,8 +261,8 @@ public partial class CodeAssistantViewModel : ViewModelBase
             case AssistantKind.Import:
                 ValidateImport(errors);
                 break;
-            case AssistantKind.Main when _hasMainBlock:
-                errors.Add("el archivo ya tiene un bloque principal");
+            case AssistantKind.Main when _projectHasMainBlock:
+                errors.Add("el proyecto ya tiene un bloque principal");
                 break;
         }
 
@@ -417,11 +419,11 @@ public partial class CodeAssistantViewModel : ViewModelBase
     private List<HelpySuggestion> FindSuggestions(string text)
     {
         var suggestions = new List<HelpySuggestion>();
-        if (!_hasMainBlock)
+        if (!_projectHasMainBlock)
         {
             suggestions.Add(new HelpySuggestion("Agrega el bloque principal", AssistantKind.Main));
         }
-        else if (!_keywords.Contains("simular"))
+        else if (_fileHasMainBlock && !_keywords.Contains("simular"))
         {
             suggestions.Add(new HelpySuggestion("Prueba tus reglas con un paquete", AssistantKind.Packet));
         }
@@ -486,6 +488,14 @@ public partial class CodeAssistantViewModel : ViewModelBase
         return false;
     }
 
+    // The editor may hold unsaved text, so the search on disk skips the current file.
+    private static bool OtherFileHasMainBlock(string? currentFile, string? projectRoot)
+    {
+        var folder = projectRoot ?? Path.GetDirectoryName(currentFile);
+        return !string.IsNullOrEmpty(folder) && MainFileFinder.Find(folder, projectRoot is not null)
+            .Any(file => !string.Equals(file, currentFile, StringComparison.OrdinalIgnoreCase));
+    }
+
     private static IReadOnlyList<string> FindImportFiles(string? currentFile, string? projectRoot)
     {
         var folder = Path.GetDirectoryName(currentFile);
@@ -497,6 +507,7 @@ public partial class CodeAssistantViewModel : ViewModelBase
         var root = projectRoot is not null && Directory.Exists(projectRoot) ? projectRoot : folder;
         return Directory.EnumerateFiles(root, "*.nw", SearchOption.AllDirectories)
             .Where(file => !string.Equals(Path.GetFullPath(file), Path.GetFullPath(currentFile), StringComparison.OrdinalIgnoreCase))
+            .Where(file => !MainFileFinder.HasMainBlock(file))
             .Select(file => Path.GetRelativePath(folder, file).Replace('\\', '/'))
             .Order()
             .ToList();
