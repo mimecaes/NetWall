@@ -55,6 +55,7 @@ public sealed class TerminalSession
         };
 
         // The output panel renders ANSI colors, so ask tools for them, and use UTF-8 end to end.
+        startInfo.Environment.Remove("NO_COLOR");
         startInfo.Environment["FORCE_COLOR"] = "1";
         startInfo.Environment["PYTHONIOENCODING"] = "utf-8";
         if (isWindows)

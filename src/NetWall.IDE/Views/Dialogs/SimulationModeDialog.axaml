@@ -218,7 +218,7 @@
                         <StackPanel Grid.Column="1" Margin="12,0,0,0" VerticalAlignment="Center" Spacing="2">
                             <TextBlock Classes="mode-title" Text="Simular el programa completo" />
                             <TextBlock Name="ProgramHint" Classes="mode-hint"
-                                       Text="Usa las reglas y los paquetes de simular del archivo abierto." />
+                                       Text="Usa las reglas y los paquetes de simular de tu programa." />
                         </StackPanel>
                     </Grid>
                 </Button>
@@ -232,7 +232,7 @@
                         <StackPanel Grid.Column="1" Margin="12,0,0,0" VerticalAlignment="Center" Spacing="2">
                             <TextBlock Classes="mode-title" Text="Simular ciertas reglas" />
                             <TextBlock Name="RulesHint" Classes="mode-hint"
-                                       Text="Elige reglas y arma tu propia red con las redes del archivo." />
+                                       Text="Elige reglas y arma tu propia red con las redes de tu programa." />
                         </StackPanel>
                     </Grid>
                 </Button>
