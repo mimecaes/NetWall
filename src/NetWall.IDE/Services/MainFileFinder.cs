@@ -19,6 +19,11 @@ public static class MainFileFinder
 
     public static bool ContainsMainBlock(string source)
     {
+        if (!source.Contains(MainKeyword, StringComparison.Ordinal))
+        {
+            return false;
+        }
+
         var afterMainKeyword = false;
         foreach (var line in source.Split('\n'))
         {

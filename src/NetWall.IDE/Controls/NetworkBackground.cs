@@ -2,6 +2,7 @@ using System;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Media;
+using Avalonia.Media.Immutable;
 using Avalonia.Threading;
 
 namespace NetWall.IDE.Controls;
@@ -10,10 +11,13 @@ public sealed class NetworkBackground : Control
 {
     private const int NodeCount = 34;
     private const double LinkDistance = 150;
+    private const int MaxLinkAlpha = 70;
 
     private readonly DispatcherTimer _timer = new() { Interval = TimeSpan.FromMilliseconds(33) };
     private readonly Point[] _positions = new Point[NodeCount];
     private readonly Vector[] _velocities = new Vector[NodeCount];
+    private readonly ImmutablePen?[] _linkPens = new ImmutablePen?[MaxLinkAlpha + 1];
+    private Color _linkColor;
 
     public NetworkBackground()
     {
@@ -74,18 +78,29 @@ public sealed class NetworkBackground : Control
                 var distance = Point.Distance(points[i], points[j]);
                 if (distance < LinkDistance)
                 {
-                    var alpha = (byte)(70 * (1 - distance / LinkDistance));
-                    context.DrawLine(new Pen(new SolidColorBrush(Color.FromArgb(alpha, accent.R, accent.G, accent.B)), 1),
-                        points[i], points[j]);
+                    var alpha = (byte)(MaxLinkAlpha * (1 - distance / LinkDistance));
+                    context.DrawLine(LinkPen(accent, alpha), points[i], points[j]);
                 }
             }
         }
 
-        var node = new SolidColorBrush(Color.FromArgb(120, accent.R, accent.G, accent.B));
+        var node = new ImmutableSolidColorBrush(Color.FromArgb(120, accent.R, accent.G, accent.B));
         foreach (var point in points)
         {
             context.DrawEllipse(node, null, point, 2.2, 2.2);
         }
+    }
+
+    private ImmutablePen LinkPen(Color accent, byte alpha)
+    {
+        if (accent != _linkColor)
+        {
+            _linkColor = accent;
+            Array.Clear(_linkPens);
+        }
+
+        return _linkPens[alpha] ??=
+            new ImmutablePen(new ImmutableSolidColorBrush(Color.FromArgb(alpha, accent.R, accent.G, accent.B)), 1);
     }
 
     private void Step()

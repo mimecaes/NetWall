@@ -82,7 +82,7 @@ public partial class MainViewModel : ViewModelBase
     {
         get
         {
-            var search = ExtensionSearchText.ToLowerInvariant();
+            var search = ExtensionSearchText;
             return Extensions.Where(e =>
                 e.Name.Contains(search, StringComparison.OrdinalIgnoreCase) ||
                 e.Description.Contains(search, StringComparison.OrdinalIgnoreCase)
@@ -935,10 +935,18 @@ public partial class MainViewModel : ViewModelBase
 
     public void SaveTab(EditorTabViewModel tab, string? pathOverride = null)
     {
+        if (WriteTab(tab, pathOverride))
+        {
+            UpdateMainFileMarks();
+        }
+    }
+
+    private bool WriteTab(EditorTabViewModel tab, string? pathOverride = null)
+    {
         var path = pathOverride ?? tab.FilePath;
         if (string.IsNullOrEmpty(path))
         {
-            return;
+            return false;
         }
 
         try
@@ -948,11 +956,12 @@ public partial class MainViewModel : ViewModelBase
             tab.FilePath = path;
             tab.Title = Path.GetFileName(path);
             AppendTerminalLine($"Saved '{path}'.");
-            UpdateMainFileMarks();
+            return true;
         }
         catch (Exception ex)
         {
             AppendTerminalLine($"Failed to save '{path}': {ex.Message}", TerminalLineKind.Error);
+            return false;
         }
     }
 
@@ -980,6 +989,7 @@ public partial class MainViewModel : ViewModelBase
     [RelayCommand(CanExecute = nameof(CanSaveAll))]
     private void SaveAll()
     {
+        var saved = false;
         foreach (var tab in OpenTabs.Where(t => t.IsDirty))
         {
             if (string.IsNullOrEmpty(tab.FilePath))
@@ -988,8 +998,13 @@ public partial class MainViewModel : ViewModelBase
             }
             else
             {
-                SaveTab(tab);
+                saved |= WriteTab(tab);
             }
+        }
+
+        if (saved)
+        {
+            UpdateMainFileMarks();
         }
     }
 
@@ -1090,7 +1105,12 @@ public partial class MainViewModel : ViewModelBase
         var modified = OpenTabs.Where(t => t.IsDirty && !string.IsNullOrEmpty(t.FilePath)).ToList();
         foreach (var tab in modified)
         {
-            SaveTab(tab);
+            WriteTab(tab);
+        }
+
+        if (modified.Count > 0)
+        {
+            UpdateMainFileMarks();
         }
 
         return !modified.Any(t => t.IsDirty);
@@ -1102,9 +1122,10 @@ public partial class MainViewModel : ViewModelBase
     private async Task<List<string>> FindMainCandidatesAsync()
     {
         var directory = ProjectDirectory;
+        var recursive = IsFolderOpen;
         return string.IsNullOrEmpty(directory)
             ? []
-            : await Task.Run(() => MainFileFinder.Find(directory, IsFolderOpen));
+            : await Task.Run(() => MainFileFinder.Find(directory, recursive));
     }
 
     private async void UpdateMainFileMarks()

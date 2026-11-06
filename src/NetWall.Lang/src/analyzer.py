@@ -1,4 +1,4 @@
-from typing import List, Optional, Set, Tuple
+from typing import Dict, List, Optional, Set, Tuple
 
 from errors import Diagnostic, lineReference
 from nodes import Network, Port, Program, Rule
@@ -23,11 +23,11 @@ def networkCovers(outer: Optional[Network], inner: Optional[Network]) -> bool:
     return inner.mask >= outer.mask and networkContains(outer, inner)
 
 
-def covers(outer: Rule, inner: Rule) -> bool:
+def covers(outer: Rule, inner: Rule, bounds: Dict[int, Tuple[int, int]]) -> bool:
     if outer.protocol is not None and outer.protocol != inner.protocol:
         return False
-    outerLow, outerHigh = portBounds(outer.port)
-    innerLow, innerHigh = portBounds(inner.port)
+    outerLow, outerHigh = bounds[id(outer)]
+    innerLow, innerHigh = bounds[id(inner)]
     if not outerLow <= innerLow <= innerHigh <= outerHigh:
         return False
     return networkCovers(outer.source, inner.source) and networkCovers(outer.destination, inner.destination)
@@ -37,11 +37,11 @@ def networksOverlap(first: Optional[Network], second: Optional[Network]) -> bool
     return networkCovers(first, second) or networkCovers(second, first)
 
 
-def overlaps(first: Rule, second: Rule) -> bool:
+def overlaps(first: Rule, second: Rule, bounds: Dict[int, Tuple[int, int]]) -> bool:
     if first.protocol is not None and second.protocol is not None and first.protocol != second.protocol:
         return False
-    firstLow, firstHigh = portBounds(first.port)
-    secondLow, secondHigh = portBounds(second.port)
+    firstLow, firstHigh = bounds[id(first)]
+    secondLow, secondHigh = bounds[id(second)]
     if max(firstLow, secondLow) > min(firstHigh, secondHigh):
         return False
     return networksOverlap(first.source, second.source) and networksOverlap(first.destination, second.destination)
@@ -51,9 +51,9 @@ def plural(count: int, singular: str, pluralForm: str) -> str:
     return f"{count} {singular if count == 1 else pluralForm}"
 
 
-def findCovering(rules: List[Rule], rule: Rule) -> Optional[Rule]:
+def findCovering(rules: List[Rule], rule: Rule, bounds: Dict[int, Tuple[int, int]]) -> Optional[Rule]:
     for earlier in rules:
-        if covers(earlier, rule):
+        if covers(earlier, rule, bounds):
             return earlier
     return None
 
@@ -61,11 +61,12 @@ def findCovering(rules: List[Rule], rule: Rule) -> Optional[Rule]:
 def analyze(program: Program) -> List[Diagnostic]:
     diagnostics: List[Diagnostic] = []
     neverApplied: Set[int] = set()
+    bounds = {id(rule): portBounds(rule.port) for rule in program.rules}
 
     for index, rule in enumerate(program.rules):
         earlierRules = program.rules[:index]
 
-        covering = findCovering(earlierRules, rule)
+        covering = findCovering(earlierRules, rule, bounds)
         if covering is not None:
             if covering.action != rule.action:
                 type = "advertencia_alcanzabilidad"
@@ -80,7 +81,7 @@ def analyze(program: Program) -> List[Diagnostic]:
         conflicts = [
             earlier for earlierIndex, earlier in enumerate(earlierRules)
             if earlierIndex not in neverApplied and earlier.action != rule.action
-            and overlaps(earlier, rule) and not covers(rule, earlier)
+            and overlaps(earlier, rule, bounds) and not covers(rule, earlier, bounds)
         ]
         if conflicts:
             first = conflicts[0]

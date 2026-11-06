@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using Avalonia;
 using Avalonia.Media;
+using Avalonia.Media.Immutable;
 using AvaloniaEdit;
 using AvaloniaEdit.Rendering;
 
@@ -33,7 +34,7 @@ public sealed class IndentRainbowRenderer : IBackgroundRenderer
         for (var i = 0; i < Colors.Length; i++)
         {
             var c = Colors[i];
-            brushes[i] = new SolidColorBrush(Color.FromArgb((byte)(BaseAlpha * Opacity), c.R, c.G, c.B));
+            brushes[i] = new ImmutableSolidColorBrush(Color.FromArgb((byte)(BaseAlpha * Opacity), c.R, c.G, c.B));
         }
 
         var document = textView.Document;
@@ -42,6 +43,11 @@ public sealed class IndentRainbowRenderer : IBackgroundRenderer
         foreach (var visualLine in textView.VisualLines)
         {
             var line = visualLine.FirstDocumentLine;
+            if (line.Length == 0 || document.GetCharAt(line.Offset) is not (' ' or '\t'))
+            {
+                continue;
+            }
+
             var text = document.GetText(line);
             var boundaries = new List<int> { 1 };
             var visualWidth = 0;
