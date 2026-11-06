@@ -131,9 +131,20 @@ public partial class MainViewModel : ViewModelBase
 
     private void OnTabPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
-        if (e.PropertyName == nameof(EditorTabViewModel.IsDirty))
+        if (e.PropertyName != nameof(EditorTabViewModel.IsDirty) || sender is not EditorTabViewModel tab)
         {
-            RecomputeDirtyState();
+            return;
+        }
+
+        RecomputeDirtyState();
+        SetNodeDirty(tab.FilePath, tab.IsDirty);
+    }
+
+    private void SetNodeDirty(string? path, bool isDirty)
+    {
+        if (path is not null && FindNode(RootNodes, path) is { } node)
+        {
+            node.IsDirty = isDirty;
         }
     }
 
@@ -547,6 +558,8 @@ public partial class MainViewModel : ViewModelBase
             {
                 node.Children.Add(child);
             }
+
+            MoveTabs(oldPath, newPath);
         }
         else
         {
@@ -563,6 +576,21 @@ public partial class MainViewModel : ViewModelBase
         }
 
         UpdateMainFileMarks();
+    }
+
+    private void MoveTabs(string oldFolder, string newFolder)
+    {
+        var prefix = oldFolder + Path.DirectorySeparatorChar;
+        foreach (var tab in OpenTabs)
+        {
+            if (tab.FilePath is { } path && path.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
+            {
+                tab.FilePath = Path.Combine(newFolder, path[prefix.Length..]);
+                SetNodeDirty(tab.FilePath, tab.IsDirty);
+            }
+        }
+
+        OnPropertyChanged(nameof(StatusBarPath));
     }
 
     [RelayCommand]
@@ -854,20 +882,8 @@ public partial class MainViewModel : ViewModelBase
 
         var tab = new EditorTabViewModel { Title = node.Name, FilePath = node.FullPath };
         tab.LoadContent(text);
-        WireDirtyTracking(tab, node);
         OpenTabs.Add(tab);
         SelectTab(tab);
-    }
-
-    private void WireDirtyTracking(EditorTabViewModel tab, FileTreeNode node)
-    {
-        tab.PropertyChanged += (_, e) =>
-        {
-            if (e.PropertyName == nameof(EditorTabViewModel.IsDirty))
-            {
-                node.IsDirty = tab.IsDirty;
-            }
-        };
     }
 
     [RelayCommand]
@@ -903,6 +919,7 @@ public partial class MainViewModel : ViewModelBase
 
         var wasSelected = SelectedTab == tab;
         OpenTabs.RemoveAt(index);
+        SetNodeDirty(tab.FilePath, false);
 
         if (!wasSelected)
         {
@@ -927,9 +944,9 @@ public partial class MainViewModel : ViewModelBase
         try
         {
             File.WriteAllText(path, tab.Content);
+            tab.IsDirty = false;
             tab.FilePath = path;
             tab.Title = Path.GetFileName(path);
-            tab.IsDirty = false;
             AppendTerminalLine($"Saved '{path}'.");
             UpdateMainFileMarks();
         }

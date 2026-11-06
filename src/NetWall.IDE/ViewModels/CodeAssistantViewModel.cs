@@ -76,7 +76,7 @@ public partial class CodeAssistantViewModel : ViewModelBase
             var path = Path.Combine(Path.GetDirectoryName(currentFile) ?? string.Empty, imported);
             if (currentFile is not null && File.Exists(path))
             {
-                CollectNetworks(File.ReadAllText(path), networks);
+                CollectImportedNetworks(path, networks);
             }
         }
 
@@ -472,6 +472,17 @@ public partial class CodeAssistantViewModel : ViewModelBase
         }
     }
 
+    private static void CollectImportedNetworks(string path, Dictionary<string, string> networks)
+    {
+        try
+        {
+            CollectNetworks(File.ReadAllText(path), networks);
+        }
+        catch (Exception e) when (e is UnauthorizedAccessException or IOException)
+        {
+        }
+    }
+
     private static bool IsHostVariable(string name, Dictionary<string, string> networks)
     {
         var visited = new HashSet<string>();
@@ -505,7 +516,8 @@ public partial class CodeAssistantViewModel : ViewModelBase
         }
 
         var root = projectRoot is not null && Directory.Exists(projectRoot) ? projectRoot : folder;
-        return Directory.EnumerateFiles(root, "*.nw", SearchOption.AllDirectories)
+        var options = new EnumerationOptions { RecurseSubdirectories = true, AttributesToSkip = 0 };
+        return Directory.EnumerateFiles(root, "*.nw", options)
             .Where(file => !string.Equals(Path.GetFullPath(file), Path.GetFullPath(currentFile), StringComparison.OrdinalIgnoreCase))
             .Where(file => !MainFileFinder.HasMainBlock(file))
             .Select(file => Path.GetRelativePath(folder, file).Replace('\\', '/'))
