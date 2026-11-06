@@ -188,6 +188,7 @@ public partial class MainViewModel : ViewModelBase
     public SimulationViewModel Simulation { get; } = new();
 
     private string? _simulationFile;
+    private int _mainFileSearch;
     private int _simulationRun;
 
     [ObservableProperty]
@@ -214,28 +215,30 @@ public partial class MainViewModel : ViewModelBase
         IsChallengeMode = false;
     }
 
-    public string? SimulationProblem => CanSimulateProgram ? null
-        : SelectedTab is null ? "No tienes ningún archivo abierto."
-        : $"«{SelectedTab.Title}» no es un archivo de NetWall.";
-
-    public bool CanSimulateProgram => SelectedTab?.FilePath is { } path
-        && string.Equals(Path.GetExtension(path), ".nw", StringComparison.OrdinalIgnoreCase);
-
-    public async Task<SimulationResult?> RunProgramSimulationAsync()
+    public async Task<string?> PrepareSimulationAsync()
     {
-        if (SelectedTab is not { FilePath: { } path } tab || FindNetWallCliPath() is not { } cliPath)
+        _simulationFile = null;
+        if (!SaveModifiedFiles())
         {
+            return "no se pudieron guardar los archivos modificados";
+        }
+
+        var candidates = await FindMainCandidatesAsync();
+        if (candidates.Count == 1)
+        {
+            _simulationFile = candidates[0];
             return null;
         }
 
-        if (tab.IsDirty)
-        {
-            SaveTab(tab);
-        }
-
-        _simulationFile = path;
-        return await SimulationRunner.RunAsync(cliPath, path);
+        return candidates.Count == 0
+            ? ProjectDiagnostics.NoMainFileMessage
+            : ProjectDiagnostics.SeveralMainFilesMessage(RelativeToProject(candidates));
     }
+
+    public async Task<SimulationResult?> RunProgramSimulationAsync() =>
+        _simulationFile is { } path && FindNetWallCliPath() is { } cliPath
+            ? await SimulationRunner.RunAsync(cliPath, path)
+            : null;
 
     private async void OnSimulationPacketRequested(SimulatedPacket request)
     {
@@ -274,13 +277,13 @@ public partial class MainViewModel : ViewModelBase
     public void ShowProgramSimulation(SimulationResult? result)
     {
         Simulation.ModeTitle = "Programa completo";
-        Simulation.Load(result, SelectedTab?.Title ?? string.Empty);
+        Simulation.Load(result, Path.GetFileName(_simulationFile) ?? string.Empty);
     }
 
     public void ShowNetworkBuilder(SimulationResult? result)
     {
         Simulation.ModeTitle = "Red propia";
-        Simulation.LoadBuilder(result, SelectedTab?.Title ?? string.Empty);
+        Simulation.LoadBuilder(result, Path.GetFileName(_simulationFile) ?? string.Empty);
     }
 
     public void ExitSimulationMode()
@@ -556,6 +559,8 @@ public partial class MainViewModel : ViewModelBase
                 }
             }
         }
+
+        UpdateMainFileMarks();
     }
 
     [RelayCommand]
@@ -601,6 +606,7 @@ public partial class MainViewModel : ViewModelBase
         }
 
         (node.Parent?.Children ?? RootNodes).Remove(node);
+        UpdateMainFileMarks();
 
         var prefix = node.FullPath + Path.DirectorySeparatorChar;
         var tabsToClose = OpenTabs
@@ -833,6 +839,7 @@ public partial class MainViewModel : ViewModelBase
         IsFolderOpen = true;
         _terminal = new TerminalSession(path);
         AddRecentProject(path);
+        UpdateMainFileMarks();
     }
 
     public void OpenNode(FileTreeNode? node)
@@ -940,6 +947,7 @@ public partial class MainViewModel : ViewModelBase
             tab.Title = Path.GetFileName(path);
             tab.IsDirty = false;
             AppendTerminalLine($"Saved '{path}'.");
+            UpdateMainFileMarks();
         }
         catch (Exception ex)
         {
@@ -1007,46 +1015,36 @@ public partial class MainViewModel : ViewModelBase
     private bool CanOpenCodeAssistant() => SelectedTab?.Language == "NetWall";
 
     [RelayCommand]
-    private async Task RunActiveFileAsync()
+    private Task CompileProjectAsync() => RunProjectAsync("compilar");
+
+    [RelayCommand]
+    private Task RunProgramAsync() => RunProjectAsync("ejecutar");
+
+    private async Task RunProjectAsync(string mode)
     {
-        if (SelectedTab is null)
-        {
-            AppendTerminalLine("No active file to run.");
-            return;
-        }
-
-        if (string.IsNullOrEmpty(SelectedTab.FilePath))
-        {
-            AppendTerminalLine("Save the file before running it.");
-            return;
-        }
-
-        if (SelectedTab.IsDirty)
-        {
-            SaveTab(SelectedTab);
-        }
-
         IsTerminalVisible = true;
-        _terminal ??= new TerminalSession(Path.GetDirectoryName(SelectedTab.FilePath) ?? RootPath);
-
-        string command;
-        if (string.Equals(Path.GetExtension(SelectedTab.FilePath), ".nw", StringComparison.OrdinalIgnoreCase))
+        if (!SaveModifiedFiles())
         {
-            var cliPath = FindNetWallCliPath();
-            if (cliPath is null)
-            {
-                AppendTerminalLine("No se encontró cli.py de NetWall.Lang.", TerminalLineKind.Error);
-                return;
-            }
-
-            command = $"python \"{cliPath}\" ejecutar \"{SelectedTab.FilePath}\"";
-        }
-        else
-        {
-            command = $"\"{SelectedTab.FilePath}\"";
+            return;
         }
 
-        var block = new TerminalRunBlock(SelectedTab.Title, command);
+        var mainFile = await FindMainFileAsync(mode);
+        if (mainFile is null)
+        {
+            return;
+        }
+
+        var cliPath = FindNetWallCliPath();
+        if (cliPath is null)
+        {
+            AppendTerminalLine("No se encontró cli.py de NetWall.Lang.", TerminalLineKind.Error);
+            return;
+        }
+
+        _terminal ??= new TerminalSession(Path.GetDirectoryName(mainFile) ?? RootPath);
+
+        var command = $"python \"{cliPath}\" {mode} \"{mainFile}\"";
+        var block = new TerminalRunBlock(Path.GetFileName(mainFile), command);
         TerminalEntries.Add(block);
         TerminalUpdated?.Invoke();
 
@@ -1059,6 +1057,74 @@ public partial class MainViewModel : ViewModelBase
 
         block.Duration = stopwatch.Elapsed;
         block.Status = result.ExitCode == 0 ? RunStatus.Succeeded : RunStatus.Failed;
+        TerminalUpdated?.Invoke();
+    }
+
+    private bool SaveModifiedFiles()
+    {
+        var modified = OpenTabs.Where(t => t.IsDirty && !string.IsNullOrEmpty(t.FilePath)).ToList();
+        foreach (var tab in modified)
+        {
+            SaveTab(tab);
+        }
+
+        return !modified.Any(t => t.IsDirty);
+    }
+
+    // Without an open folder the project is the folder of the active file, not its subfolders.
+    private string? ProjectDirectory => IsFolderOpen ? RootPath : Path.GetDirectoryName(SelectedTab?.FilePath);
+
+    private async Task<List<string>> FindMainCandidatesAsync()
+    {
+        var directory = ProjectDirectory;
+        return string.IsNullOrEmpty(directory)
+            ? []
+            : await Task.Run(() => MainFileFinder.Find(directory, IsFolderOpen));
+    }
+
+    private async void UpdateMainFileMarks()
+    {
+        if (!IsFolderOpen)
+        {
+            return;
+        }
+
+        var run = ++_mainFileSearch;
+        var candidates = await FindMainCandidatesAsync();
+        if (run == _mainFileSearch)
+        {
+            FileSystemExplorer.MarkMainFiles(RootNodes, candidates.ToHashSet(StringComparer.OrdinalIgnoreCase));
+        }
+    }
+
+    private IEnumerable<string> RelativeToProject(IEnumerable<string> paths) =>
+        paths.Select(path => Path.GetRelativePath(ProjectDirectory!, path));
+
+    private async Task<string?> FindMainFileAsync(string mode)
+    {
+        var candidates = await FindMainCandidatesAsync();
+        if (candidates.Count == 1)
+        {
+            return candidates[0];
+        }
+
+        var diagnostic = candidates.Count == 0
+            ? ProjectDiagnostics.NoMainFile()
+            : ProjectDiagnostics.SeveralMainFiles(RelativeToProject(candidates));
+        ReportCompilationFailure(diagnostic, mode);
+        return null;
+    }
+
+    private void ReportCompilationFailure(string diagnostic, string mode)
+    {
+        var name = IsFolderOpen ? RootName : SelectedTab?.Title ?? mode;
+        var block = new TerminalRunBlock(name, mode)
+        {
+            Duration = TimeSpan.Zero,
+            Status = RunStatus.Failed,
+        };
+        block.Lines.Add(new TerminalLine(TerminalLineKind.Output, diagnostic));
+        TerminalEntries.Add(block);
         TerminalUpdated?.Invoke();
     }
 

@@ -24,6 +24,9 @@ public partial class FileTreeNode : ObservableObject
     public partial bool IsDirty { get; set; }
 
     [ObservableProperty]
+    public partial bool IsMain { get; set; }
+
+    [ObservableProperty]
     public partial bool IsEditing { get; set; }
 
     [ObservableProperty]

@@ -11,6 +11,8 @@ public static class FileSystemExplorer
 {
     private static readonly string[] ExcludedNames = [".git", "bin", "obj", "node_modules"];
 
+    public static bool IsExcluded(string name) => ExcludedNames.Contains(name);
+
     public static List<FileTreeNode> BuildChildren(string directoryPath, FileTreeNode? parent = null, int level = 0)
     {
         var result = new List<FileTreeNode>();
@@ -32,7 +34,7 @@ public static class FileSystemExplorer
         foreach (var directory in directories)
         {
             var name = Path.GetFileName(directory);
-            if (ExcludedNames.Contains(name))
+            if (IsExcluded(name))
             {
                 continue;
             }
@@ -65,5 +67,14 @@ public static class FileSystemExplorer
         }
 
         return result;
+    }
+
+    public static void MarkMainFiles(IEnumerable<FileTreeNode> nodes, IReadOnlySet<string> mainFiles)
+    {
+        foreach (var node in nodes)
+        {
+            node.IsMain = !node.IsFolder && mainFiles.Contains(node.FullPath);
+            MarkMainFiles(node.Children, mainFiles);
+        }
     }
 }

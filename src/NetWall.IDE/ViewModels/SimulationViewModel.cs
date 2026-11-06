@@ -308,7 +308,9 @@ public partial class SimulationViewModel : ViewModelBase
         get
         {
             var allowed = Entries.Count(entry => entry.IsAllowed);
-            return $"¡Listo! {allowed} permitidos y {Entries.Count - allowed} bloqueados.";
+            var blocked = Entries.Count - allowed;
+            return $"¡Listo! {allowed} {(allowed == 1 ? "permitido" : "permitidos")} " +
+                $"y {blocked} {(blocked == 1 ? "bloqueado" : "bloqueados")}.";
         }
     }
 

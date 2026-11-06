@@ -100,8 +100,8 @@ public partial class MainWindow : Window
             return;
         }
 
-        var choice = await SimulationModeDialog.ShowAsync(this, Pet.Color, viewModel.SimulationProblem,
-            viewModel.IsFolderOpen);
+        var problem = await viewModel.PrepareSimulationAsync();
+        var choice = await SimulationModeDialog.ShowAsync(this, Pet.Color, problem, viewModel.IsFolderOpen);
         if (choice == SimulationChoice.OpenFolder)
         {
             viewModel.OpenFolderCommand.Execute(null);
@@ -380,7 +380,8 @@ public partial class MainWindow : Window
 
     private async void OnRequestCodeAssistant()
     {
-        var code = await CodeAssistantDialog.ShowAsync(this, Pet.Color, ViewModel?.SelectedTab?.FilePath, ViewModel?.RootPath,
+        var projectRoot = ViewModel is { IsFolderOpen: true } viewModel ? viewModel.RootPath : null;
+        var code = await CodeAssistantDialog.ShowAsync(this, Pet.Color, ViewModel?.SelectedTab?.FilePath, projectRoot,
             CodeEditor.Text);
         if (code is not null)
         {
