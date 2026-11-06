@@ -38,7 +38,13 @@ public partial class ChallengePanel : UserControl
         Editor.TextArea.TextView.LineTransformers.Add(_colorizer);
         Editor.TextArea.TextView.BackgroundRenderers.Add(_highlighter);
         AddHandler(PointerPressedEvent, OnPanelPointerPressed, RoutingStrategies.Tunnel);
-        TestList.LayoutUpdated += (_, _) => Correction.InvalidateVisual();
+        TestList.LayoutUpdated += (_, _) =>
+        {
+            if (Correction.IsEffectivelyVisible)
+            {
+                Correction.InvalidateVisual();
+            }
+        };
         Editor.TextChanged += OnEditorTextChanged;
         AddHandler(KeyDownEvent, OnPanelKeyDown, RoutingStrategies.Tunnel);
     }

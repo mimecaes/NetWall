@@ -135,6 +135,7 @@ public sealed class SimulationCanvas : Control
         set
         {
             _result = value;
+            UpdateTimer();
             BuildHosts();
             Clear();
             _bubble = string.Empty;
@@ -363,7 +364,7 @@ public sealed class SimulationCanvas : Control
     {
         base.OnAttachedToVisualTree(e);
         ThemeManager.ThemeApplied += OnThemeApplied;
-        _timer.Start();
+        UpdateTimer();
     }
 
     protected override void OnDetachedFromVisualTree(VisualTreeAttachmentEventArgs e)
@@ -372,6 +373,8 @@ public sealed class SimulationCanvas : Control
         ThemeManager.ThemeApplied -= OnThemeApplied;
         _timer.Stop();
     }
+
+    private void UpdateTimer() => _timer.IsEnabled = _result is not null && VisualRoot is not null;
 
     protected override Size ArrangeOverride(Size finalSize)
     {

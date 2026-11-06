@@ -40,7 +40,7 @@ public partial class PetWidget : UserControl
 
     private static readonly Dictionary<PetColor, Bitmap> SheetCache = new();
 
-    private readonly DispatcherTimer _timer;
+    private readonly DispatcherTimer _timer = new() { Interval = TimeSpan.FromMilliseconds(60) };
     private readonly Queue<DateTime> _recentEdits = new();
     private readonly Random _random = new();
 
@@ -55,6 +55,7 @@ public partial class PetWidget : UserControl
     private int _frame;
     private int _frameTick;
     private Bitmap _sheetBitmap;
+    private (Bitmap Sheet, int Row, int Column)? _shownFrame;
 
     public PetWidget()
     {
@@ -62,7 +63,6 @@ public partial class PetWidget : UserControl
         _sheetBitmap = LoadSheet(PetColor.Gray);
         PickNewIdleBehavior();
 
-        _timer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(60) };
         _timer.Tick += OnTick;
         _timer.Start();
     }
@@ -72,7 +72,10 @@ public partial class PetWidget : UserControl
     {
         var now = DateTime.UtcNow;
         _lastActivity = now;
-        _recentEdits.Enqueue(now);
+        if (IsVisible)
+        {
+            _recentEdits.Enqueue(now);
+        }
     }
 
     /// <summary>Call on any other activity (caret moves, etc.) that should reset the idle/sleep timer.</summary>
@@ -111,7 +114,27 @@ public partial class PetWidget : UserControl
     private CroppedBitmap Frame(int row, int col) =>
         new(_sheetBitmap, new PixelRect(col * Cell, row * Cell, Cell, Cell));
 
-    private void SetFrame(int row, int col) => Sprite.Source = Frame(row, col);
+    private void SetFrame(int row, int col)
+    {
+        if (_shownFrame != (_sheetBitmap, row, col))
+        {
+            _shownFrame = (_sheetBitmap, row, col);
+            Sprite.Source = Frame(row, col);
+        }
+    }
+
+    protected override void OnPropertyChanged(AvaloniaPropertyChangedEventArgs change)
+    {
+        base.OnPropertyChanged(change);
+        if (change.Property == IsVisibleProperty)
+        {
+            _timer.IsEnabled = IsVisible;
+            if (!IsVisible)
+            {
+                _recentEdits.Clear();
+            }
+        }
+    }
 
     private void OnTick(object? sender, EventArgs e)
     {
@@ -120,6 +143,11 @@ public partial class PetWidget : UserControl
         while (_recentEdits.Count > 0 && (now - _recentEdits.Peek()).TotalSeconds > ExerciseWindowSeconds)
         {
             _recentEdits.Dequeue();
+        }
+
+        if (!IsEffectivelyVisible)
+        {
+            return;
         }
 
         UpdateState(now);

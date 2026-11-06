@@ -33,7 +33,7 @@ public sealed class NetworkBackground : Control
     protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
     {
         base.OnAttachedToVisualTree(e);
-        _timer.Start();
+        UpdateTimer();
     }
 
     protected override void OnDetachedFromVisualTree(VisualTreeAttachmentEventArgs e)
@@ -41,6 +41,17 @@ public sealed class NetworkBackground : Control
         base.OnDetachedFromVisualTree(e);
         _timer.Stop();
     }
+
+    protected override void OnPropertyChanged(AvaloniaPropertyChangedEventArgs change)
+    {
+        base.OnPropertyChanged(change);
+        if (change.Property == IsVisibleProperty)
+        {
+            UpdateTimer();
+        }
+    }
+
+    private void UpdateTimer() => _timer.IsEnabled = IsVisible && VisualRoot is not null;
 
     public override void Render(DrawingContext context)
     {

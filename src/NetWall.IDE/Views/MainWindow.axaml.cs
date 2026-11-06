@@ -51,17 +51,9 @@ public partial class MainWindow : Window
         TerminalScrollViewer.AddHandler(AnsiTextBlock.LinkClickedEvent, OnTerminalLinkClicked);
         ThemeManager.ThemeApplied += OnThemeApplied;
         Closed += (_, _) => ThemeManager.ThemeApplied -= OnThemeApplied;
-        Loaded += OnWindowLoaded;
         SizeChanged += OnWindowSizeChanged;
         KeyDown += OnWindowKeyDown;
-    }
-
-    private void OnWindowLoaded(object? sender, RoutedEventArgs e)
-    {
-        if (this.FindControl<ItemsControl>("TabsItemsControl") is { } tabsControl)
-        {
-            tabsControl.LayoutUpdated += OnTabsLayoutUpdated;
-        }
+        SnippetHelpy.Paused = true;
     }
 
     private void OnPanelGripPressed(object? sender, PointerPressedEventArgs e)
@@ -209,11 +201,6 @@ public partial class MainWindow : Window
         {
             viewModel.AvailableHeight = e.NewSize.Height;
         }
-    }
-
-    private void OnTabsLayoutUpdated(object? sender, EventArgs e)
-    {
-        // This will be called when tabs are updated, allowing us to handle animations
     }
 
     private async void OnTabCloseClick(object? sender, RoutedEventArgs e)
@@ -577,6 +564,7 @@ public partial class MainWindow : Window
     private void ShowHelpy(string text, HelpyMood mood)
     {
         _helpyVersion++;
+        SnippetHelpy.Paused = false;
         SnippetTip.Text = text;
         SnippetHelpy.Mood = mood;
         SnippetHelper.Classes.Set("shown", true);
@@ -586,6 +574,7 @@ public partial class MainWindow : Window
     {
         SnippetHelper.Classes.Set("shown", false);
         SnippetHelpy.Mood = HelpyMood.Idle;
+        SnippetHelpy.Paused = true;
     }
 
     private void OnThemeDotClick(object? sender, RoutedEventArgs e)
