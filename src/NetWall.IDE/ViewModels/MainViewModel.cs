@@ -1020,7 +1020,7 @@ public partial class MainViewModel : ViewModelBase
             return;
         }
 
-        var mainFile = await FindMainFileAsync();
+        var mainFile = await FindMainFileAsync(mode);
         if (mainFile is null)
         {
             return;
@@ -1063,7 +1063,7 @@ public partial class MainViewModel : ViewModelBase
         return !modified.Any(t => t.IsDirty);
     }
 
-    private async Task<string?> FindMainFileAsync()
+    private async Task<string?> FindMainFileAsync(string mode)
     {
         // Without an open folder the project is the folder of the active file, not its subfolders.
         var directory = IsFolderOpen ? RootPath : Path.GetDirectoryName(SelectedTab?.FilePath);
@@ -1076,11 +1076,24 @@ public partial class MainViewModel : ViewModelBase
             return candidates[0];
         }
 
-        var message = candidates.Count == 0
-            ? "ningún archivo del proyecto contiene un bloque 'principal'"
-            : $"más de un archivo contiene un bloque 'principal': {string.Join(", ", candidates.Select(Path.GetFileName))}";
-        AppendTerminalLine(message, TerminalLineKind.Error);
+        var diagnostic = candidates.Count == 0
+            ? ProjectDiagnostics.NoMainFile()
+            : ProjectDiagnostics.SeveralMainFiles(candidates.Select(path => Path.GetRelativePath(directory!, path)));
+        ReportCompilationFailure(diagnostic, mode);
         return null;
+    }
+
+    private void ReportCompilationFailure(string diagnostic, string mode)
+    {
+        var name = IsFolderOpen ? RootName : SelectedTab?.Title ?? mode;
+        var block = new TerminalRunBlock(name, mode)
+        {
+            Duration = TimeSpan.Zero,
+            Status = RunStatus.Failed,
+        };
+        block.Lines.Add(new TerminalLine(TerminalLineKind.Output, diagnostic));
+        TerminalEntries.Add(block);
+        TerminalUpdated?.Invoke();
     }
 
     private static string? FindNetWallCliPath()
