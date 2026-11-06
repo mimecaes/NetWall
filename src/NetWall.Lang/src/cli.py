@@ -10,11 +10,12 @@ from nodes import Program
 from semantic import check
 from analyzer import analyze
 from expander import expand
+from exporter import exportText, outputPath
 from simulator import DEFAULT_POLICY, packetFrom, simulate, simulationData
 
 
-MODES = ("compilar", "ejecutar")
-USAGE = "uso: python cli.py compilar|ejecutar <archivo.nw>"
+MODES = ("compilar", "ejecutar", "exportar")
+USAGE = "uso: python cli.py compilar|ejecutar|exportar <archivo.nw>"
 
 DIAGNOSTIC_COLORS = {
     "error_lexico": "31",
@@ -163,22 +164,62 @@ def printChallenge(path: Path) -> int:
     return 1 if errors else 0
 
 
-def printProgram(path: Path, execute: bool) -> int:
+def startPainter() -> Painter:
     paint = Painter(useColor())
     if paint.enabled and os.name == "nt" and sys.stdout.isatty():
         os.system("")
+    return paint
+
+
+def diagnosticLines(loader: Loader, diagnostics: List[Diagnostic], paint: Painter) -> List[str]:
+    order = {file: index for index, file in enumerate(loader.files)}
+    diagnostics.sort(key=lambda d: (order.get(d.file, 0), d.line))
+    if not diagnostics:
+        return []
+    return ["\n\n".join(formatDiagnostic(d, Path(d.file), paint) for d in diagnostics)]
+
+
+def printExport(path: Path) -> int:
+    paint = startPainter()
+    loader, program, diagnostics, errors, output = compileProgram(path)
+    warnings = len(diagnostics) - errors
+
+    lines = list(output)
+    if output and diagnostics:
+        lines.append("")
+    lines += diagnosticLines(loader, diagnostics, paint)
+
+    if not errors:
+        target = outputPath(path)
+        try:
+            with target.open("w", encoding="utf-8", newline="\n") as file:
+                file.write(exportText(program, path.name))
+        except OSError:
+            print(paint.color("31", f"✖ no se pudo escribir '{displayPath(target)}'"))
+            return 1
+
+        if lines:
+            lines.append("")
+        location = paint.link(target, 1, displayPath(target))
+        lines.append(f"exportado: {paint.color(LOCATION, location)}")
+
+    if lines:
+        print("\n".join(lines))
+        print()
+    print(formatSummary(errors, warnings, paint))
+    return 1 if errors else 0
+
+
+def printProgram(path: Path, execute: bool) -> int:
+    paint = startPainter()
 
     loader, program, diagnostics, errors, output = compileProgram(path)
     warnings = len(diagnostics) - errors
 
-    order = {file: index for index, file in enumerate(loader.files)}
-    diagnostics.sort(key=lambda d: (order.get(d.file, 0), d.line))
-    
     lines = list(output)
     if output and (diagnostics or program.rules or execute):
         lines.append("")
-    if diagnostics:
-        lines.append("\n\n".join(formatDiagnostic(d, Path(d.file), paint) for d in diagnostics))
+    lines += diagnosticLines(loader, diagnostics, paint)
 
     # with errors there is no list of rules and principal block doesn't run
     if not errors:
@@ -204,6 +245,9 @@ def printProgram(path: Path, execute: bool) -> int:
 def main() -> int:
     sys.stdout.reconfigure(encoding="utf-8")
     args = sys.argv[1:]
+
+    if len(args) == 2 and args[0] == "exportar":
+        return printExport(Path(args[1]).resolve())
 
     if len(args) == 2 and args[0] in MODES:
         return printProgram(Path(args[1]).resolve(), args[0] == "ejecutar")
