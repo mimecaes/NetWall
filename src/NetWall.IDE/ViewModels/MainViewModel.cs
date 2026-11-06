@@ -214,28 +214,30 @@ public partial class MainViewModel : ViewModelBase
         IsChallengeMode = false;
     }
 
-    public string? SimulationProblem => CanSimulateProgram ? null
-        : SelectedTab is null ? "No tienes ningún archivo abierto."
-        : $"«{SelectedTab.Title}» no es un archivo de NetWall.";
-
-    public bool CanSimulateProgram => SelectedTab?.FilePath is { } path
-        && string.Equals(Path.GetExtension(path), ".nw", StringComparison.OrdinalIgnoreCase);
-
-    public async Task<SimulationResult?> RunProgramSimulationAsync()
+    public async Task<string?> PrepareSimulationAsync()
     {
-        if (SelectedTab is not { FilePath: { } path } tab || FindNetWallCliPath() is not { } cliPath)
+        _simulationFile = null;
+        if (!SaveModifiedFiles())
         {
+            return "no se pudieron guardar los archivos modificados";
+        }
+
+        var candidates = await FindMainCandidatesAsync();
+        if (candidates.Count == 1)
+        {
+            _simulationFile = candidates[0];
             return null;
         }
 
-        if (tab.IsDirty)
-        {
-            SaveTab(tab);
-        }
-
-        _simulationFile = path;
-        return await SimulationRunner.RunAsync(cliPath, path);
+        return candidates.Count == 0
+            ? ProjectDiagnostics.NoMainFileMessage
+            : ProjectDiagnostics.SeveralMainFilesMessage(RelativeToProject(candidates));
     }
+
+    public async Task<SimulationResult?> RunProgramSimulationAsync() =>
+        _simulationFile is { } path && FindNetWallCliPath() is { } cliPath
+            ? await SimulationRunner.RunAsync(cliPath, path)
+            : null;
 
     private async void OnSimulationPacketRequested(SimulatedPacket request)
     {
@@ -274,13 +276,13 @@ public partial class MainViewModel : ViewModelBase
     public void ShowProgramSimulation(SimulationResult? result)
     {
         Simulation.ModeTitle = "Programa completo";
-        Simulation.Load(result, SelectedTab?.Title ?? string.Empty);
+        Simulation.Load(result, Path.GetFileName(_simulationFile) ?? string.Empty);
     }
 
     public void ShowNetworkBuilder(SimulationResult? result)
     {
         Simulation.ModeTitle = "Red propia";
-        Simulation.LoadBuilder(result, SelectedTab?.Title ?? string.Empty);
+        Simulation.LoadBuilder(result, Path.GetFileName(_simulationFile) ?? string.Empty);
     }
 
     public void ExitSimulationMode()
@@ -1063,14 +1065,23 @@ public partial class MainViewModel : ViewModelBase
         return !modified.Any(t => t.IsDirty);
     }
 
-    private async Task<string?> FindMainFileAsync(string mode)
+    // Without an open folder the project is the folder of the active file, not its subfolders.
+    private string? ProjectDirectory => IsFolderOpen ? RootPath : Path.GetDirectoryName(SelectedTab?.FilePath);
+
+    private async Task<List<string>> FindMainCandidatesAsync()
     {
-        // Without an open folder the project is the folder of the active file, not its subfolders.
-        var directory = IsFolderOpen ? RootPath : Path.GetDirectoryName(SelectedTab?.FilePath);
-        var candidates = string.IsNullOrEmpty(directory)
+        var directory = ProjectDirectory;
+        return string.IsNullOrEmpty(directory)
             ? []
             : await Task.Run(() => MainFileFinder.Find(directory, IsFolderOpen));
+    }
 
+    private IEnumerable<string> RelativeToProject(IEnumerable<string> paths) =>
+        paths.Select(path => Path.GetRelativePath(ProjectDirectory!, path));
+
+    private async Task<string?> FindMainFileAsync(string mode)
+    {
+        var candidates = await FindMainCandidatesAsync();
         if (candidates.Count == 1)
         {
             return candidates[0];
@@ -1078,7 +1089,7 @@ public partial class MainViewModel : ViewModelBase
 
         var diagnostic = candidates.Count == 0
             ? ProjectDiagnostics.NoMainFile()
-            : ProjectDiagnostics.SeveralMainFiles(candidates.Select(path => Path.GetRelativePath(directory!, path)));
+            : ProjectDiagnostics.SeveralMainFiles(RelativeToProject(candidates));
         ReportCompilationFailure(diagnostic, mode);
         return null;
     }

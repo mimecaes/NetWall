@@ -185,8 +185,8 @@
                             <TextBlock Text="2" />
                         </Border>
                         <StackPanel Grid.Column="1" Margin="12,0,0,0" VerticalAlignment="Center" Spacing="2">
-                            <TextBlock Classes="mode-title" Text="Abre un archivo .nw" />
-                            <TextBlock Classes="mode-hint" Text="Haz clic en él en el explorador de la izquierda." />
+                            <TextBlock Classes="mode-title" Text="Deja 'principal' en un solo archivo" />
+                            <TextBlock Classes="mode-hint" Text="Escríbelo si falta o quita los que sobren." />
                         </StackPanel>
                     </Grid>
                 </Border>
@@ -197,7 +197,7 @@
                         </Border>
                         <StackPanel Grid.Column="1" Margin="12,0,0,0" VerticalAlignment="Center" Spacing="2">
                             <TextBlock Classes="mode-title" Text="Vuelve a presionar el botón de simulación" />
-                            <TextBlock Classes="mode-hint" Text="Usaré las reglas, redes y paquetes de ese archivo." />
+                            <TextBlock Classes="mode-hint" Text="Usaré las reglas, redes y paquetes de tu programa." />
                         </StackPanel>
                     </Grid>
                 </Border>

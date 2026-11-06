@@ -36,7 +36,7 @@ public partial class SimulationModeDialog : Window
         dialog.Helpy.SetColor(helpyColor);
         if (problem is not null)
         {
-            dialog._message = $"{problem} Para simular necesito un archivo .nw abierto. Te explico cómo:";
+            dialog._message = $"{char.ToUpper(problem[0])}{problem[1..]}. Para simular necesito un solo archivo con 'principal'. Te explico cómo:";
             dialog.Bubble.Classes.Add("bubble-warning");
             dialog.Options.IsVisible = false;
             dialog.NeedFile.IsVisible = true;

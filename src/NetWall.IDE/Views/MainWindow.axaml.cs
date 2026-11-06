@@ -100,8 +100,8 @@ public partial class MainWindow : Window
             return;
         }
 
-        var choice = await SimulationModeDialog.ShowAsync(this, Pet.Color, viewModel.SimulationProblem,
-            viewModel.IsFolderOpen);
+        var problem = await viewModel.PrepareSimulationAsync();
+        var choice = await SimulationModeDialog.ShowAsync(this, Pet.Color, problem, viewModel.IsFolderOpen);
         if (choice == SimulationChoice.OpenFolder)
         {
             viewModel.OpenFolderCommand.Execute(null);
