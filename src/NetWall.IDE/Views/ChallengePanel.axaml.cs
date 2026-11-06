@@ -231,7 +231,11 @@ public partial class ChallengePanel : UserControl
 
         if (e.Key == Key.Enter && e.KeyModifiers.HasFlag(KeyModifiers.Control))
         {
-            _viewModel.CheckCommand.Execute(null);
+            if (_viewModel.CheckCommand.CanExecute(null))
+            {
+                _viewModel.CheckCommand.Execute(null);
+            }
+
             e.Handled = true;
         }
         else if (e.KeyModifiers == KeyModifiers.None && !Editor.TextArea.IsKeyboardFocusWithin

@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Text.Json;
@@ -74,8 +75,15 @@ public static class SimulationRunner
 
             if (request is not null)
             {
-                await process.StandardInput.WriteAsync(request);
-                process.StandardInput.Close();
+                try
+                {
+                    await process.StandardInput.WriteAsync(request);
+                    process.StandardInput.Close();
+                }
+                catch (IOException)
+                {
+                    
+                }
             }
 
             var output = await process.StandardOutput.ReadToEndAsync();

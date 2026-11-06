@@ -29,7 +29,9 @@ public partial class MainWindow : Window
     private DispatcherTimer? _indentFadeTimer;
     private double? _gripStartY;
     private double _gripStartHeight;
+    private bool _enteringSimulation;
     private bool _exitingSimulation;
+    private bool _enteringChallenge;
     private bool _exitingChallenge;
     private IReadOnlyList<HelpyField> _fields = [];
     private int _helpyVersion;
@@ -95,11 +97,18 @@ public partial class MainWindow : Window
 
     private async void OnSimulationModeClick(object? sender, RoutedEventArgs e)
     {
-        if (ViewModel is not { } viewModel)
+        if (_enteringSimulation || ViewModel is not { } viewModel)
         {
             return;
         }
 
+        _enteringSimulation = true;
+        await EnterSimulationAsync(viewModel);
+        _enteringSimulation = false;
+    }
+
+    private async Task EnterSimulationAsync(MainViewModel viewModel)
+    {
         var problem = await viewModel.PrepareSimulationAsync();
         var choice = await SimulationModeDialog.ShowAsync(this, Pet.Color, problem, viewModel.IsFolderOpen);
         if (choice == SimulationChoice.OpenFolder)
@@ -133,20 +142,22 @@ public partial class MainWindow : Window
 
     private async void OnChallengeModeClick(object? sender, RoutedEventArgs e)
     {
-        if (ViewModel is not { } viewModel)
+        if (_enteringChallenge || ViewModel is not { } viewModel)
         {
             return;
         }
 
+        _enteringChallenge = true;
         ChallengeView.SetHelpyColor(Pet.Color);
         await ChallengeCurtain.PlayAsync(Pet.Color, viewModel.EnterChallengeMode);
+        _enteringChallenge = false;
     }
 
     private void OnExitChallengeClick(object? sender, RoutedEventArgs e) => _ = ExitChallengeAsync();
 
     private async Task ExitChallengeAsync()
     {
-        if (_exitingChallenge || ViewModel is not { IsChallengeMode: true } viewModel)
+        if (_enteringChallenge || _exitingChallenge || ViewModel is not { IsChallengeMode: true } viewModel)
         {
             return;
         }
@@ -172,7 +183,7 @@ public partial class MainWindow : Window
 
     private async Task ExitSimulationAsync()
     {
-        if (_exitingSimulation || ViewModel is not { IsSimulationMode: true } viewModel)
+        if (_enteringSimulation || _exitingSimulation || ViewModel is not { IsSimulationMode: true } viewModel)
         {
             return;
         }

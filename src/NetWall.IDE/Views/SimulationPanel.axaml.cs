@@ -497,9 +497,11 @@ public partial class SimulationPanel : UserControl
         }
 
         viewModel.IsAnimating = true;
+        var token = _cancel.Token;
         try
         {
-            await AnimateAsync(viewModel, packet, _cancel.Token);
+            await AnimateAsync(viewModel, packet, token);
+            token.ThrowIfCancellationRequested();
             viewModel.AddEntry(packet);
             return true;
         }
