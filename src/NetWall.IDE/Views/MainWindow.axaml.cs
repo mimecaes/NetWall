@@ -29,7 +29,9 @@ public partial class MainWindow : Window
     private DispatcherTimer? _indentFadeTimer;
     private double? _gripStartY;
     private double _gripStartHeight;
+    private bool _enteringSimulation;
     private bool _exitingSimulation;
+    private bool _enteringChallenge;
     private bool _exitingChallenge;
     private IReadOnlyList<HelpyField> _fields = [];
     private int _helpyVersion;
@@ -49,17 +51,9 @@ public partial class MainWindow : Window
         TerminalScrollViewer.AddHandler(AnsiTextBlock.LinkClickedEvent, OnTerminalLinkClicked);
         ThemeManager.ThemeApplied += OnThemeApplied;
         Closed += (_, _) => ThemeManager.ThemeApplied -= OnThemeApplied;
-        Loaded += OnWindowLoaded;
         SizeChanged += OnWindowSizeChanged;
         KeyDown += OnWindowKeyDown;
-    }
-
-    private void OnWindowLoaded(object? sender, RoutedEventArgs e)
-    {
-        if (this.FindControl<ItemsControl>("TabsItemsControl") is { } tabsControl)
-        {
-            tabsControl.LayoutUpdated += OnTabsLayoutUpdated;
-        }
+        SnippetHelpy.Paused = true;
     }
 
     private void OnPanelGripPressed(object? sender, PointerPressedEventArgs e)
@@ -95,11 +89,18 @@ public partial class MainWindow : Window
 
     private async void OnSimulationModeClick(object? sender, RoutedEventArgs e)
     {
-        if (ViewModel is not { } viewModel)
+        if (_enteringSimulation || ViewModel is not { } viewModel)
         {
             return;
         }
 
+        _enteringSimulation = true;
+        await EnterSimulationAsync(viewModel);
+        _enteringSimulation = false;
+    }
+
+    private async Task EnterSimulationAsync(MainViewModel viewModel)
+    {
         var problem = await viewModel.PrepareSimulationAsync();
         var choice = await SimulationModeDialog.ShowAsync(this, Pet.Color, problem, viewModel.IsFolderOpen);
         if (choice == SimulationChoice.OpenFolder)
@@ -133,20 +134,22 @@ public partial class MainWindow : Window
 
     private async void OnChallengeModeClick(object? sender, RoutedEventArgs e)
     {
-        if (ViewModel is not { } viewModel)
+        if (_enteringChallenge || ViewModel is not { } viewModel)
         {
             return;
         }
 
+        _enteringChallenge = true;
         ChallengeView.SetHelpyColor(Pet.Color);
         await ChallengeCurtain.PlayAsync(Pet.Color, viewModel.EnterChallengeMode);
+        _enteringChallenge = false;
     }
 
     private void OnExitChallengeClick(object? sender, RoutedEventArgs e) => _ = ExitChallengeAsync();
 
     private async Task ExitChallengeAsync()
     {
-        if (_exitingChallenge || ViewModel is not { IsChallengeMode: true } viewModel)
+        if (_enteringChallenge || _exitingChallenge || ViewModel is not { IsChallengeMode: true } viewModel)
         {
             return;
         }
@@ -172,7 +175,7 @@ public partial class MainWindow : Window
 
     private async Task ExitSimulationAsync()
     {
-        if (_exitingSimulation || ViewModel is not { IsSimulationMode: true } viewModel)
+        if (_enteringSimulation || _exitingSimulation || ViewModel is not { IsSimulationMode: true } viewModel)
         {
             return;
         }
@@ -198,11 +201,6 @@ public partial class MainWindow : Window
         {
             viewModel.AvailableHeight = e.NewSize.Height;
         }
-    }
-
-    private void OnTabsLayoutUpdated(object? sender, EventArgs e)
-    {
-        // This will be called when tabs are updated, allowing us to handle animations
     }
 
     private async void OnTabCloseClick(object? sender, RoutedEventArgs e)
@@ -566,6 +564,7 @@ public partial class MainWindow : Window
     private void ShowHelpy(string text, HelpyMood mood)
     {
         _helpyVersion++;
+        SnippetHelpy.Paused = false;
         SnippetTip.Text = text;
         SnippetHelpy.Mood = mood;
         SnippetHelper.Classes.Set("shown", true);
@@ -575,6 +574,7 @@ public partial class MainWindow : Window
     {
         SnippetHelper.Classes.Set("shown", false);
         SnippetHelpy.Mood = HelpyMood.Idle;
+        SnippetHelpy.Paused = true;
     }
 
     private void OnThemeDotClick(object? sender, RoutedEventArgs e)

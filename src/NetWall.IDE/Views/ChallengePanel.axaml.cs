@@ -38,7 +38,13 @@ public partial class ChallengePanel : UserControl
         Editor.TextArea.TextView.LineTransformers.Add(_colorizer);
         Editor.TextArea.TextView.BackgroundRenderers.Add(_highlighter);
         AddHandler(PointerPressedEvent, OnPanelPointerPressed, RoutingStrategies.Tunnel);
-        TestList.LayoutUpdated += (_, _) => Correction.InvalidateVisual();
+        TestList.LayoutUpdated += (_, _) =>
+        {
+            if (Correction.IsEffectivelyVisible)
+            {
+                Correction.InvalidateVisual();
+            }
+        };
         Editor.TextChanged += OnEditorTextChanged;
         AddHandler(KeyDownEvent, OnPanelKeyDown, RoutingStrategies.Tunnel);
     }
@@ -231,7 +237,11 @@ public partial class ChallengePanel : UserControl
 
         if (e.Key == Key.Enter && e.KeyModifiers.HasFlag(KeyModifiers.Control))
         {
-            _viewModel.CheckCommand.Execute(null);
+            if (_viewModel.CheckCommand.CanExecute(null))
+            {
+                _viewModel.CheckCommand.Execute(null);
+            }
+
             e.Handled = true;
         }
         else if (e.KeyModifiers == KeyModifiers.None && !Editor.TextArea.IsKeyboardFocusWithin

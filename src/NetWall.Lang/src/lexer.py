@@ -95,13 +95,13 @@ def tokenize(text: str, file: str = "<entrada>") -> Tuple[List[Token], List[Diag
             i = j
             continue
 
-        if c.isdigit():
+        if c.isdecimal():
             start = i
-            while i < end and text[i].isdigit():
+            while i < end and text[i].isdecimal():
                 i += 1
-            if i < end and text[i] == "." and i + 1 < end and text[i + 1].isdigit(): #float
+            if i < end and text[i] == "." and i + 1 < end and text[i + 1].isdecimal(): #float
                 i += 1
-                while i < end and text[i].isdigit():
+                while i < end and text[i].isdecimal():
                     i += 1
                 tokens.append(Token("FLOAT", text[start:i], line))
             else:

@@ -71,8 +71,22 @@ public sealed class TerminalSession
         using var process = new Process { StartInfo = startInfo };
         var output = new StringBuilder();
 
-        process.OutputDataReceived += (_, e) => { if (e.Data is not null) output.AppendLine(e.Data); };
-        process.ErrorDataReceived += (_, e) => { if (e.Data is not null) output.AppendLine(e.Data); };
+        
+        void Append(string? line)
+        {
+            if (line is null)
+            {
+                return;
+            }
+
+            lock (output)
+            {
+                output.AppendLine(line);
+            }
+        }
+
+        process.OutputDataReceived += (_, e) => Append(e.Data);
+        process.ErrorDataReceived += (_, e) => Append(e.Data);
 
         try
         {

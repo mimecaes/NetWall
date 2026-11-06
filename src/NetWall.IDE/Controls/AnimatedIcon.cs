@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using Avalonia;
 using Avalonia.Animation;
@@ -24,6 +25,8 @@ public sealed class AnimatedIcon : Path
         set => SetValue(KindProperty, value);
     }
 
+    private static readonly Dictionary<LucideIconKind, Geometry> Geometries = [];
+
     private Button? _hoverSource;
     private CancellationTokenSource? _drawCts;
 
@@ -34,7 +37,18 @@ public sealed class AnimatedIcon : Path
 
     private void UpdateGeometry()
     {
-        Data = Kind is { } kind ? Geometry.Parse(kind.GetGeometryData()) : null;
+        Data = Kind is { } kind ? GeometryOf(kind) : null;
+    }
+
+    private static Geometry GeometryOf(LucideIconKind kind)
+    {
+        if (!Geometries.TryGetValue(kind, out var geometry))
+        {
+            geometry = Geometry.Parse(kind.GetGeometryData());
+            Geometries[kind] = geometry;
+        }
+
+        return geometry;
     }
 
     protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)

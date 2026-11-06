@@ -13,6 +13,7 @@ using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
+using Avalonia.Media.Immutable;
 using Avalonia.Threading;
 using NetWall.IDE.Models;
 using NetWall.IDE.Services;
@@ -60,6 +61,7 @@ public sealed class SimulationCanvas : Control
     private const double DeviceGrow = 0.22;
     private const double WallGrow = 0.06;
     private const double GrowMilliseconds = 90;
+    private const int MaxLabels = 256;
 
     private static readonly FontFamily Font = new("Cascadia Code,Consolas,DejaVu Sans Mono,monospace");
     internal static readonly string[] ZoneBrushes = ["Ansi5Brush", "Ansi6Brush", "Ansi3Brush", "Ansi4Brush"];
@@ -71,6 +73,10 @@ public sealed class SimulationCanvas : Control
     private readonly Dictionary<string, (int Sent, int Received, int Blocked)> _stats = [];
     private readonly List<(Func<Point> Center, string Brush, long Start)> _pulses = [];
     private readonly Dictionary<string, double> _grow = [];
+    private readonly Dictionary<string, IBrush> _resources = [];
+    private readonly Dictionary<(string Text, double Size, Color Color, double MaxWidth, bool Bold), FormattedText> _labels = [];
+    private readonly Cursor _arrow = new(StandardCursorType.Arrow);
+    private readonly Cursor _hand = new(StandardCursorType.Hand);
     private readonly Stopwatch _clock = Stopwatch.StartNew();
     private readonly Stopwatch _realClock = Stopwatch.StartNew();
     private readonly DispatcherTimer _timer = new() { Interval = TimeSpan.FromMilliseconds(16) };
@@ -114,6 +120,8 @@ public sealed class SimulationCanvas : Control
     private long _bubbleStart;
     private BubbleTone _bubbleTone;
     private bool _helpyHopping;
+    private string? _fullBubbleSource;
+    private FormattedText? _fullBubble;
 
     public SimulationCanvas()
     {
@@ -135,6 +143,7 @@ public sealed class SimulationCanvas : Control
         set
         {
             _result = value;
+            UpdateTimer();
             BuildHosts();
             Clear();
             _bubble = string.Empty;
@@ -363,7 +372,7 @@ public sealed class SimulationCanvas : Control
     {
         base.OnAttachedToVisualTree(e);
         ThemeManager.ThemeApplied += OnThemeApplied;
-        _timer.Start();
+        UpdateTimer();
     }
 
     protected override void OnDetachedFromVisualTree(VisualTreeAttachmentEventArgs e)
@@ -372,6 +381,8 @@ public sealed class SimulationCanvas : Control
         ThemeManager.ThemeApplied -= OnThemeApplied;
         _timer.Stop();
     }
+
+    private void UpdateTimer() => _timer.IsEnabled = _result is not null && VisualRoot is not null;
 
     protected override Size ArrangeOverride(Size finalSize)
     {
@@ -511,7 +522,7 @@ public sealed class SimulationCanvas : Control
         {
             _hover = hover;
             _hoverPoint = point;
-            Cursor = new Cursor(hover is null ? StandardCursorType.Arrow : StandardCursorType.Hand);
+            Cursor = hover is null ? _arrow : _hand;
             InvalidateVisual();
         }
     }
@@ -556,7 +567,12 @@ public sealed class SimulationCanvas : Control
 
     private double TopSpace => _helpyEnabled ? HelpySpace : 24;
 
-    private void OnThemeApplied(object? sender, EventArgs e) => InvalidateVisual();
+    private void OnThemeApplied(object? sender, EventArgs e)
+    {
+        _labels.Clear();
+        _fullBubbleSource = null;
+        InvalidateVisual();
+    }
 
     private void OnTick(object? sender, EventArgs e)
     {
@@ -862,7 +878,7 @@ public sealed class SimulationCanvas : Control
 
     private void DrawWires(DrawingContext context)
     {
-        var wire = new Pen(new SolidColorBrush(ColorOf("TextMutedBrush"), 0.35), 1.5);
+        var wire = new ImmutablePen(new ImmutableSolidColorBrush(ColorOf("TextMutedBrush"), 0.35), 1.5);
         foreach (var device in _devices.Values.Where(device => device.Model?.IsConnected ?? true))
         {
             context.DrawLine(wire, device.Icon.Center, device.WallPoint);
@@ -879,18 +895,18 @@ public sealed class SimulationCanvas : Control
         var accent = ColorOf("AccentBrush");
         var target = _wall.Inflate(14).Contains(_linkEnd);
         var receiver = DeviceAt(_linkEnd) is { Model: { } model } hit && model != _linking ? hit : null;
-        context.DrawLine(new Pen(new SolidColorBrush(accent), 2, new DashStyle([4, 3], 0), PenLineCap.Round),
+        context.DrawLine(new ImmutablePen(new ImmutableSolidColorBrush(accent), 2, new ImmutableDashStyle([4, 3], 0), PenLineCap.Round),
             Port(device), _linkEnd);
-        context.DrawEllipse(new SolidColorBrush(accent, target || receiver is not null ? 0.9 : 0.4), null, _linkEnd, 5, 5);
+        context.DrawEllipse(new ImmutableSolidColorBrush(accent, target || receiver is not null ? 0.9 : 0.4), null, _linkEnd, 5, 5);
         if (target)
         {
-            context.DrawRectangle(null, new Pen(new SolidColorBrush(accent), 2), _wall.Inflate(6), 6, 6);
+            context.DrawRectangle(null, new ImmutablePen(new ImmutableSolidColorBrush(accent), 2), _wall.Inflate(6), 6, 6);
         }
         else if (receiver is not null)
         {
-            context.DrawRectangle(new SolidColorBrush(accent, 0.12), new Pen(new SolidColorBrush(accent), 2),
+            context.DrawRectangle(new ImmutableSolidColorBrush(accent, 0.12), new ImmutablePen(new ImmutableSolidColorBrush(accent), 2),
                 receiver.Cell.Deflate(new Thickness(6, 0)), 10, 10);
-            DrawCentered(context, "enviar paquete", 10, new SolidColorBrush(accent), receiver.Cell.Center.X,
+            DrawCentered(context, "enviar paquete", 10, new ImmutableSolidColorBrush(accent), receiver.Cell.Center.X,
                 receiver.Cell.Bottom + 2, 120, bold: true);
         }
     }
@@ -901,14 +917,14 @@ public sealed class SimulationCanvas : Control
         var center = Port(device);
         if (device.Model!.IsConnected)
         {
-            context.DrawEllipse(new SolidColorBrush(accent), null, center, 3.5, 3.5);
+            context.DrawEllipse(new ImmutableSolidColorBrush(accent), null, center, 3.5, 3.5);
             return;
         }
 
         var pulse = 0.5 + 0.5 * Math.Sin(now / 260.0);
-        context.DrawEllipse(Brush("TerminalBackgroundBrush"), new Pen(new SolidColorBrush(accent, 0.5 + 0.5 * pulse), 2),
+        context.DrawEllipse(Brush("TerminalBackgroundBrush"), new ImmutablePen(new ImmutableSolidColorBrush(accent, 0.5 + 0.5 * pulse), 2),
             center, PortRadius, PortRadius);
-        context.DrawEllipse(null, new Pen(new SolidColorBrush(accent, 0.3 * (1 - pulse)), 1.5), center,
+        context.DrawEllipse(null, new ImmutablePen(new ImmutableSolidColorBrush(accent, 0.3 * (1 - pulse)), 1.5), center,
             PortRadius + 3 + pulse * 4, PortRadius + 3 + pulse * 4);
     }
 
@@ -920,8 +936,8 @@ public sealed class SimulationCanvas : Control
         }
 
         var color = ColorOf(_routeBrush);
-        var glow = new Pen(new SolidColorBrush(color, 0.18), 7, lineCap: PenLineCap.Round);
-        var dashes = new Pen(new SolidColorBrush(color), 2, new DashStyle([3, 3], -(now / 40.0) % 6),
+        var glow = new ImmutablePen(new ImmutableSolidColorBrush(color, 0.18), 7, lineCap: PenLineCap.Round);
+        var dashes = new ImmutablePen(new ImmutableSolidColorBrush(color), 2, new ImmutableDashStyle([3, 3], -(now / 40.0) % 6),
             lineCap: PenLineCap.Round);
         for (var i = 0; i < route.Count - 1; i++)
         {
@@ -940,7 +956,7 @@ public sealed class SimulationCanvas : Control
         context.DrawRectangle(Brush("TerminalBackgroundBrush"), null, backdrop, 10, 10);
         if (active)
         {
-            context.DrawRectangle(new SolidColorBrush(ColorOf("AccentBrush"), 0.08), null, backdrop, 10, 10);
+            context.DrawRectangle(new ImmutableSolidColorBrush(ColorOf("AccentBrush"), 0.08), null, backdrop, 10, 10);
         }
 
         switch (device.Kind)
@@ -958,7 +974,7 @@ public sealed class SimulationCanvas : Control
 
         var title = device.Name ?? device.Host.Zone?.Name
             ?? (device.Kind == DeviceKind.Internet ? "internet" : device.Model?.KindLabel.ToLowerInvariant() ?? "internet");
-        DrawCentered(context, title, 11, new SolidColorBrush(tint), device.Cell.Center.X, device.Cell.Y + 3,
+        DrawCentered(context, title, 11, new ImmutableSolidColorBrush(tint), device.Cell.Center.X, device.Cell.Y + 3,
             CellWidth - 6, bold: true);
         DrawCentered(context, device.Address, 10,
             Brush(device.Model is { HasError: true } ? "StopRedBrush" : "TextPrimaryBrush"), device.Cell.Center.X,
@@ -969,42 +985,42 @@ public sealed class SimulationCanvas : Control
         }
     }
 
-    private void DrawComputer(DrawingContext context, Rect icon, IBrush stroke, Color tint)
+    private void DrawComputer(DrawingContext context, Rect icon, IImmutableBrush stroke, Color tint)
     {
-        var pen = new Pen(stroke, 1.6);
+        var pen = new ImmutablePen(stroke, 1.6);
         var monitor = new Rect(icon.X + 4, icon.Y + 1, icon.Width - 8, icon.Height - 11);
         context.DrawRectangle(Brush("SurfaceBackgroundBrush"), pen, monitor, 3, 3);
-        context.DrawRectangle(new SolidColorBrush(tint, 0.35), null, monitor.Deflate(3), 1.5, 1.5);
-        context.DrawLine(new Pen(new SolidColorBrush(tint), 1.2),
+        context.DrawRectangle(new ImmutableSolidColorBrush(tint, 0.35), null, monitor.Deflate(3), 1.5, 1.5);
+        context.DrawLine(new ImmutablePen(new ImmutableSolidColorBrush(tint), 1.2),
             new Point(monitor.X + 7, monitor.Y + 7), new Point(monitor.X + 18, monitor.Y + 7));
-        context.DrawLine(new Pen(new SolidColorBrush(tint, 0.6), 1.2),
+        context.DrawLine(new ImmutablePen(new ImmutableSolidColorBrush(tint, 0.6), 1.2),
             new Point(monitor.X + 7, monitor.Y + 11), new Point(monitor.X + 14, monitor.Y + 11));
         context.DrawLine(pen, new Point(icon.Center.X, monitor.Bottom), new Point(icon.Center.X, icon.Bottom - 3));
-        context.DrawLine(new Pen(stroke, 2.2, lineCap: PenLineCap.Round),
+        context.DrawLine(new ImmutablePen(stroke, 2.2, lineCap: PenLineCap.Round),
             new Point(icon.Center.X - 8, icon.Bottom - 2), new Point(icon.Center.X + 8, icon.Bottom - 2));
     }
 
-    private void DrawServer(DrawingContext context, Rect icon, IBrush stroke)
+    private void DrawServer(DrawingContext context, Rect icon, IImmutableBrush stroke)
     {
-        var pen = new Pen(stroke, 1.6);
+        var pen = new ImmutablePen(stroke, 1.6);
         var body = new Rect(icon.Center.X - 12, icon.Y, 24, icon.Height);
         context.DrawRectangle(Brush("SurfaceBackgroundBrush"), pen, body, 3, 3);
         for (var i = 0; i < 3; i++)
         {
             var y = body.Y + 7 + i * 9;
-            context.DrawLine(new Pen(stroke, 1.2), new Point(body.X + 9, y), new Point(body.Right - 4, y));
+            context.DrawLine(new ImmutablePen(stroke, 1.2), new Point(body.X + 9, y), new Point(body.Right - 4, y));
             context.DrawEllipse(Brush(i == 0 ? "RunGreenBrush" : "Ansi3Brush"), null, new Point(body.X + 5, y), 1.6, 1.6);
         }
     }
 
-    private static void DrawGlobe(DrawingContext context, Rect icon, IBrush stroke, Color tint)
+    private static void DrawGlobe(DrawingContext context, Rect icon, IImmutableBrush stroke, Color tint)
     {
-        var pen = new Pen(stroke, 1.5);
-        var thin = new Pen(stroke, 1.1);
+        var pen = new ImmutablePen(stroke, 1.5);
+        var thin = new ImmutablePen(stroke, 1.1);
         var center = icon.Center;
         var radius = icon.Height / 2 - 1;
         var chord = radius * 0.87;
-        context.DrawEllipse(new SolidColorBrush(tint, 0.14), pen, center, radius, radius);
+        context.DrawEllipse(new ImmutableSolidColorBrush(tint, 0.14), pen, center, radius, radius);
         context.DrawEllipse(null, thin, center, radius * 0.45, radius);
         context.DrawLine(thin, new Point(center.X - radius, center.Y), new Point(center.X + radius, center.Y));
         context.DrawLine(thin, new Point(center.X - chord, center.Y - radius / 2),
@@ -1031,20 +1047,20 @@ public sealed class SimulationCanvas : Control
             DrawBricks(context, wall, brick, door, doorY);
             if (flash > 0)
             {
-                context.DrawRectangle(new SolidColorBrush(ColorOf("StopRedBrush"), 0.4 * flash), null, wall);
+                context.DrawRectangle(new ImmutableSolidColorBrush(ColorOf("StopRedBrush"), 0.4 * flash), null, wall);
             }
 
             if (_inspectStart is { } inspect)
             {
                 var y = wall.Y + (now - inspect) % 900 / 900.0 * wall.Height;
                 var accent = ColorOf("AccentBrush");
-                context.DrawRectangle(new SolidColorBrush(accent, 0.2), null, new Rect(wall.X, y - 10, wall.Width, 20));
-                context.DrawLine(new Pen(new SolidColorBrush(accent), 2), new Point(wall.X, y), new Point(wall.Right, y));
+                context.DrawRectangle(new ImmutableSolidColorBrush(accent, 0.2), null, new Rect(wall.X, y - 10, wall.Width, 20));
+                context.DrawLine(new ImmutablePen(new ImmutableSolidColorBrush(accent), 2), new Point(wall.X, y), new Point(wall.Right, y));
             }
         }
 
         var highlighted = _inspectStart is not null;
-        context.DrawRectangle(null, new Pen(Brush(highlighted ? "AccentBrush" : "BorderBrush"), highlighted ? 2 : 1),
+        context.DrawRectangle(null, new ImmutablePen(Brush(highlighted ? "AccentBrush" : "BorderBrush"), highlighted ? 2 : 1),
             wall.Inflate(2), 4, 4);
 
         DrawCentered(context, "NetWall", 13, Brush("TextPrimaryBrush"), wall.Center.X, wall.Bottom + 8, 160, bold: true);
@@ -1072,8 +1088,8 @@ public sealed class SimulationCanvas : Control
                 var slide = inDoor ? (x + BrickWidth / 2 < wall.Center.X ? -1 : 1) * door * 18 : 0;
                 var rect = new Rect(x + slide, y, BrickWidth, BrickHeight);
                 var alpha = inDoor ? shade * (1 - door * 0.85) : shade;
-                context.DrawRectangle(new SolidColorBrush(brick, alpha), null, rect, 2, 2);
-                context.DrawLine(new Pen(new SolidColorBrush(Colors.White, 0.14 * alpha), 1),
+                context.DrawRectangle(new ImmutableSolidColorBrush(brick, alpha), null, rect, 2, 2);
+                context.DrawLine(new ImmutablePen(new ImmutableSolidColorBrush(Colors.White, 0.14 * alpha), 1),
                     rect.TopLeft + new Vector(2, 1.5), rect.TopRight + new Vector(-2, 1.5));
             }
         }
@@ -1122,14 +1138,14 @@ public sealed class SimulationCanvas : Control
             }
 
             var size = 2.5 + (TrailLength - i) * 0.6;
-            context.DrawEllipse(new SolidColorBrush(color, 0.08 + 0.3 * (TrailLength - i + 1) / TrailLength), null,
+            context.DrawEllipse(new ImmutableSolidColorBrush(color, 0.08 + 0.3 * (TrailLength - i + 1) / TrailLength), null,
                 PointAt(points, Ease(behind)), size, size);
         }
 
         var point = PointAt(points, Ease(progress));
         var body = new Rect(point.X - 12, point.Y - 8, 24, 16);
-        context.DrawRectangle(new SolidColorBrush(color, 0.25), null, body.Inflate(3), 5, 5);
-        context.DrawRectangle(new SolidColorBrush(color), null, body, 3, 3);
+        context.DrawRectangle(new ImmutableSolidColorBrush(color, 0.25), null, body.Inflate(3), 5, 5);
+        context.DrawRectangle(new ImmutableSolidColorBrush(color), null, body, 3, 3);
         var flap = new StreamGeometry();
         using (var geometry = flap.Open())
         {
@@ -1139,7 +1155,7 @@ public sealed class SimulationCanvas : Control
             geometry.EndFigure(false);
         }
 
-        context.DrawGeometry(null, new Pen(Brush("TerminalBackgroundBrush"), 1.5), flap);
+        context.DrawGeometry(null, new ImmutablePen(Brush("TerminalBackgroundBrush"), 1.5), flap);
     }
 
     private void DrawPulses(DrawingContext context, long now)
@@ -1148,7 +1164,7 @@ public sealed class SimulationCanvas : Control
         {
             var k = Math.Clamp((now - start) / 700.0, 0, 1);
             var radius = 8 + k * 30;
-            context.DrawEllipse(null, new Pen(new SolidColorBrush(ColorOf(brush), 1 - k), 2.5), center(), radius, radius);
+            context.DrawEllipse(null, new ImmutablePen(new ImmutableSolidColorBrush(ColorOf(brush), 1 - k), 2.5), center(), radius, radius);
         }
     }
 
@@ -1165,8 +1181,7 @@ public sealed class SimulationCanvas : Control
             return;
         }
 
-        var full = Format(_bubble, 11, Brush("TextPrimaryBrush"), bold: false);
-        full.MaxTextWidth = 250;
+        var full = FullBubble();
         var width = full.Width + 22;
         var height = full.Height + 14;
         var x = Math.Clamp(_wall.Center.X - width / 2, Inset, Math.Max(Inset, _design.Width - Inset - width));
@@ -1177,7 +1192,7 @@ public sealed class SimulationCanvas : Control
             BubbleTone.Blocked => "StopRedBrush",
             _ => "AccentBrush",
         };
-        var pen = new Pen(Brush(border), 1.5);
+        var pen = new ImmutablePen(Brush(border), 1.5);
         var tipLeft = new Point(_wall.Center.X - 7, bubble.Bottom);
         var tip = new Point(_wall.Center.X, bubble.Bottom + 7);
         var tipRight = new Point(_wall.Center.X + 7, bubble.Bottom);
@@ -1196,9 +1211,26 @@ public sealed class SimulationCanvas : Control
         context.DrawLine(pen, tip, tipRight);
 
         var visible = Math.Clamp((int)((now - _bubbleStart) / 16), 0, _bubble.Length);
-        var text = Format(_bubble[..visible], 11, Brush("TextPrimaryBrush"), bold: false);
-        text.MaxTextWidth = 250;
+        var text = visible == _bubble.Length ? full : BubbleText(_bubble[..visible]);
         context.DrawText(text, new Point(bubble.X + 11, bubble.Y + 7));
+    }
+
+    private FormattedText FullBubble()
+    {
+        if (_fullBubble is null || _fullBubbleSource != _bubble)
+        {
+            _fullBubble = BubbleText(_bubble);
+            _fullBubbleSource = _bubble;
+        }
+
+        return _fullBubble;
+    }
+
+    private FormattedText BubbleText(string value)
+    {
+        var text = Format(value, 11, Brush("TextPrimaryBrush"), bold: false);
+        text.MaxTextWidth = 250;
+        return text;
     }
 
     private void DrawTooltip(DrawingContext context)
@@ -1236,7 +1268,7 @@ public sealed class SimulationCanvas : Control
         var x = _hoverPoint.X + 14 + width > _design.Width ? _hoverPoint.X - 14 - width : _hoverPoint.X + 14;
         var y = Math.Clamp(_hoverPoint.Y + 12, 4, Math.Max(4, _design.Height - height - 4));
         var card = new Rect(Math.Max(4, x), y, width, height);
-        context.DrawRectangle(Brush("SurfaceBackgroundBrush"), new Pen(Brush("AccentBrush"), 1), card, 8, 8);
+        context.DrawRectangle(Brush("SurfaceBackgroundBrush"), new ImmutablePen(Brush("AccentBrush"), 1), card, 8, 8);
         var top = card.Y + 7;
         foreach (var text in formatted)
         {
@@ -1245,10 +1277,21 @@ public sealed class SimulationCanvas : Control
         }
     }
 
-    private static void DrawCentered(DrawingContext context, string text, double size, IBrush brush, double centerX,
+    private void DrawCentered(DrawingContext context, string text, double size, IBrush brush, double centerX,
         double top, double maxWidth, bool bold = false)
     {
-        var formatted = Fit(text, size, brush, maxWidth, bold);
+        var key = (text, size, brush is ISolidColorBrush solid ? solid.Color : default, maxWidth, bold);
+        if (!_labels.TryGetValue(key, out var formatted))
+        {
+            if (_labels.Count >= MaxLabels)
+            {
+                _labels.Clear();
+            }
+
+            formatted = Fit(text, size, brush, maxWidth, bold);
+            _labels[key] = formatted;
+        }
+
         context.DrawText(formatted, new Point(centerX - formatted.Width / 2, top));
     }
 
@@ -1268,8 +1311,21 @@ public sealed class SimulationCanvas : Control
         new(text, CultureInfo.CurrentCulture, FlowDirection.LeftToRight,
             new Typeface(Font, FontStyle.Normal, bold ? FontWeight.Bold : FontWeight.Normal), size, brush);
 
-    private IBrush Brush(string key) =>
-        this.TryFindResource(key, out var resource) && resource is IBrush brush ? brush : Brushes.Gray;
+    private IImmutableBrush Brush(string key)
+    {
+        if (_resources.TryGetValue(key, out var cached))
+        {
+            return cached.ToImmutable();
+        }
+
+        if (this.TryFindResource(key, out var resource) && resource is IBrush brush)
+        {
+            _resources[key] = brush;
+            return brush.ToImmutable();
+        }
+
+        return Brushes.Gray.ToImmutable();
+    }
 
     private Color ColorOf(string key) => Brush(key) is ISolidColorBrush solid ? solid.Color : Colors.Gray;
 

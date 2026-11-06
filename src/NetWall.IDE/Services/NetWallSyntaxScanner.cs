@@ -63,7 +63,6 @@ public static class NetWallSyntaxScanner
 
     private const string Punctuation = "{}()[],;";
     private const string SingleOperators = "=<>!";
-    private static readonly HashSet<string> DoubleOperators = ["==", "!=", "<=", ">=", "&&", "||"];
 
     public static bool IsReserved(string word) => ReservedWords.ContainsKey(word);
 
@@ -153,7 +152,7 @@ public static class NetWallSyntaxScanner
             previousWord = null;
 
             // Two character operators are checked before the one character symbols.
-            if (i + 1 < end && DoubleOperators.Contains(text.Substring(i, 2)))
+            if (i + 1 < end && IsDoubleOperator(c, text[i + 1]))
             {
                 i += 2;
                 spans.Add(new SyntaxSpan(start, 2, SyntaxToken.Operator));
@@ -169,6 +168,9 @@ public static class NetWallSyntaxScanner
 
         return spans;
     }
+
+    private static bool IsDoubleOperator(char first, char second) =>
+        (first, second) is ('=', '=') or ('!', '=') or ('<', '=') or ('>', '=') or ('&', '&') or ('|', '|');
 
     private static char NextNonSpace(string text, int index)
     {

@@ -197,6 +197,7 @@ public partial class SimulationViewModel : ViewModelBase
         Result.Packets?.Clear();
         Result.Packets?.AddRange(replayed);
         Reset();
+        _packetRules.Clear();
         foreach (var packet in replayed)
         {
             _packetRules[packet] = result.Rules ?? [];

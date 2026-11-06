@@ -91,6 +91,11 @@ public sealed class RuledStack : Panel
 
     private void OnLayoutUpdated(object? sender, EventArgs e)
     {
+        if (!IsEffectivelyVisible)
+        {
+            return;
+        }
+
         _page ??= this.GetVisualAncestors().OfType<Panel>()
             .FirstOrDefault(panel => panel.Children.OfType<NotebookPaper>().Any());
         if (_page is null || this.TranslatePoint(default, _page) is not { } point)

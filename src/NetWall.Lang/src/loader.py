@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import List, Set
+from typing import List, Optional, Set
 
 from errors import Diagnostic
 from lexer import tokenize
@@ -14,11 +14,25 @@ class Loader:
         self.loaded: Set[str] = set()
         self.loading: List[str] = []
 
+    def read(self, path: Path) -> Optional[str]:
+        try:
+            return path.read_text(encoding="utf-8-sig")
+        except UnicodeDecodeError:
+            self.diagnostics.append(Diagnostic(
+                file=str(path), line=0, type="error_lexico",
+                message=f"el archivo '{path.name}' no está guardado en UTF-8",
+            ))
+            return None
+
     def load(self, path: Path, isModule: bool = False) -> Program:
         file = str(path)
         self.loaded.add(file)
         self.loading.append(file)
-        text = path.read_text(encoding="utf-8")
+        text = self.read(path)
+        if text is None:
+            self.loading.pop()
+            self.files.append(file)
+            return Program(mainFile=file)
 
         tokens, lexerDiagnostics = tokenize(text, file=file)
         program, parserDiagnostics = parse(tokens, file=file, isModule=isModule)

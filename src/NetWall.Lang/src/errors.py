@@ -118,6 +118,8 @@ CAUSES = [
      "La ruta indicada al compilar desde la línea de comandos no existe."),
     (r"no se encontró el archivo '.*'",
      "La ruta está mal escrita. Las rutas son relativas a la carpeta del archivo que importa."),
+    (r"el archivo '.*' no está guardado en UTF-8",
+     "El archivo se guardó con otra codificación, por ejemplo ANSI. Debe guardarse de nuevo en UTF-8."),
     (r"ningún archivo del proyecto contiene un bloque 'principal'",
      "Falta escribir principal { } en el archivo que inicia el programa."),
     (r"más de un archivo contiene un bloque 'principal': .*",

@@ -43,12 +43,20 @@ public sealed class HelpySprite : Image
     private int _loops;
     private int _patience;
     private bool _acting;
+    private bool _paused;
+    private (Bitmap Sheet, int Row, int Column)? _shownFrame;
 
     public HelpySprite()
     {
         RenderOptions.SetBitmapInterpolationMode(this, BitmapInterpolationMode.None);
         Stretch = Stretch.Uniform;
-        _timer.Tick += (_, _) => NextFrame();
+        _timer.Tick += (_, _) =>
+        {
+            if (IsEffectivelyVisible)
+            {
+                NextFrame();
+            }
+        };
         Start();
     }
 
@@ -64,7 +72,19 @@ public sealed class HelpySprite : Image
         set => SetValue(FidgetsProperty, value);
     }
 
+    public bool Paused
+    {
+        get => _paused;
+        set
+        {
+            _paused = value;
+            UpdateTimer();
+        }
+    }
+
     public void SetColor(PetColor color) => _sheet = PetWidget.LoadSheet(color);
+
+    private void UpdateTimer() => _timer.IsEnabled = !_paused && VisualRoot is not null;
 
     private ((int Row, int Column)[] Frames, int Milliseconds) Animation => Mood switch
     {
@@ -81,7 +101,7 @@ public sealed class HelpySprite : Image
     {
         base.OnAttachedToVisualTree(e);
         NextFrame();
-        _timer.Start();
+        UpdateTimer();
     }
 
     protected override void OnDetachedFromVisualTree(VisualTreeAttachmentEventArgs e)
@@ -124,7 +144,12 @@ public sealed class HelpySprite : Image
     private void NextFrame()
     {
         var (row, column) = _frames[_frame];
-        Source = new CroppedBitmap(_sheet, new PixelRect(column * Cell, row * Cell, Cell, Cell));
+        if (_shownFrame != (_sheet, row, column))
+        {
+            _shownFrame = (_sheet, row, column);
+            Source = new CroppedBitmap(_sheet, new PixelRect(column * Cell, row * Cell, Cell, Cell));
+        }
+
         if (++_frame < _frames.Length)
         {
             return;

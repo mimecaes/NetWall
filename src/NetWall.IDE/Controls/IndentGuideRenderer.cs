@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using Avalonia;
 using Avalonia.Media;
+using Avalonia.Media.Immutable;
 using AvaloniaEdit;
 using AvaloniaEdit.Rendering;
 
@@ -22,13 +23,18 @@ public sealed class IndentGuideRenderer : IBackgroundRenderer
             return;
         }
 
-        var guideColor = new SolidColorBrush(Color.FromArgb((byte)(BaseAlpha * Opacity), 128, 128, 128));
+        var pen = new ImmutablePen(new ImmutableSolidColorBrush(Color.FromArgb((byte)(BaseAlpha * Opacity), 128, 128, 128)), LineWidth);
         var document = textView.Document;
         var indentSize = Math.Max(1, textView.Options.IndentationSize);
 
         foreach (var visualLine in textView.VisualLines)
         {
             var line = visualLine.FirstDocumentLine;
+            if (line.Length == 0 || document.GetCharAt(line.Offset) is not (' ' or '\t'))
+            {
+                continue;
+            }
+
             var text = document.GetText(line);
             var boundaries = new List<int> { 1 };
             var visualWidth = 0;
@@ -72,7 +78,7 @@ public sealed class IndentGuideRenderer : IBackgroundRenderer
                 var xPos = textView.GetVisualPosition(new TextViewPosition(line.LineNumber, boundaries[i]), VisualYPosition.LineTop).X - scrollOffset.X - 5;
 
                 drawingContext.DrawLine(
-                    new Pen(guideColor, LineWidth),
+                    pen,
                     new Point(xPos, top),
                     new Point(xPos, bottom)
                 );
