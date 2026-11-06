@@ -156,6 +156,12 @@
                             </ToolTip.Tip>
                             <controls:AnimatedIcon Classes="icon" Kind="Play" Stroke="#2FBF9E" />
                         </Button>
+                        <Button Classes="icon toolbar-icon" Command="{Binding ExportProjectCommand}">
+                            <ToolTip.Tip>
+                                <TextBlock Text="Exportar a iptables" />
+                            </ToolTip.Tip>
+                            <controls:AnimatedIcon Classes="icon" Kind="FileOutput" />
+                        </Button>
                     </StackPanel>
                 </Border>
 

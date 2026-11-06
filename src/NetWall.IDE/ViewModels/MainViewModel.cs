@@ -187,6 +187,8 @@ public partial class MainViewModel : ViewModelBase
 
     public SimulationViewModel Simulation { get; } = new();
 
+    private const string ExportExtension = ".iptables.txt"; // the name exporter.py gives the file
+
     private string? _simulationFile;
     private int _mainFileSearch;
     private int _simulationRun;
@@ -1020,25 +1022,34 @@ public partial class MainViewModel : ViewModelBase
     [RelayCommand]
     private Task RunProgramAsync() => RunProjectAsync("ejecutar");
 
-    private async Task RunProjectAsync(string mode)
+    [RelayCommand]
+    private async Task ExportProjectAsync()
+    {
+        if (await RunProjectAsync("exportar") is { } mainFile)
+        {
+            ShowExportedFile(Path.ChangeExtension(mainFile, ExportExtension));
+        }
+    }
+
+    private async Task<string?> RunProjectAsync(string mode)
     {
         IsTerminalVisible = true;
         if (!SaveModifiedFiles())
         {
-            return;
+            return null;
         }
 
         var mainFile = await FindMainFileAsync(mode);
         if (mainFile is null)
         {
-            return;
+            return null;
         }
 
         var cliPath = FindNetWallCliPath();
         if (cliPath is null)
         {
             AppendTerminalLine("No se encontró cli.py de NetWall.Lang.", TerminalLineKind.Error);
-            return;
+            return null;
         }
 
         _terminal ??= new TerminalSession(Path.GetDirectoryName(mainFile) ?? RootPath);
@@ -1058,6 +1069,32 @@ public partial class MainViewModel : ViewModelBase
         block.Duration = stopwatch.Elapsed;
         block.Status = result.ExitCode == 0 ? RunStatus.Succeeded : RunStatus.Failed;
         TerminalUpdated?.Invoke();
+        return result.ExitCode == 0 ? mainFile : null;
+    }
+
+    private void ShowExportedFile(string path)
+    {
+        if (IsFolderOpen && FindNode(RootNodes, path) is null)
+        {
+            var parent = FindNode(RootNodes, Path.GetDirectoryName(path) ?? string.Empty);
+            InsertNode(parent?.Children ?? RootNodes, new FileTreeNode
+            {
+                Name = Path.GetFileName(path),
+                FullPath = path,
+                Level = parent is null ? 0 : parent.Level + 1,
+                Parent = parent,
+            });
+        }
+
+        var tab = OpenTabs.FirstOrDefault(t => string.Equals(t.FilePath, path, StringComparison.OrdinalIgnoreCase));
+        if (tab is not null && File.Exists(path))
+        {
+            tab.LoadContent(File.ReadAllText(path));
+            if (tab == SelectedTab)
+            {
+                OnPropertyChanged(nameof(SelectedTab));
+            }
+        }
     }
 
     private bool SaveModifiedFiles()
