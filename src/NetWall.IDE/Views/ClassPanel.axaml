@@ -187,6 +187,48 @@
             <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}" />
             <Setter Property="Background" Value="Transparent" />
         </Style>
+        <Style Selector="Border.section">
+            <Setter Property="Background" Value="{DynamicResource PanelBackgroundBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="12" />
+            <Setter Property="Padding" Value="18,16" />
+            <Setter Property="Margin" Value="0,0,0,14" />
+            <Setter Property="Transitions">
+                <Transitions>
+                    <BrushTransition Property="BorderBrush" Duration="0:0:0.2" />
+                </Transitions>
+            </Setter>
+        </Style>
+        <Style Selector="Border.section:focus-within">
+            <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}" />
+        </Style>
+        <Style Selector="Grid.section-header">
+            <Setter Property="Margin" Value="0,0,0,4" />
+        </Style>
+        <Style Selector="TextBlock.section-title">
+            <Setter Property="FontSize" Value="13.5" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
+        </Style>
+        <Style Selector="Border.section-divider">
+            <Setter Property="Height" Value="1" />
+            <Setter Property="Margin" Value="0,18" />
+            <Setter Property="Background" Value="{DynamicResource BorderBrush}" />
+        </Style>
+        <Style Selector="Border.section Border.exercise-card">
+            <Setter Property="Background" Value="{DynamicResource SurfaceBackgroundBrush}" />
+        </Style>
+        <Style Selector="Border.section Border.test-card">
+            <Setter Property="Background" Value="{DynamicResource SurfaceBackgroundBrush}" />
+        </Style>
+        <Style Selector="Border.section Button.avatar-choice">
+            <Setter Property="Background" Value="{DynamicResource SurfaceBackgroundBrush}" />
+        </Style>
+        <Style Selector="Border.section Button.room-card">
+            <Setter Property="Background" Value="{DynamicResource SurfaceBackgroundBrush}" />
+        </Style>
         <Style Selector="TextBlock.label">
             <Setter Property="FontSize" Value="11.5" />
             <Setter Property="FontWeight" Value="SemiBold" />
@@ -533,36 +575,38 @@
     </UserControl.Styles>
 
     <Panel>
-        <StackPanel Classes="class-view" Classes.shown="{Binding IsLanding}"
-                    HorizontalAlignment="Center" VerticalAlignment="Center" Width="460">
-            <TextBlock Text="Modo Clase" FontSize="34" FontWeight="Bold" HorizontalAlignment="Center"
-                       Foreground="{DynamicResource TextPrimaryBrush}" />
-            <TextBlock Text="Lleva tus ejercicios al laboratorio de redes" FontSize="14" HorizontalAlignment="Center"
-                       Margin="0,6,0,26" Foreground="{DynamicResource TextMutedBrush}" />
-            <StackPanel Orientation="Horizontal" Spacing="10" HorizontalAlignment="Center">
-                <Button Classes="class-primary" Click="OnNewClassClick">
+        <Border Classes="class-view section" Classes.shown="{Binding IsLanding}" Padding="36,32"
+                HorizontalAlignment="Center" VerticalAlignment="Center" Width="480">
+            <StackPanel>
+                <TextBlock Text="Modo Clase" FontSize="34" FontWeight="Bold" HorizontalAlignment="Center"
+                           Foreground="{DynamicResource TextPrimaryBrush}" />
+                <TextBlock Text="Lleva tus ejercicios al laboratorio de redes" FontSize="14" HorizontalAlignment="Center"
+                           Margin="0,6,0,26" Foreground="{DynamicResource TextMutedBrush}" />
+                <StackPanel Orientation="Horizontal" Spacing="10" HorizontalAlignment="Center">
+                    <Button Classes="class-primary" Click="OnNewClassClick">
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <controls:AnimatedIcon Kind="Plus" Width="16" Height="16" Stretch="Uniform" Stroke="White"
+                                                   StrokeThickness="2" />
+                            <TextBlock Text="Nueva clase" FontWeight="SemiBold" Foreground="White" />
+                        </StackPanel>
+                    </Button>
+                    <Button Classes="class-secondary" Click="OnOpenClassClick">
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <controls:AnimatedIcon Classes="icon-sm" Kind="FolderOpen" />
+                            <TextBlock Text="Abrir clase" />
+                        </StackPanel>
+                    </Button>
+                </StackPanel>
+                <TextBlock Text="¿Eres estudiante?" FontSize="12.5" HorizontalAlignment="Center" Margin="0,30,0,8"
+                           Foreground="{DynamicResource TextMutedBrush}" />
+                <Button Classes="class-secondary" HorizontalAlignment="Center" Click="OnJoinClassClick">
                     <StackPanel Orientation="Horizontal" Spacing="8">
-                        <controls:AnimatedIcon Kind="Plus" Width="16" Height="16" Stretch="Uniform" Stroke="White"
-                                               StrokeThickness="2" />
-                        <TextBlock Text="Nueva clase" FontWeight="SemiBold" Foreground="White" />
-                    </StackPanel>
-                </Button>
-                <Button Classes="class-secondary" Click="OnOpenClassClick">
-                    <StackPanel Orientation="Horizontal" Spacing="8">
-                        <controls:AnimatedIcon Classes="icon-sm" Kind="FolderOpen" />
-                        <TextBlock Text="Abrir clase" />
+                        <controls:AnimatedIcon Classes="icon-sm" Kind="LogIn" />
+                        <TextBlock Text="Unirme a una clase" />
                     </StackPanel>
                 </Button>
             </StackPanel>
-            <TextBlock Text="¿Eres estudiante?" FontSize="12.5" HorizontalAlignment="Center" Margin="0,30,0,8"
-                       Foreground="{DynamicResource TextMutedBrush}" />
-            <Button Classes="class-secondary" HorizontalAlignment="Center" Click="OnJoinClassClick">
-                <StackPanel Orientation="Horizontal" Spacing="8">
-                    <controls:AnimatedIcon Classes="icon-sm" Kind="LogIn" />
-                    <TextBlock Text="Unirme a una clase" />
-                </StackPanel>
-            </Button>
-        </StackPanel>
+        </Border>
 
         <DockPanel Classes="class-view" Classes.shown="{Binding IsHosting}" Margin="30,18,30,16">
             <Grid DockPanel.Dock="Bottom" Margin="0,10,0,0">
@@ -661,92 +705,105 @@
         </DockPanel>
 
         <StackPanel Classes="class-view" Classes.shown="{Binding IsJoining}" HorizontalAlignment="Center"
-                    VerticalAlignment="Center" Width="440">
+                    VerticalAlignment="Center" Width="480">
             <TextBlock Text="Unirme a una clase" FontSize="28" FontWeight="Bold" HorizontalAlignment="Center"
                        Foreground="{DynamicResource TextPrimaryBrush}" />
-            <Grid ColumnDefinitions="Auto,*" Margin="0,22,0,0">
-                <Border Classes="avatar-preview" Width="92" Height="92" Margin="0,0,16,0">
-                    <controls:KittenAvatar Width="76" Height="76" Color="{Binding Join.Color}" Accessory="{Binding Join.Accessory}" />
-                </Border>
-                <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                    <TextBlock Classes="label" Text="Tu nombre" Margin="0,0,0,6" />
-                    <TextBox Classes="field" Text="{Binding Join.Name}" MaxLength="24" Watermark="Como te verá el profesor" />
-                </StackPanel>
-            </Grid>
-            <TextBlock Classes="label" Text="Tu gatito" />
-            <ItemsControl ItemsSource="{Binding Join.Colors}">
-                <ItemsControl.ItemsPanel>
-                    <ItemsPanelTemplate>
-                        <StackPanel Orientation="Horizontal" Spacing="6" />
-                    </ItemsPanelTemplate>
-                </ItemsControl.ItemsPanel>
-                <ItemsControl.ItemTemplate>
-                    <DataTemplate x:DataType="vm:AvatarChoice">
-                        <Button Classes="avatar-choice" Classes.selected="{Binding IsSelected}" ToolTip.Tip="{Binding Label}"
-                                Command="{Binding $parent[ItemsControl].((vm:ClassViewModel)DataContext).Join.PickColorCommand, FallbackValue={x:Null}}"
-                                CommandParameter="{Binding}">
-                            <controls:KittenAvatar Width="34" Height="34" Color="{Binding Color}" />
+            <Border Classes="section" Margin="0,22,0,0">
+                <StackPanel>
+                    <Grid Classes="section-header" ColumnDefinitions="Auto,*,Auto">
+                        <controls:AnimatedIcon Classes="icon-sm" Kind="Cat" Stroke="{DynamicResource AccentBrush}" Margin="0,0,9,0" />
+                        <TextBlock Grid.Column="1" Classes="section-title" Text="Tú" />
+                    </Grid>
+                    <Grid ColumnDefinitions="Auto,*" Margin="0,10,0,0">
+                        <Border Classes="avatar-preview" Width="92" Height="92" Margin="0,0,16,0">
+                            <controls:KittenAvatar Width="76" Height="76" Color="{Binding Join.Color}" Accessory="{Binding Join.Accessory}" />
+                        </Border>
+                        <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                            <TextBlock Classes="label" Text="Tu nombre" Margin="0,0,0,6" />
+                            <TextBox Classes="field" Text="{Binding Join.Name}" MaxLength="24" Watermark="Como te verá el profesor" />
+                        </StackPanel>
+                    </Grid>
+                    <TextBlock Classes="label" Text="Tu gatito" />
+                    <ItemsControl ItemsSource="{Binding Join.Colors}">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <StackPanel Orientation="Horizontal" Spacing="6" />
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate x:DataType="vm:AvatarChoice">
+                                <Button Classes="avatar-choice" Classes.selected="{Binding IsSelected}" ToolTip.Tip="{Binding Label}"
+                                        Command="{Binding $parent[ItemsControl].((vm:ClassViewModel)DataContext).Join.PickColorCommand, FallbackValue={x:Null}}"
+                                        CommandParameter="{Binding}">
+                                    <controls:KittenAvatar Width="34" Height="34" Color="{Binding Color}" />
+                                </Button>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                    <ItemsControl ItemsSource="{Binding Join.Accessories}" Margin="0,6,0,0">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <StackPanel Orientation="Horizontal" Spacing="6" />
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate x:DataType="vm:AvatarChoice">
+                                <Button Classes="avatar-choice" Classes.selected="{Binding IsSelected}" ToolTip.Tip="{Binding Label}"
+                                        Command="{Binding $parent[ItemsControl].((vm:ClassViewModel)DataContext).Join.PickAccessoryCommand, FallbackValue={x:Null}}"
+                                        CommandParameter="{Binding}">
+                                    <controls:KittenAvatar Width="34" Height="34"
+                                                           Color="{Binding $parent[ItemsControl].((vm:ClassViewModel)DataContext).Join.Color, FallbackValue=Gray}"
+                                                           Accessory="{Binding Accessory}" />
+                                </Button>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                    <Border Classes="section-divider" />
+                    <Grid Classes="section-header" ColumnDefinitions="Auto,*,Auto">
+                        <controls:AnimatedIcon Classes="icon-sm" Kind="Radio" Stroke="{DynamicResource AccentBrush}" Margin="0,0,9,0" />
+                        <TextBlock Grid.Column="1" Classes="section-title" Text="Entrar a una sala" />
+                    </Grid>
+                    <TextBlock Classes="label" Text="Salas en esta red" Margin="0,8,0,6" />
+                    <Border Classes="searching" IsVisible="{Binding !Join.HasRooms}" Padding="12,10" CornerRadius="8"
+                            Background="{DynamicResource SurfaceBackgroundBrush}">
+                        <StackPanel Orientation="Horizontal" Spacing="9">
+                            <Ellipse Classes="live" Width="8" Height="8" Fill="{DynamicResource AccentBrush}" VerticalAlignment="Center" />
+                            <TextBlock Text="Buscando salas abiertas…" FontSize="12.5" Foreground="{DynamicResource TextMutedBrush}" />
+                        </StackPanel>
+                    </Border>
+                    <ItemsControl ItemsSource="{Binding Join.Rooms}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate x:DataType="vm:FoundRoom">
+                                <Button Classes="room-card" Command="{Binding $parent[ItemsControl].((vm:ClassViewModel)DataContext).Join.JoinRoomCommand, FallbackValue={x:Null}}"
+                                        CommandParameter="{Binding}">
+                                    <Grid ColumnDefinitions="Auto,*,Auto">
+                                        <controls:AnimatedIcon Classes="icon-sm" Kind="Presentation" Stroke="{DynamicResource AccentBrush}"
+                                                               Margin="0,0,10,0" />
+                                        <StackPanel Grid.Column="1">
+                                            <TextBlock Text="{Binding ClassName}" FontSize="13" FontWeight="SemiBold"
+                                                       Foreground="{DynamicResource TextPrimaryBrush}" />
+                                            <TextBlock Text="{Binding StudentsText}" FontSize="11.5"
+                                                       Foreground="{DynamicResource TextMutedBrush}" />
+                                        </StackPanel>
+                                        <TextBlock Grid.Column="2" Text="Entrar" FontSize="12" VerticalAlignment="Center"
+                                                   Foreground="{DynamicResource AccentBrush}" />
+                                    </Grid>
+                                </Button>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                    <TextBlock Classes="label" Text="O escribe el código que muestra el profesor" />
+                    <Grid ColumnDefinitions="*,Auto" Name="CodeBoxShell" Classes="shake-host">
+                        <TextBox Classes="field" Text="{Binding Join.Code}" MaxLength="9" Watermark="K7M2-QX4"
+                                 FontFamily="Cascadia Code,Consolas,DejaVu Sans Mono,monospace" FontSize="16" />
+                        <Button Grid.Column="1" Classes="class-primary" Margin="8,0,0,0" Command="{Binding Join.JoinCodeCommand}"
+                                IsEnabled="{Binding Join.CanJoin}">
+                            <TextBlock Text="Unirme" FontWeight="SemiBold" Foreground="White" />
                         </Button>
-                    </DataTemplate>
-                </ItemsControl.ItemTemplate>
-            </ItemsControl>
-            <ItemsControl ItemsSource="{Binding Join.Accessories}" Margin="0,6,0,0">
-                <ItemsControl.ItemsPanel>
-                    <ItemsPanelTemplate>
-                        <StackPanel Orientation="Horizontal" Spacing="6" />
-                    </ItemsPanelTemplate>
-                </ItemsControl.ItemsPanel>
-                <ItemsControl.ItemTemplate>
-                    <DataTemplate x:DataType="vm:AvatarChoice">
-                        <Button Classes="avatar-choice" Classes.selected="{Binding IsSelected}" ToolTip.Tip="{Binding Label}"
-                                Command="{Binding $parent[ItemsControl].((vm:ClassViewModel)DataContext).Join.PickAccessoryCommand, FallbackValue={x:Null}}"
-                                CommandParameter="{Binding}">
-                            <controls:KittenAvatar Width="34" Height="34"
-                                                   Color="{Binding $parent[ItemsControl].((vm:ClassViewModel)DataContext).Join.Color, FallbackValue=Gray}"
-                                                   Accessory="{Binding Accessory}" />
-                        </Button>
-                    </DataTemplate>
-                </ItemsControl.ItemTemplate>
-            </ItemsControl>
-            <TextBlock Classes="label" Text="Salas en esta red" />
-            <Border Classes="searching" IsVisible="{Binding !Join.HasRooms}" Padding="12,10" CornerRadius="8"
-                    Background="{DynamicResource SurfaceBackgroundBrush}">
-                <StackPanel Orientation="Horizontal" Spacing="9">
-                    <Ellipse Classes="live" Width="8" Height="8" Fill="{DynamicResource AccentBrush}" VerticalAlignment="Center" />
-                    <TextBlock Text="Buscando salas abiertas…" FontSize="12.5" Foreground="{DynamicResource TextMutedBrush}" />
+                    </Grid>
                 </StackPanel>
             </Border>
-            <ItemsControl ItemsSource="{Binding Join.Rooms}">
-                <ItemsControl.ItemTemplate>
-                    <DataTemplate x:DataType="vm:FoundRoom">
-                        <Button Classes="room-card" Command="{Binding $parent[ItemsControl].((vm:ClassViewModel)DataContext).Join.JoinRoomCommand, FallbackValue={x:Null}}"
-                                CommandParameter="{Binding}">
-                            <Grid ColumnDefinitions="Auto,*,Auto">
-                                <controls:AnimatedIcon Classes="icon-sm" Kind="Presentation" Stroke="{DynamicResource AccentBrush}"
-                                                       Margin="0,0,10,0" />
-                                <StackPanel Grid.Column="1">
-                                    <TextBlock Text="{Binding ClassName}" FontSize="13" FontWeight="SemiBold"
-                                               Foreground="{DynamicResource TextPrimaryBrush}" />
-                                    <TextBlock Text="{Binding StudentsText}" FontSize="11.5"
-                                               Foreground="{DynamicResource TextMutedBrush}" />
-                                </StackPanel>
-                                <TextBlock Grid.Column="2" Text="Entrar" FontSize="12" VerticalAlignment="Center"
-                                           Foreground="{DynamicResource AccentBrush}" />
-                            </Grid>
-                        </Button>
-                    </DataTemplate>
-                </ItemsControl.ItemTemplate>
-            </ItemsControl>
-            <TextBlock Classes="label" Text="O escribe el código que muestra el profesor" />
-            <Grid ColumnDefinitions="*,Auto" Name="CodeBoxShell" Classes="shake-host">
-                <TextBox Classes="field" Text="{Binding Join.Code}" MaxLength="9" Watermark="K7M2-QX4"
-                         FontFamily="Cascadia Code,Consolas,DejaVu Sans Mono,monospace" FontSize="16" />
-                <Button Grid.Column="1" Classes="class-primary" Margin="8,0,0,0" Command="{Binding Join.JoinCodeCommand}"
-                        IsEnabled="{Binding Join.CanJoin}">
-                    <TextBlock Text="Unirme" FontWeight="SemiBold" Foreground="White" />
-                </Button>
-            </Grid>
-            <Button Classes="class-icon" Width="NaN" Padding="10,0" Margin="0,22,0,0" HorizontalAlignment="Center"
+            <Button Classes="class-icon" Width="NaN" Padding="10,0" Margin="0,4,0,0" HorizontalAlignment="Center"
                     Click="OnBackClick">
                 <StackPanel Orientation="Horizontal" Spacing="6">
                     <controls:AnimatedIcon Classes="icon-sm" Kind="ArrowLeft" />
@@ -782,35 +839,43 @@
                 </Button>
             </Grid>
             <Grid ColumnDefinitions="270,22,*">
-                <ScrollViewer VerticalScrollBarVisibility="Auto">
-                    <ItemsControl ItemsSource="{Binding Join.Exercises}">
-                        <ItemsControl.ItemTemplate>
-                            <DataTemplate x:DataType="vm:StudentExercise">
-                                <Border Classes="exercise-card" Classes.selected="{Binding IsSelected}" Padding="10,10"
-                                        PointerPressed="OnStudentCardPressed">
-                                    <Grid ColumnDefinitions="Auto,*,Auto">
-                                        <controls:AnimatedIcon Classes="type" Kind="{Binding Icon}" Margin="2,0,10,0"
-                                                               VerticalAlignment="Center" />
-                                        <StackPanel Grid.Column="1" Spacing="1" VerticalAlignment="Center">
-                                            <TextBlock FontSize="13" FontWeight="SemiBold" TextTrimming="CharacterEllipsis"
-                                                       Foreground="{DynamicResource TextPrimaryBrush}">
-                                                <Run Text="{Binding Number}" />
-                                                <Run Text="·" />
-                                                <Run Text="{Binding Exercise.Title}" />
-                                            </TextBlock>
-                                            <TextBlock Text="{Binding TypeText}" FontSize="11" Foreground="{DynamicResource TextMutedBrush}" />
-                                        </StackPanel>
-                                        <Border Grid.Column="2" Classes="check-badge" Classes.shown="{Binding IsSolved}"
-                                                Background="{DynamicResource RunGreenBrush}">
-                                            <controls:AnimatedIcon Classes="icon-sm" Kind="Check" Stroke="White"
-                                                                   HorizontalAlignment="Center" VerticalAlignment="Center" />
+                <Border Classes="section" Padding="12,14" Margin="0">
+                    <DockPanel>
+                        <Grid DockPanel.Dock="Top" Classes="section-header" Margin="4,0,0,10" ColumnDefinitions="Auto,*,Auto">
+                            <controls:AnimatedIcon Classes="icon-sm" Kind="ListChecks" Stroke="{DynamicResource AccentBrush}" Margin="0,0,9,0" />
+                            <TextBlock Grid.Column="1" Classes="section-title" Text="Ejercicios" />
+                        </Grid>
+                        <ScrollViewer VerticalScrollBarVisibility="Auto">
+                            <ItemsControl ItemsSource="{Binding Join.Exercises}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate x:DataType="vm:StudentExercise">
+                                        <Border Classes="exercise-card" Classes.selected="{Binding IsSelected}" Padding="10,10"
+                                                PointerPressed="OnStudentCardPressed">
+                                            <Grid ColumnDefinitions="Auto,*,Auto">
+                                                <controls:AnimatedIcon Classes="type" Kind="{Binding Icon}" Margin="2,0,10,0"
+                                                                       VerticalAlignment="Center" />
+                                                <StackPanel Grid.Column="1" Spacing="1" VerticalAlignment="Center">
+                                                    <TextBlock FontSize="13" FontWeight="SemiBold" TextTrimming="CharacterEllipsis"
+                                                               Foreground="{DynamicResource TextPrimaryBrush}">
+                                                        <Run Text="{Binding Number}" />
+                                                        <Run Text="·" />
+                                                        <Run Text="{Binding Exercise.Title}" />
+                                                    </TextBlock>
+                                                    <TextBlock Text="{Binding TypeText}" FontSize="11" Foreground="{DynamicResource TextMutedBrush}" />
+                                                </StackPanel>
+                                                <Border Grid.Column="2" Classes="check-badge" Classes.shown="{Binding IsSolved}"
+                                                        Background="{DynamicResource RunGreenBrush}">
+                                                    <controls:AnimatedIcon Classes="icon-sm" Kind="Check" Stroke="White"
+                                                                           HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                                </Border>
+                                            </Grid>
                                         </Border>
-                                    </Grid>
-                                </Border>
-                            </DataTemplate>
-                        </ItemsControl.ItemTemplate>
-                    </ItemsControl>
-                </ScrollViewer>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </ScrollViewer>
+                    </DockPanel>
+                </Border>
                 <TransitioningContentControl Grid.Column="2" Content="{Binding Join.Selected}">
                     <TransitioningContentControl.PageTransition>
                         <CrossFade Duration="0:0:0.22" />
@@ -819,67 +884,83 @@
                         <DataTemplate x:DataType="vm:StudentExercise">
                             <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="0,0,12,0">
                                 <StackPanel>
-                                    <StackPanel Orientation="Horizontal" Spacing="8">
-                                        <controls:AnimatedIcon Classes="icon-sm" Kind="{Binding Icon}" Stroke="{DynamicResource AccentBrush}" />
-                                        <TextBlock Text="{Binding TypeText}" FontSize="12" FontWeight="SemiBold"
-                                                   Foreground="{DynamicResource AccentBrush}" />
-                                    </StackPanel>
-                                    <TextBlock Text="{Binding Exercise.Title}" FontSize="20" FontWeight="Bold" Margin="0,8,0,4"
-                                               TextWrapping="Wrap" Foreground="{DynamicResource TextPrimaryBrush}" />
-                                    <TextBlock Text="{Binding Exercise.Statement}" FontSize="13.5" TextWrapping="Wrap"
-                                               Foreground="{DynamicResource TextPrimaryBrush}" />
-                                    <StackPanel>
-                                        <TextBlock Classes="label" Text="Tu código" />
-                                        <Border CornerRadius="8" ClipToBounds="True" BorderThickness="1"
-                                                BorderBrush="{DynamicResource BorderBrush}">
-                                            <controls:CodeBox Code="{Binding Code}" Height="230" ShowLineNumbers="True"
-                                                              Background="{DynamicResource EditorBackgroundBrush}"
-                                                              Foreground="{DynamicResource TextPrimaryBrush}"
-                                                              LineNumbersForeground="{DynamicResource TextDisabledBrush}"
-                                                              FontFamily="Cascadia Code,Consolas,DejaVu Sans Mono,monospace"
-                                                              FontSize="13.5" Padding="6" />
-                                        </Border>
-                                        <TextBlock Classes="label" Text="Pruebas" />
-                                        <ItemsControl ItemsSource="{Binding Tests}">
-                                            <ItemsControl.ItemTemplate>
-                                                <DataTemplate x:DataType="vm:StudentTest">
-                                                    <Border Classes="test-card" Classes.passed="{Binding IsPassed}"
-                                                            Classes.failed="{Binding IsFailed}" Padding="12,8">
-                                                        <Grid ColumnDefinitions="*,Auto">
-                                                            <TextBlock Text="{Binding Test.Label}" FontSize="12.5" VerticalAlignment="Center"
-                                                                       TextWrapping="Wrap" Foreground="{DynamicResource TextPrimaryBrush}" />
-                                                            <Panel Grid.Column="1">
-                                                                <Border Classes="check-badge" Classes.shown="{Binding IsPassed}"
-                                                                        Background="{DynamicResource RunGreenBrush}">
-                                                                    <controls:AnimatedIcon Classes="icon-sm" Kind="Check" Stroke="White"
-                                                                                           HorizontalAlignment="Center" VerticalAlignment="Center" />
-                                                                </Border>
-                                                                <Border Classes="check-badge" Classes.shown="{Binding IsFailed}"
-                                                                        Background="{DynamicResource StopRedBrush}">
-                                                                    <controls:AnimatedIcon Classes="icon-sm" Kind="X" Stroke="White"
-                                                                                           HorizontalAlignment="Center" VerticalAlignment="Center" />
-                                                                </Border>
-                                                            </Panel>
-                                                        </Grid>
-                                                    </Border>
-                                                </DataTemplate>
-                                            </ItemsControl.ItemTemplate>
-                                        </ItemsControl>
-                                        <Button Classes="class-primary" HorizontalAlignment="Left" Margin="0,6,0,0"
-                                                Command="{Binding SubmitCommand}" IsEnabled="{Binding CanCheck}">
+                                    <Border Classes="section">
+                                        <StackPanel>
                                             <StackPanel Orientation="Horizontal" Spacing="8">
-                                                <controls:AnimatedIcon Kind="Send" Width="14" Height="14" Stretch="Uniform"
-                                                                       Stroke="White" StrokeThickness="2" />
-                                                <TextBlock Text="Comprobar y enviar" FontWeight="SemiBold" Foreground="White" />
+                                                <controls:AnimatedIcon Classes="icon-sm" Kind="{Binding Icon}" Stroke="{DynamicResource AccentBrush}" />
+                                                <TextBlock Text="{Binding TypeText}" FontSize="12" FontWeight="SemiBold"
+                                                           Foreground="{DynamicResource AccentBrush}" />
                                             </StackPanel>
-                                        </Button>
-                                        <Border Classes="solution-result swap" Classes.shown="{Binding HasResult}"
-                                                Classes.passed="{Binding ResultPassed}" Classes.testing="{Binding IsChecking}"
-                                                Margin="0,10,0,24">
-                                            <TextBlock Text="{Binding ResultText}" FontSize="12.5" TextWrapping="Wrap"
+                                            <TextBlock Text="{Binding Exercise.Title}" FontSize="20" FontWeight="Bold" Margin="0,10,0,4"
+                                                       TextWrapping="Wrap" Foreground="{DynamicResource TextPrimaryBrush}" />
+                                            <TextBlock Text="{Binding Exercise.Statement}" FontSize="13.5" TextWrapping="Wrap"
                                                        Foreground="{DynamicResource TextPrimaryBrush}" />
-                                        </Border>
-                                    </StackPanel>
+                                        </StackPanel>
+                                    </Border>
+                                    <Border Classes="section">
+                                        <StackPanel>
+                                            <Grid Classes="section-header" Margin="0,0,0,12" ColumnDefinitions="Auto,*,Auto">
+                                                <controls:AnimatedIcon Classes="icon-sm" Kind="Code" Stroke="{DynamicResource AccentBrush}" Margin="0,0,9,0" />
+                                                <TextBlock Grid.Column="1" Classes="section-title" Text="Tu código" />
+                                            </Grid>
+                                            <Border CornerRadius="8" ClipToBounds="True" BorderThickness="1"
+                                                    BorderBrush="{DynamicResource BorderBrush}">
+                                                <controls:CodeBox Code="{Binding Code}" Height="230" ShowLineNumbers="True"
+                                                                  Background="{DynamicResource EditorBackgroundBrush}"
+                                                                  Foreground="{DynamicResource TextPrimaryBrush}"
+                                                                  LineNumbersForeground="{DynamicResource TextDisabledBrush}"
+                                                                  FontFamily="Cascadia Code,Consolas,DejaVu Sans Mono,monospace"
+                                                                  FontSize="13.5" Padding="6" />
+                                            </Border>
+                                        </StackPanel>
+                                    </Border>
+                                    <Border Classes="section" Margin="0,0,0,24">
+                                        <StackPanel>
+                                            <Grid Classes="section-header" Margin="0,0,0,12" ColumnDefinitions="Auto,*,Auto">
+                                                <controls:AnimatedIcon Classes="icon-sm" Kind="FlaskConical" Stroke="{DynamicResource AccentBrush}" Margin="0,0,9,0" />
+                                                <TextBlock Grid.Column="1" Classes="section-title" Text="Pruebas" />
+                                            </Grid>
+                                            <ItemsControl ItemsSource="{Binding Tests}">
+                                                <ItemsControl.ItemTemplate>
+                                                    <DataTemplate x:DataType="vm:StudentTest">
+                                                        <Border Classes="test-card" Classes.passed="{Binding IsPassed}"
+                                                                Classes.failed="{Binding IsFailed}" Padding="12,8">
+                                                            <Grid ColumnDefinitions="*,Auto">
+                                                                <TextBlock Text="{Binding Test.Label}" FontSize="12.5" VerticalAlignment="Center"
+                                                                           TextWrapping="Wrap" Foreground="{DynamicResource TextPrimaryBrush}" />
+                                                                <Panel Grid.Column="1">
+                                                                    <Border Classes="check-badge" Classes.shown="{Binding IsPassed}"
+                                                                            Background="{DynamicResource RunGreenBrush}">
+                                                                        <controls:AnimatedIcon Classes="icon-sm" Kind="Check" Stroke="White"
+                                                                                               HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                                                    </Border>
+                                                                    <Border Classes="check-badge" Classes.shown="{Binding IsFailed}"
+                                                                            Background="{DynamicResource StopRedBrush}">
+                                                                        <controls:AnimatedIcon Classes="icon-sm" Kind="X" Stroke="White"
+                                                                                               HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                                                    </Border>
+                                                                </Panel>
+                                                            </Grid>
+                                                        </Border>
+                                                    </DataTemplate>
+                                                </ItemsControl.ItemTemplate>
+                                            </ItemsControl>
+                                            <Button Classes="class-primary" HorizontalAlignment="Left" Margin="0,6,0,0"
+                                                    Command="{Binding SubmitCommand}" IsEnabled="{Binding CanCheck}">
+                                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                                    <controls:AnimatedIcon Kind="Send" Width="14" Height="14" Stretch="Uniform"
+                                                                           Stroke="White" StrokeThickness="2" />
+                                                    <TextBlock Text="Comprobar y enviar" FontWeight="SemiBold" Foreground="White" />
+                                                </StackPanel>
+                                            </Button>
+                                            <Border Classes="solution-result swap" Classes.shown="{Binding HasResult}"
+                                                    Classes.passed="{Binding ResultPassed}" Classes.testing="{Binding IsChecking}"
+                                                    Margin="0,10,0,0">
+                                                <TextBlock Text="{Binding ResultText}" FontSize="12.5" TextWrapping="Wrap"
+                                                           Foreground="{DynamicResource TextPrimaryBrush}" />
+                                            </Border>
+                                        </StackPanel>
+                                    </Border>
                                 </StackPanel>
                             </ScrollViewer>
                         </DataTemplate>
@@ -940,78 +1021,85 @@
             </Border>
 
             <Grid ColumnDefinitions="300,24,*">
-                <DockPanel>
-                    <Button DockPanel.Dock="Bottom" Classes="class-secondary" HorizontalAlignment="Stretch"
-                            HorizontalContentAlignment="Center" Margin="0,4,0,0">
-                        <StackPanel Orientation="Horizontal" Spacing="8">
-                            <controls:AnimatedIcon Classes="icon-sm" Kind="Plus" />
-                            <TextBlock Text="Agregar ejercicio" />
-                        </StackPanel>
-                        <Button.Flyout>
-                            <MenuFlyout Placement="TopEdgeAlignedLeft">
-                                <MenuItem Header="Reto libre" Command="{Binding AddExerciseCommand}" CommandParameter="free" />
-                                <MenuItem Header="Arreglar código" Command="{Binding AddExerciseCommand}" CommandParameter="fix" />
-                            </MenuFlyout>
-                        </Button.Flyout>
-                    </Button>
-                    <TextBlock DockPanel.Dock="Top" Classes="label" Margin="2,0,0,8" Text="{Binding ExerciseCountText}" />
-                    <ScrollViewer VerticalScrollBarVisibility="Auto">
-                        <ItemsControl Name="ExerciseList" ItemsSource="{Binding Exercises}">
-                            <ItemsControl.ItemTemplate>
-                                <DataTemplate x:DataType="vm:ExerciseEditor">
-                                    <Border Classes="exercise-card" Classes.selected="{Binding IsSelected}"
-                                            Classes.dragging="{Binding IsDragging}" PointerPressed="OnCardPressed">
-                                        <Panel>
-                                            <Grid ColumnDefinitions="Auto,Auto,*,Auto" Margin="4,10,8,10"
-                                                  Classes="swap" Classes.shown="{Binding !IsConfirmingDelete}">
-                                                <Border Classes="grip" PointerPressed="OnGripPressed"
-                                                        PointerMoved="OnGripMoved" PointerReleased="OnGripReleased"
-                                                        ToolTip.Tip="Arrastra para ordenar">
-                                                    <controls:AnimatedIcon Classes="icon-sm" Kind="GripVertical" />
-                                                </Border>
-                                                <controls:AnimatedIcon Grid.Column="1" Classes="type" Kind="{Binding Icon}"
-                                                                       Margin="6,0,10,0" VerticalAlignment="Center" />
-                                                <StackPanel Grid.Column="2" VerticalAlignment="Center" Spacing="1">
-                                                    <TextBlock FontSize="13" FontWeight="SemiBold" TextTrimming="CharacterEllipsis"
-                                                               Foreground="{DynamicResource TextPrimaryBrush}">
-                                                        <Run Text="{Binding Number}" />
-                                                        <Run Text="·" />
-                                                        <Run Text="{Binding DisplayTitle}" />
-                                                    </TextBlock>
-                                                    <TextBlock FontSize="11" Foreground="{DynamicResource TextMutedBrush}">
-                                                        <Run Text="{Binding TypeText}" />
-                                                        <Run Text="·" />
-                                                        <Run Text="{Binding TestsText}" />
-                                                    </TextBlock>
-                                                </StackPanel>
-                                                <StackPanel Grid.Column="3" Classes="card-tools" Orientation="Horizontal">
-                                                    <Button Classes="class-icon" ToolTip.Tip="Duplicar"
-                                                            Command="{Binding DuplicateCommand}">
-                                                        <controls:AnimatedIcon Classes="icon-sm" Kind="Copy" />
-                                                    </Button>
-                                                    <Button Classes="class-icon danger" ToolTip.Tip="Borrar"
-                                                            Command="{Binding AskDeleteCommand}">
-                                                        <controls:AnimatedIcon Classes="icon-sm" Kind="Trash2" />
-                                                    </Button>
-                                                </StackPanel>
-                                            </Grid>
-                                            <Grid ColumnDefinitions="*,Auto,Auto" Margin="12,8" Classes="swap"
-                                                  Classes.shown="{Binding IsConfirmingDelete}">
-                                                <TextBlock Text="¿Borrar este ejercicio?" VerticalAlignment="Center"
-                                                           FontSize="12.5" Foreground="{DynamicResource TextPrimaryBrush}" />
-                                                <Button Grid.Column="1" Classes="class-secondary" Padding="10,5" Margin="0,0,6,0"
-                                                        Content="No" Command="{Binding CancelDeleteCommand}" />
-                                                <Button Grid.Column="2" Classes="class-primary" Padding="10,5"
-                                                        Background="{DynamicResource StopRedBrush}" Content="Borrar"
-                                                        Command="{Binding DeleteCommand}" />
-                                            </Grid>
-                                        </Panel>
-                                    </Border>
-                                </DataTemplate>
-                            </ItemsControl.ItemTemplate>
-                        </ItemsControl>
-                    </ScrollViewer>
-                </DockPanel>
+                <Border Classes="section" Padding="12,14" Margin="0">
+                    <DockPanel>
+                        <Button DockPanel.Dock="Bottom" Classes="class-secondary" HorizontalAlignment="Stretch"
+                                HorizontalContentAlignment="Center" Margin="0,4,0,0">
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <controls:AnimatedIcon Classes="icon-sm" Kind="Plus" />
+                                <TextBlock Text="Agregar ejercicio" />
+                            </StackPanel>
+                            <Button.Flyout>
+                                <MenuFlyout Placement="TopEdgeAlignedLeft">
+                                    <MenuItem Header="Reto libre" Command="{Binding AddExerciseCommand}" CommandParameter="free" />
+                                    <MenuItem Header="Arreglar código" Command="{Binding AddExerciseCommand}" CommandParameter="fix" />
+                                </MenuFlyout>
+                            </Button.Flyout>
+                        </Button>
+                        <Grid DockPanel.Dock="Top" Classes="section-header" Margin="4,0,4,10" ColumnDefinitions="Auto,*,Auto">
+                            <controls:AnimatedIcon Classes="icon-sm" Kind="ListChecks" Stroke="{DynamicResource AccentBrush}" Margin="0,0,9,0" />
+                            <TextBlock Grid.Column="1" Classes="section-title" Text="Ejercicios" />
+                            <TextBlock Grid.Column="2" Text="{Binding ExerciseCountText}" FontSize="11.5" VerticalAlignment="Center"
+                                       Foreground="{DynamicResource TextMutedBrush}" />
+                        </Grid>
+                        <ScrollViewer VerticalScrollBarVisibility="Auto">
+                            <ItemsControl Name="ExerciseList" ItemsSource="{Binding Exercises}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate x:DataType="vm:ExerciseEditor">
+                                        <Border Classes="exercise-card" Classes.selected="{Binding IsSelected}"
+                                                Classes.dragging="{Binding IsDragging}" PointerPressed="OnCardPressed">
+                                            <Panel>
+                                                <Grid ColumnDefinitions="Auto,Auto,*,Auto" Margin="4,10,8,10"
+                                                      Classes="swap" Classes.shown="{Binding !IsConfirmingDelete}">
+                                                    <Border Classes="grip" PointerPressed="OnGripPressed"
+                                                            PointerMoved="OnGripMoved" PointerReleased="OnGripReleased"
+                                                            ToolTip.Tip="Arrastra para ordenar">
+                                                        <controls:AnimatedIcon Classes="icon-sm" Kind="GripVertical" />
+                                                    </Border>
+                                                    <controls:AnimatedIcon Grid.Column="1" Classes="type" Kind="{Binding Icon}"
+                                                                           Margin="6,0,10,0" VerticalAlignment="Center" />
+                                                    <StackPanel Grid.Column="2" VerticalAlignment="Center" Spacing="1">
+                                                        <TextBlock FontSize="13" FontWeight="SemiBold" TextTrimming="CharacterEllipsis"
+                                                                   Foreground="{DynamicResource TextPrimaryBrush}">
+                                                            <Run Text="{Binding Number}" />
+                                                            <Run Text="·" />
+                                                            <Run Text="{Binding DisplayTitle}" />
+                                                        </TextBlock>
+                                                        <TextBlock FontSize="11" Foreground="{DynamicResource TextMutedBrush}">
+                                                            <Run Text="{Binding TypeText}" />
+                                                            <Run Text="·" />
+                                                            <Run Text="{Binding TestsText}" />
+                                                        </TextBlock>
+                                                    </StackPanel>
+                                                    <StackPanel Grid.Column="3" Classes="card-tools" Orientation="Horizontal">
+                                                        <Button Classes="class-icon" ToolTip.Tip="Duplicar"
+                                                                Command="{Binding DuplicateCommand}">
+                                                            <controls:AnimatedIcon Classes="icon-sm" Kind="Copy" />
+                                                        </Button>
+                                                        <Button Classes="class-icon danger" ToolTip.Tip="Borrar"
+                                                                Command="{Binding AskDeleteCommand}">
+                                                            <controls:AnimatedIcon Classes="icon-sm" Kind="Trash2" />
+                                                        </Button>
+                                                    </StackPanel>
+                                                </Grid>
+                                                <Grid ColumnDefinitions="*,Auto,Auto" Margin="12,8" Classes="swap"
+                                                      Classes.shown="{Binding IsConfirmingDelete}">
+                                                    <TextBlock Text="¿Borrar este ejercicio?" VerticalAlignment="Center"
+                                                               FontSize="12.5" Foreground="{DynamicResource TextPrimaryBrush}" />
+                                                    <Button Grid.Column="1" Classes="class-secondary" Padding="10,5" Margin="0,0,6,0"
+                                                            Content="No" Command="{Binding CancelDeleteCommand}" />
+                                                    <Button Grid.Column="2" Classes="class-primary" Padding="10,5"
+                                                            Background="{DynamicResource StopRedBrush}" Content="Borrar"
+                                                            Command="{Binding DeleteCommand}" />
+                                                </Grid>
+                                            </Panel>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </ScrollViewer>
+                    </DockPanel>
+                </Border>
 
                 <TransitioningContentControl Grid.Column="2" Content="{Binding Selected}">
                     <TransitioningContentControl.PageTransition>
@@ -1021,150 +1109,169 @@
                         <DataTemplate x:DataType="vm:ExerciseEditor">
                             <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="0,0,12,0">
                                 <StackPanel>
-                                    <StackPanel Orientation="Horizontal" Spacing="8">
-                                        <controls:AnimatedIcon Classes="icon-sm" Kind="{Binding Icon}"
-                                                               Stroke="{DynamicResource AccentBrush}" />
-                                        <TextBlock Text="{Binding TypeText}" FontSize="12" FontWeight="SemiBold"
-                                                   Foreground="{DynamicResource AccentBrush}" />
-                                    </StackPanel>
-                                    <TextBlock Classes="label" Text="Título" />
-                                    <TextBox Classes="field" Text="{Binding Title}" Watermark="Ej.: Permite la web" />
-                                    <TextBlock Classes="label" Text="Enunciado" />
-                                    <TextBox Classes="field" Text="{Binding Statement}" AcceptsReturn="True"
-                                             TextWrapping="Wrap" MinHeight="70"
-                                             Watermark="Lo que verán los estudiantes" />
-                                    <Grid ColumnDefinitions="*,Auto">
-                                        <TextBlock Classes="label" Text="{Binding StarterText}" />
-                                        <Button Grid.Column="1" Classes="class-icon" Width="NaN" Padding="8,0"
-                                                VerticalAlignment="Bottom" Margin="0,0,0,4" Click="OnUseNwClick"
-                                                ToolTip.Tip="Copiar el código de un archivo .nw">
-                                            <StackPanel Orientation="Horizontal" Spacing="6">
-                                                <controls:AnimatedIcon Classes="icon-sm" Kind="FileCode" />
-                                                <TextBlock Text="Usar un .nw" FontSize="12"
-                                                           Foreground="{DynamicResource TextMutedBrush}" />
+                                    <Border Classes="section">
+                                        <StackPanel>
+                                            <StackPanel Orientation="Horizontal" Spacing="8" Margin="0,0,0,2">
+                                                <controls:AnimatedIcon Classes="icon-sm" Kind="{Binding Icon}"
+                                                                       Stroke="{DynamicResource AccentBrush}" />
+                                                <TextBlock Text="{Binding TypeText}" FontSize="12" FontWeight="SemiBold"
+                                                           Foreground="{DynamicResource AccentBrush}" />
                                             </StackPanel>
-                                        </Button>
-                                    </Grid>
-                                    <Border CornerRadius="8" ClipToBounds="True" BorderThickness="1"
-                                            BorderBrush="{DynamicResource BorderBrush}">
-                                        <controls:CodeBox Code="{Binding Starter}" Height="170" ShowLineNumbers="True"
-                                                          Background="{DynamicResource EditorBackgroundBrush}"
-                                                          Foreground="{DynamicResource TextPrimaryBrush}"
-                                                          LineNumbersForeground="{DynamicResource TextDisabledBrush}"
-                                                          FontFamily="Cascadia Code,Consolas,DejaVu Sans Mono,monospace"
-                                                          FontSize="13" Padding="6" />
+                                            <TextBlock Classes="label" Text="Título" Margin="0,10,0,6" />
+                                            <TextBox Classes="field" Text="{Binding Title}" Watermark="Ej.: Permite la web" />
+                                            <TextBlock Classes="label" Text="Enunciado" />
+                                            <TextBox Classes="field" Text="{Binding Statement}" AcceptsReturn="True"
+                                                     TextWrapping="Wrap" MinHeight="70"
+                                                     Watermark="Lo que verán los estudiantes" />
+                                        </StackPanel>
                                     </Border>
-                                    <Grid ColumnDefinitions="*,Auto">
-                                        <TextBlock Classes="label" Text="Pruebas" />
-                                        <Button Grid.Column="1" Classes="class-icon" Width="NaN" Padding="8,0"
-                                                VerticalAlignment="Bottom" Margin="0,0,0,4">
-                                            <StackPanel Orientation="Horizontal" Spacing="6">
-                                                <controls:AnimatedIcon Classes="icon-sm" Kind="Plus" />
-                                                <TextBlock Text="Agregar prueba" FontSize="12"
-                                                           Foreground="{DynamicResource TextMutedBrush}" />
-                                            </StackPanel>
-                                            <Button.Flyout>
-                                                <MenuFlyout Placement="BottomEdgeAlignedRight">
-                                                    <MenuItem Header="Paquete" Command="{Binding AddTestCommand}" CommandParameter="packet" />
-                                                    <MenuItem Header="Política por defecto" Command="{Binding AddTestCommand}"
-                                                              CommandParameter="policy" />
-                                                    <MenuItem Header="Variable" Command="{Binding AddTestCommand}"
-                                                              CommandParameter="variable" />
-                                                    <MenuItem Header="Sin advertencias" Command="{Binding AddTestCommand}"
-                                                              CommandParameter="clean" />
-                                                </MenuFlyout>
-                                            </Button.Flyout>
-                                        </Button>
-                                    </Grid>
-                                    <ItemsControl ItemsSource="{Binding Tests}">
-                                        <ItemsControl.ItemTemplate>
-                                            <DataTemplate x:DataType="vm:TestEditor">
-                                                <Border Classes="test-card" Classes.passed="{Binding IsPassed}"
-                                                        Classes.failed="{Binding IsFailed}">
-                                                    <StackPanel Spacing="8">
-                                                        <Grid ColumnDefinitions="Auto,Auto,*,Auto,Auto">
-                                                            <controls:AnimatedIcon Classes="icon-sm" Kind="{Binding Icon}"
-                                                                                   Stroke="{DynamicResource AccentBrush}" />
-                                                            <TextBlock Grid.Column="1" Text="{Binding KindText}" Margin="8,0,12,0"
-                                                                       FontSize="12" FontWeight="SemiBold" VerticalAlignment="Center"
-                                                                       Foreground="{DynamicResource TextPrimaryBrush}" />
-                                                            <TextBox Grid.Column="2" Classes="field" Padding="8,4" FontSize="12"
-                                                                     Text="{Binding Label}" Watermark="{Binding AutoLabel}"
-                                                                     ToolTip.Tip="Descripción que verán los estudiantes" />
-                                                            <Panel Grid.Column="3">
-                                                                <Border Classes="check-badge" Classes.shown="{Binding IsPassed}"
-                                                                        Background="{DynamicResource RunGreenBrush}">
-                                                                    <controls:AnimatedIcon Classes="icon-sm" Kind="Check" Stroke="White"
-                                                                                           HorizontalAlignment="Center" VerticalAlignment="Center" />
-                                                                </Border>
-                                                                <Border Classes="check-badge" Classes.shown="{Binding IsFailed}"
-                                                                        Background="{DynamicResource StopRedBrush}">
-                                                                    <controls:AnimatedIcon Classes="icon-sm" Kind="X" Stroke="White"
-                                                                                           HorizontalAlignment="Center" VerticalAlignment="Center" />
-                                                                </Border>
-                                                            </Panel>
-                                                            <Button Grid.Column="4" Classes="class-icon danger" Margin="6,0,0,0"
-                                                                    ToolTip.Tip="Quitar prueba" Command="{Binding RemoveCommand}">
-                                                                <controls:AnimatedIcon Classes="icon-sm" Kind="X" />
-                                                            </Button>
-                                                        </Grid>
-                                                        <WrapPanel IsVisible="{Binding IsPacket}" ItemSpacing="8" LineSpacing="8">
-                                                            <ComboBox ItemsSource="{x:Static vm:TestEditor.Protocols}"
-                                                                      SelectedItem="{Binding Protocol}" Width="84" />
-                                                            <NumericUpDown Value="{Binding Port}" Minimum="0" Maximum="65535"
-                                                                           Increment="1" FormatString="0" Width="120"
-                                                                           Watermark="Puerto" />
-                                                            <TextBox Classes="field" Text="{Binding Source}" Width="130"
-                                                                     Watermark="Origen" ToolTip.Tip="Dirección de origen" />
-                                                            <TextBlock Text="→" VerticalAlignment="Center"
-                                                                       Foreground="{DynamicResource TextMutedBrush}" />
-                                                            <TextBox Classes="field" Text="{Binding Destination}" Width="130"
-                                                                     Watermark="Destino" ToolTip.Tip="Dirección de destino" />
-                                                        </WrapPanel>
-                                                        <StackPanel IsVisible="{Binding IsVariable}" Orientation="Horizontal" Spacing="8">
-                                                            <TextBox Classes="field" Text="{Binding Name}" Width="150"
-                                                                     Watermark="Nombre" />
-                                                            <ComboBox ItemsSource="{x:Static vm:TestEditor.VariableTypes}"
-                                                                      SelectedItem="{Binding VariableType}" Width="130" />
-                                                            <TextBox Classes="field" Text="{Binding Value}" Width="170"
-                                                                     Watermark="Valor (opcional)" />
-                                                        </StackPanel>
-                                                        <StackPanel IsVisible="{Binding HasExpect}" Orientation="Horizontal" Spacing="8">
-                                                            <ToggleButton Classes="expect allow" IsChecked="{Binding ExpectsAllow}"
-                                                                          Content="Debe pasar" />
-                                                            <ToggleButton Classes="expect block" IsChecked="{Binding ExpectsBlock}"
-                                                                          Content="Debe bloquearse" />
-                                                        </StackPanel>
+                                    <Border Classes="section">
+                                        <StackPanel>
+                                            <Grid Classes="section-header" Margin="0,0,0,12" ColumnDefinitions="Auto,*,Auto">
+                                                <controls:AnimatedIcon Classes="icon-sm" Kind="Code" Stroke="{DynamicResource AccentBrush}" Margin="0,0,9,0" />
+                                                <TextBlock Grid.Column="1" Classes="section-title" Text="{Binding StarterText}" />
+                                                <Button Grid.Column="2" Classes="class-icon" Width="NaN" Padding="8,0"
+                                                        VerticalAlignment="Center" Click="OnUseNwClick"
+                                                        ToolTip.Tip="Copiar el código de un archivo .nw">
+                                                    <StackPanel Orientation="Horizontal" Spacing="6">
+                                                        <controls:AnimatedIcon Classes="icon-sm" Kind="FileCode" />
+                                                        <TextBlock Text="Usar un .nw" FontSize="12"
+                                                                   Foreground="{DynamicResource TextMutedBrush}" />
                                                     </StackPanel>
-                                                </Border>
-                                            </DataTemplate>
-                                        </ItemsControl.ItemTemplate>
-                                    </ItemsControl>
-                                    <StackPanel Margin="0,0,0,24">
-                                        <TextBlock Classes="label" Text="Tu solución (solo la ves tú)" />
-                                        <Border CornerRadius="8" ClipToBounds="True" BorderThickness="1"
-                                                BorderBrush="{DynamicResource BorderBrush}">
-                                            <controls:CodeBox Code="{Binding Solution}" Height="150" ShowLineNumbers="True"
-                                                              Background="{DynamicResource EditorBackgroundBrush}"
-                                                              Foreground="{DynamicResource TextPrimaryBrush}"
-                                                              LineNumbersForeground="{DynamicResource TextDisabledBrush}"
-                                                              FontFamily="Cascadia Code,Consolas,DejaVu Sans Mono,monospace"
-                                                              FontSize="13" Padding="6" />
-                                        </Border>
-                                        <Button Classes="class-primary" HorizontalAlignment="Left" Margin="0,10,0,0"
-                                                Command="{Binding TestSolutionCommand}" IsEnabled="{Binding !IsTesting}">
-                                            <StackPanel Orientation="Horizontal" Spacing="8">
-                                                <controls:AnimatedIcon Kind="Play" Width="14" Height="14" Stretch="Uniform"
-                                                                       Stroke="White" StrokeThickness="2" />
-                                                <TextBlock Text="Probar con mi solución" FontWeight="SemiBold" Foreground="White" />
-                                            </StackPanel>
-                                        </Button>
-                                        <Border Classes="solution-result swap" Classes.shown="{Binding HasSolutionResult}"
-                                                Classes.passed="{Binding SolutionPassed}" Classes.testing="{Binding IsTesting}">
-                                            <TextBlock Text="{Binding SolutionText}" FontSize="12.5" TextWrapping="Wrap"
-                                                       Foreground="{DynamicResource TextPrimaryBrush}" />
-                                        </Border>
-                                    </StackPanel>
+                                                </Button>
+                                            </Grid>
+                                            <Border CornerRadius="8" ClipToBounds="True" BorderThickness="1"
+                                                    BorderBrush="{DynamicResource BorderBrush}">
+                                                <controls:CodeBox Code="{Binding Starter}" Height="170" ShowLineNumbers="True"
+                                                                  Background="{DynamicResource EditorBackgroundBrush}"
+                                                                  Foreground="{DynamicResource TextPrimaryBrush}"
+                                                                  LineNumbersForeground="{DynamicResource TextDisabledBrush}"
+                                                                  FontFamily="Cascadia Code,Consolas,DejaVu Sans Mono,monospace"
+                                                                  FontSize="13" Padding="6" />
+                                            </Border>
+                                        </StackPanel>
+                                    </Border>
+                                    <Border Classes="section">
+                                        <StackPanel>
+                                            <Grid Classes="section-header" Margin="0,0,0,12" ColumnDefinitions="Auto,*,Auto">
+                                                <controls:AnimatedIcon Classes="icon-sm" Kind="FlaskConical" Stroke="{DynamicResource AccentBrush}" Margin="0,0,9,0" />
+                                                <TextBlock Grid.Column="1" Classes="section-title" Text="Pruebas" />
+                                                <Button Grid.Column="2" Classes="class-icon" Width="NaN" Padding="8,0"
+                                                        VerticalAlignment="Center">
+                                                    <StackPanel Orientation="Horizontal" Spacing="6">
+                                                        <controls:AnimatedIcon Classes="icon-sm" Kind="Plus" />
+                                                        <TextBlock Text="Agregar prueba" FontSize="12"
+                                                                   Foreground="{DynamicResource TextMutedBrush}" />
+                                                    </StackPanel>
+                                                    <Button.Flyout>
+                                                        <MenuFlyout Placement="BottomEdgeAlignedRight">
+                                                            <MenuItem Header="Paquete" Command="{Binding AddTestCommand}" CommandParameter="packet" />
+                                                            <MenuItem Header="Política por defecto" Command="{Binding AddTestCommand}"
+                                                                      CommandParameter="policy" />
+                                                            <MenuItem Header="Variable" Command="{Binding AddTestCommand}"
+                                                                      CommandParameter="variable" />
+                                                            <MenuItem Header="Sin advertencias" Command="{Binding AddTestCommand}"
+                                                                      CommandParameter="clean" />
+                                                        </MenuFlyout>
+                                                    </Button.Flyout>
+                                                </Button>
+                                            </Grid>
+                                            <ItemsControl ItemsSource="{Binding Tests}">
+                                                <ItemsControl.ItemTemplate>
+                                                    <DataTemplate x:DataType="vm:TestEditor">
+                                                        <Border Classes="test-card" Classes.passed="{Binding IsPassed}"
+                                                                Classes.failed="{Binding IsFailed}">
+                                                            <StackPanel Spacing="8">
+                                                                <Grid ColumnDefinitions="Auto,Auto,*,Auto,Auto">
+                                                                    <controls:AnimatedIcon Classes="icon-sm" Kind="{Binding Icon}"
+                                                                                           Stroke="{DynamicResource AccentBrush}" />
+                                                                    <TextBlock Grid.Column="1" Text="{Binding KindText}" Margin="8,0,12,0"
+                                                                               FontSize="12" FontWeight="SemiBold" VerticalAlignment="Center"
+                                                                               Foreground="{DynamicResource TextPrimaryBrush}" />
+                                                                    <TextBox Grid.Column="2" Classes="field" Padding="8,4" FontSize="12"
+                                                                             Text="{Binding Label}" Watermark="{Binding AutoLabel}"
+                                                                             ToolTip.Tip="Descripción que verán los estudiantes" />
+                                                                    <Panel Grid.Column="3">
+                                                                        <Border Classes="check-badge" Classes.shown="{Binding IsPassed}"
+                                                                                Background="{DynamicResource RunGreenBrush}">
+                                                                            <controls:AnimatedIcon Classes="icon-sm" Kind="Check" Stroke="White"
+                                                                                                   HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                                                        </Border>
+                                                                        <Border Classes="check-badge" Classes.shown="{Binding IsFailed}"
+                                                                                Background="{DynamicResource StopRedBrush}">
+                                                                            <controls:AnimatedIcon Classes="icon-sm" Kind="X" Stroke="White"
+                                                                                                   HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                                                        </Border>
+                                                                    </Panel>
+                                                                    <Button Grid.Column="4" Classes="class-icon danger" Margin="6,0,0,0"
+                                                                            ToolTip.Tip="Quitar prueba" Command="{Binding RemoveCommand}">
+                                                                        <controls:AnimatedIcon Classes="icon-sm" Kind="X" />
+                                                                    </Button>
+                                                                </Grid>
+                                                                <WrapPanel IsVisible="{Binding IsPacket}" ItemSpacing="8" LineSpacing="8">
+                                                                    <ComboBox ItemsSource="{x:Static vm:TestEditor.Protocols}"
+                                                                              SelectedItem="{Binding Protocol}" Width="84" />
+                                                                    <NumericUpDown Value="{Binding Port}" Minimum="0" Maximum="65535"
+                                                                                   Increment="1" FormatString="0" Width="120"
+                                                                                   Watermark="Puerto" />
+                                                                    <TextBox Classes="field" Text="{Binding Source}" Width="130"
+                                                                             Watermark="Origen" ToolTip.Tip="Dirección de origen" />
+                                                                    <TextBlock Text="→" VerticalAlignment="Center"
+                                                                               Foreground="{DynamicResource TextMutedBrush}" />
+                                                                    <TextBox Classes="field" Text="{Binding Destination}" Width="130"
+                                                                             Watermark="Destino" ToolTip.Tip="Dirección de destino" />
+                                                                </WrapPanel>
+                                                                <StackPanel IsVisible="{Binding IsVariable}" Orientation="Horizontal" Spacing="8">
+                                                                    <TextBox Classes="field" Text="{Binding Name}" Width="150"
+                                                                             Watermark="Nombre" />
+                                                                    <ComboBox ItemsSource="{x:Static vm:TestEditor.VariableTypes}"
+                                                                              SelectedItem="{Binding VariableType}" Width="130" />
+                                                                    <TextBox Classes="field" Text="{Binding Value}" Width="170"
+                                                                             Watermark="Valor (opcional)" />
+                                                                </StackPanel>
+                                                                <StackPanel IsVisible="{Binding HasExpect}" Orientation="Horizontal" Spacing="8">
+                                                                    <ToggleButton Classes="expect allow" IsChecked="{Binding ExpectsAllow}"
+                                                                                  Content="Debe pasar" />
+                                                                    <ToggleButton Classes="expect block" IsChecked="{Binding ExpectsBlock}"
+                                                                                  Content="Debe bloquearse" />
+                                                                </StackPanel>
+                                                            </StackPanel>
+                                                        </Border>
+                                                    </DataTemplate>
+                                                </ItemsControl.ItemTemplate>
+                                            </ItemsControl>
+                                        </StackPanel>
+                                    </Border>
+                                    <Border Classes="section" Margin="0,0,0,24">
+                                        <StackPanel>
+                                            <Grid Classes="section-header" Margin="0,0,0,12" ColumnDefinitions="Auto,*,Auto">
+                                                <controls:AnimatedIcon Classes="icon-sm" Kind="KeyRound" Stroke="{DynamicResource AccentBrush}" Margin="0,0,9,0" />
+                                                <TextBlock Grid.Column="1" Classes="section-title" Text="Tu solución (solo la ves tú)" />
+                                            </Grid>
+                                            <Border CornerRadius="8" ClipToBounds="True" BorderThickness="1"
+                                                    BorderBrush="{DynamicResource BorderBrush}">
+                                                <controls:CodeBox Code="{Binding Solution}" Height="150" ShowLineNumbers="True"
+                                                                  Background="{DynamicResource EditorBackgroundBrush}"
+                                                                  Foreground="{DynamicResource TextPrimaryBrush}"
+                                                                  LineNumbersForeground="{DynamicResource TextDisabledBrush}"
+                                                                  FontFamily="Cascadia Code,Consolas,DejaVu Sans Mono,monospace"
+                                                                  FontSize="13" Padding="6" />
+                                            </Border>
+                                            <Button Classes="class-primary" HorizontalAlignment="Left" Margin="0,10,0,0"
+                                                    Command="{Binding TestSolutionCommand}" IsEnabled="{Binding !IsTesting}">
+                                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                                    <controls:AnimatedIcon Kind="Play" Width="14" Height="14" Stretch="Uniform"
+                                                                           Stroke="White" StrokeThickness="2" />
+                                                    <TextBlock Text="Probar con mi solución" FontWeight="SemiBold" Foreground="White" />
+                                                </StackPanel>
+                                            </Button>
+                                            <Border Classes="solution-result swap" Classes.shown="{Binding HasSolutionResult}"
+                                                    Classes.passed="{Binding SolutionPassed}" Classes.testing="{Binding IsTesting}">
+                                                <TextBlock Text="{Binding SolutionText}" FontSize="12.5" TextWrapping="Wrap"
+                                                           Foreground="{DynamicResource TextPrimaryBrush}" />
+                                            </Border>
+                                        </StackPanel>
+                                    </Border>
                                 </StackPanel>
                             </ScrollViewer>
                         </DataTemplate>
