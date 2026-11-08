@@ -2,6 +2,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="using:NetWall.IDE.ViewModels"
              xmlns:controls="using:NetWall.IDE.Controls"
+             xmlns:models="using:NetWall.IDE.Models"
              x:Class="NetWall.IDE.Views.ClassPanel"
              x:DataType="vm:ClassViewModel"
              x:CompileBindings="True">
@@ -440,6 +441,103 @@
             <Setter Property="Opacity" Value="1" />
             <Setter Property="RenderTransform" Value="scale(1)" />
         </Style>
+        <Style Selector="Border.packet-card">
+            <Setter Property="Padding" Value="16,12" />
+            <Setter Property="CornerRadius" Value="10" />
+            <Setter Property="Background" Value="{DynamicResource SurfaceBackgroundBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+        </Style>
+        <Style Selector="ProgressBar.countdown">
+            <Setter Property="Height" Value="8" />
+            <Setter Property="MinHeight" Value="8" />
+            <Setter Property="CornerRadius" Value="4" />
+            <Setter Property="Foreground" Value="{DynamicResource AccentBrush}" />
+            <Setter Property="Background" Value="{DynamicResource SurfaceBackgroundBrush}" />
+        </Style>
+        <Style Selector="controls|KittenAvatar.voter">
+            <Setter Property="Opacity" Value="0.3" />
+            <Setter Property="RenderTransformOrigin" Value="50%,100%" />
+            <Setter Property="Transitions">
+                <Transitions>
+                    <DoubleTransition Property="Opacity" Duration="0:0:0.25" />
+                    <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.35" Easing="BackEaseOut" />
+                </Transitions>
+            </Setter>
+        </Style>
+        <Style Selector="controls|KittenAvatar.voter.voted">
+            <Setter Property="Opacity" Value="1" />
+            <Setter Property="RenderTransform" Value="scale(1.15)" />
+        </Style>
+        <Style Selector="Border.vote-bar">
+            <Setter Property="Height" Value="30" />
+            <Setter Property="MinWidth" Value="4" />
+            <Setter Property="CornerRadius" Value="6" />
+            <Setter Property="Opacity" Value="0.55" />
+            <Setter Property="Transitions">
+                <Transitions>
+                    <DoubleTransition Property="Width" Duration="0:0:0.8" Easing="CubicEaseOut" />
+                </Transitions>
+            </Setter>
+        </Style>
+        <Style Selector="Border.vote-bar.correct">
+            <Setter Property="Opacity" Value="1" />
+        </Style>
+        <Style Selector="Border.podium-step">
+            <Setter Property="CornerRadius" Value="10,10,0,0" />
+            <Setter Property="Background" Value="{DynamicResource AccentBrush}" />
+            <Setter Property="Transitions">
+                <Transitions>
+                    <DoubleTransition Property="Height" Duration="0:0:0.7" Easing="BackEaseOut" />
+                </Transitions>
+            </Setter>
+        </Style>
+        <Style Selector="Button.vote-button">
+            <Setter Property="HorizontalAlignment" Value="Stretch" />
+            <Setter Property="HorizontalContentAlignment" Value="Center" />
+            <Setter Property="Height" Value="64" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+            <Setter Property="CornerRadius" Value="12" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="RenderTransformOrigin" Value="50%,50%" />
+            <Setter Property="Transitions">
+                <Transitions>
+                    <DoubleTransition Property="Opacity" Duration="0:0:0.25" />
+                    <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.2" Easing="CubicEaseOut" />
+                </Transitions>
+            </Setter>
+        </Style>
+        <Style Selector="Button.vote-button.allow">
+            <Setter Property="Background" Value="{DynamicResource RunGreenBrush}" />
+        </Style>
+        <Style Selector="Button.vote-button.block">
+            <Setter Property="Background" Value="{DynamicResource StopRedBrush}" />
+        </Style>
+        <Style Selector="Button.vote-button.allow:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource RunGreenBrush}" />
+        </Style>
+        <Style Selector="Button.vote-button.block:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource StopRedBrush}" />
+        </Style>
+        <Style Selector="Button.vote-button:pointerover">
+            <Setter Property="RenderTransform" Value="scale(1.03)" />
+        </Style>
+        <Style Selector="Button.vote-button.chosen">
+            <Setter Property="RenderTransform" Value="scale(1.05)" />
+        </Style>
+        <Style Selector="Button.vote-button.faded">
+            <Setter Property="Opacity" Value="0.3" />
+        </Style>
+        <Style Selector="Border.reveal-card">
+            <Setter Property="Padding" Value="18,16" />
+            <Setter Property="CornerRadius" Value="12" />
+            <Setter Property="Background" Value="{DynamicResource SurfaceBackgroundBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource StopRedBrush}" />
+            <Setter Property="BorderThickness" Value="2" />
+        </Style>
+        <Style Selector="Border.reveal-card.correct">
+            <Setter Property="BorderBrush" Value="{DynamicResource RunGreenBrush}" />
+        </Style>
         <Style Selector="Border.avatar-preview">
             <Setter Property="CornerRadius" Value="46" />
             <Setter Property="Background" Value="{DynamicResource SurfaceBackgroundBrush}" />
@@ -565,14 +663,35 @@
         </StackPanel>
 
         <DockPanel Classes="class-view" Classes.shown="{Binding IsHosting}" Margin="30,18,30,16">
-            <Grid DockPanel.Dock="Bottom" Margin="0,10,0,0">
-                <Button Classes="class-secondary" HorizontalAlignment="Center" Click="OnCloseRoomClick">
+            <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" Spacing="10" HorizontalAlignment="Center"
+                        Margin="0,10,0,0">
+                <Button Classes="class-primary" IsEnabled="{Binding Room.HasVoteExercises}"
+                        ToolTip.Tip="Inicia una pregunta de ¿Pasa o se bloquea? para todos">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <controls:AnimatedIcon Kind="Vote" Width="15" Height="15" Stretch="Uniform" Stroke="White" StrokeThickness="2" />
+                        <TextBlock Text="Iniciar votación" FontWeight="SemiBold" Foreground="White" />
+                    </StackPanel>
+                    <Button.Flyout>
+                        <Flyout Placement="TopEdgeAlignedLeft">
+                            <ItemsControl ItemsSource="{Binding Room.VoteExercises}" MinWidth="260">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate x:DataType="models:ClassExercise">
+                                        <Button Classes="room-card" Content="{Binding Title}"
+                                                Command="{Binding $parent[ItemsControl].((vm:ClassViewModel)DataContext).Room.StartVoteCommand, FallbackValue={x:Null}}"
+                                                CommandParameter="{Binding}" Click="OnVoteChosen" />
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </Flyout>
+                    </Button.Flyout>
+                </Button>
+                <Button Classes="class-secondary" Click="OnCloseRoomClick">
                     <StackPanel Orientation="Horizontal" Spacing="8">
                         <controls:AnimatedIcon Classes="icon-sm" Kind="DoorClosed" />
                         <TextBlock Text="Cerrar sala" />
                     </StackPanel>
                 </Button>
-            </Grid>
+            </StackPanel>
             <Viewbox Stretch="Uniform" StretchDirection="DownOnly" VerticalAlignment="Top">
                 <StackPanel Width="780">
                     <Border Classes="firewall-box" HorizontalAlignment="Center">
@@ -659,6 +778,148 @@
                 </StackPanel>
             </Viewbox>
         </DockPanel>
+
+        <Border Classes="class-view vote-stage" Classes.shown="{Binding Room.IsVoting}" Background="{DynamicResource BackgroundBrush}">
+            <Grid Margin="36,22" RowDefinitions="Auto,*,Auto">
+                <StackPanel>
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <controls:AnimatedIcon Classes="icon-sm" Kind="Vote" Stroke="{DynamicResource AccentBrush}" />
+                        <TextBlock Text="¿Pasa o se bloquea?" FontSize="12.5" FontWeight="SemiBold"
+                                   Foreground="{DynamicResource AccentBrush}" />
+                    </StackPanel>
+                    <TextBlock Text="{Binding Room.VoteExercise.Title, FallbackValue=''}" FontSize="26" FontWeight="Bold"
+                               Margin="0,4,0,0" Foreground="{DynamicResource TextPrimaryBrush}" />
+                    <TextBlock Text="{Binding Room.VoteExercise.Statement, FallbackValue=''}" FontSize="14"
+                               TextWrapping="Wrap" Foreground="{DynamicResource TextPrimaryBrush}" />
+                </StackPanel>
+                <Grid Grid.Row="1" ColumnDefinitions="*,24,400" Margin="0,16,0,0">
+                    <Border CornerRadius="10" ClipToBounds="True" BorderThickness="1" BorderBrush="{DynamicResource BorderBrush}">
+                        <controls:CodeBox Code="{Binding Room.VoteExercise.Starter, FallbackValue=''}" IsReadOnly="True"
+                                          ShowLineNumbers="True" Background="{DynamicResource EditorBackgroundBrush}"
+                                          Foreground="{DynamicResource TextPrimaryBrush}"
+                                          LineNumbersForeground="{DynamicResource TextDisabledBrush}"
+                                          FontFamily="Cascadia Code,Consolas,DejaVu Sans Mono,monospace" FontSize="15" Padding="8" />
+                    </Border>
+                    <StackPanel Grid.Column="2">
+                        <Border Classes="packet-card">
+                            <StackPanel Spacing="4">
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <controls:AnimatedIcon Classes="icon-sm" Kind="Send" Stroke="{DynamicResource AccentBrush}" />
+                                    <TextBlock Text="Paquete" FontSize="12" Foreground="{DynamicResource TextMutedBrush}" />
+                                </StackPanel>
+                                <TextBlock Text="{Binding Room.PacketText}" FontSize="17" FontWeight="SemiBold" TextWrapping="Wrap"
+                                           FontFamily="Cascadia Code,Consolas,DejaVu Sans Mono,monospace"
+                                           Foreground="{DynamicResource TextPrimaryBrush}" />
+                            </StackPanel>
+                        </Border>
+                        <Panel Margin="0,18,0,0">
+                            <StackPanel Classes="swap" Classes.shown="{Binding !Room.IsRevealed}">
+                                <Grid ColumnDefinitions="*,Auto">
+                                    <TextBlock Text="{Binding Room.AnsweredText}" FontSize="13.5" Foreground="{DynamicResource TextPrimaryBrush}" />
+                                    <TextBlock Grid.Column="1" Text="{Binding Room.RemainingText}" FontSize="22" FontWeight="Bold"
+                                               Foreground="{DynamicResource AccentBrush}" />
+                                </Grid>
+                                <ProgressBar Classes="countdown" Minimum="0" Maximum="1" Value="{Binding Room.Remaining}" Margin="0,8,0,0" />
+                                <ItemsControl ItemsSource="{Binding Room.Seats}" Margin="0,16,0,0">
+                                    <ItemsControl.ItemsPanel>
+                                        <ItemsPanelTemplate>
+                                            <WrapPanel ItemSpacing="4" LineSpacing="4" />
+                                        </ItemsPanelTemplate>
+                                    </ItemsControl.ItemsPanel>
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate x:DataType="vm:LabSeat">
+                                            <controls:KittenAvatar Classes="voter" Classes.voted="{Binding HasVoted}" Width="30" Height="30"
+                                                                   IsVisible="{Binding IsConnected}" Color="{Binding Color}"
+                                                                   Accessory="{Binding Accessory}" ToolTip.Tip="{Binding Name}" />
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </StackPanel>
+                            <StackPanel Classes="swap" Classes.shown="{Binding Room.IsRevealed}" Spacing="10">
+                                <Grid ColumnDefinitions="110,*">
+                                    <TextBlock Text="Pasa" FontSize="15" FontWeight="SemiBold" VerticalAlignment="Center"
+                                               Foreground="{DynamicResource TextPrimaryBrush}" />
+                                    <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
+                                        <Border Classes="vote-bar" Classes.correct="{Binding Room.CorrectIsAllow}"
+                                                Width="{Binding Room.AllowWidth}" Background="{DynamicResource RunGreenBrush}" />
+                                        <TextBlock Text="{Binding Room.AllowCount}" FontSize="16" FontWeight="Bold" VerticalAlignment="Center"
+                                                   Foreground="{DynamicResource TextPrimaryBrush}" />
+                                    </StackPanel>
+                                </Grid>
+                                <Grid ColumnDefinitions="110,*">
+                                    <TextBlock Text="Se bloquea" FontSize="15" FontWeight="SemiBold" VerticalAlignment="Center"
+                                               Foreground="{DynamicResource TextPrimaryBrush}" />
+                                    <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
+                                        <Border Classes="vote-bar" Classes.correct="{Binding !Room.CorrectIsAllow}"
+                                                Width="{Binding Room.BlockWidth}" Background="{DynamicResource StopRedBrush}" />
+                                        <TextBlock Text="{Binding Room.BlockCount}" FontSize="16" FontWeight="Bold" VerticalAlignment="Center"
+                                                   Foreground="{DynamicResource TextPrimaryBrush}" />
+                                    </StackPanel>
+                                </Grid>
+                                <Border Classes="packet-card" Margin="0,8,0,0">
+                                    <StackPanel Spacing="3">
+                                        <TextBlock FontSize="15" FontWeight="Bold" Foreground="{DynamicResource RunGreenBrush}"
+                                                   IsVisible="{Binding Room.CorrectIsAllow}" Text="Respuesta correcta: pasa" />
+                                        <TextBlock FontSize="15" FontWeight="Bold" Foreground="{DynamicResource StopRedBrush}"
+                                                   IsVisible="{Binding !Room.CorrectIsAllow}" Text="Respuesta correcta: se bloquea" />
+                                        <TextBlock Text="{Binding Room.RuleText}" FontSize="13" TextWrapping="Wrap"
+                                                   Foreground="{DynamicResource TextMutedBrush}" />
+                                    </StackPanel>
+                                </Border>
+                            </StackPanel>
+                        </Panel>
+                    </StackPanel>
+                </Grid>
+                <Border Grid.Row="1" Classes="class-view podium" Classes.shown="{Binding Room.IsPodium}"
+                        Background="{DynamicResource BackgroundBrush}">
+                    <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
+                        <TextBlock Text="Podio" FontSize="28" FontWeight="Bold" HorizontalAlignment="Center"
+                                   Foreground="{DynamicResource TextPrimaryBrush}" />
+                        <TextBlock Text="Nadie sumó puntos todavía." FontSize="13" HorizontalAlignment="Center" Margin="0,10,0,0"
+                                   IsVisible="{Binding !Room.Podium.Count}" Foreground="{DynamicResource TextMutedBrush}" />
+                        <ItemsControl ItemsSource="{Binding Room.Podium}" Margin="0,20,0,0">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <StackPanel Orientation="Horizontal" Spacing="18" />
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate x:DataType="vm:PodiumPlace">
+                                    <StackPanel Width="150" VerticalAlignment="Bottom">
+                                        <controls:KittenAvatar Width="76" Height="76" HorizontalAlignment="Center"
+                                                               Color="{Binding Color}" Accessory="{Binding Accessory}" />
+                                        <TextBlock Text="{Binding Name}" FontSize="15" FontWeight="SemiBold" HorizontalAlignment="Center"
+                                                   TextTrimming="CharacterEllipsis" Foreground="{DynamicResource TextPrimaryBrush}" />
+                                        <TextBlock Text="{Binding PointsText}" FontSize="12" HorizontalAlignment="Center" Margin="0,2,0,6"
+                                                   Foreground="{DynamicResource TextMutedBrush}" />
+                                        <Border Classes="podium-step" Height="{Binding Height}">
+                                            <TextBlock Text="{Binding Rank}" FontSize="30" FontWeight="Bold" HorizontalAlignment="Center"
+                                                       VerticalAlignment="Center" Foreground="White" />
+                                        </Border>
+                                    </StackPanel>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </StackPanel>
+                </Border>
+                <StackPanel Grid.Row="2" Orientation="Horizontal" Spacing="10" HorizontalAlignment="Center" Margin="0,14,0,0">
+                    <Button Classes="class-primary" Content="Revelar ahora" IsVisible="{Binding !Room.IsRevealed}"
+                            Command="{Binding Room.RevealCommand}" />
+                    <Button Classes="class-primary" IsVisible="{Binding Room.IsRevealed}" Command="{Binding Room.ShowPodiumCommand}">
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <controls:AnimatedIcon Kind="Trophy" Width="15" Height="15" Stretch="Uniform" Stroke="White" StrokeThickness="2" />
+                            <TextBlock Text="Ver podio" FontWeight="SemiBold" Foreground="White" />
+                        </StackPanel>
+                    </Button>
+                    <Button Classes="class-secondary" Command="{Binding Room.CloseVoteCommand}">
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <controls:AnimatedIcon Classes="icon-sm" Kind="Monitor" />
+                            <TextBlock Text="Volver al laboratorio" />
+                        </StackPanel>
+                    </Button>
+                </StackPanel>
+            </Grid>
+        </Border>
 
         <StackPanel Classes="class-view" Classes.shown="{Binding IsJoining}" HorizontalAlignment="Center"
                     VerticalAlignment="Center" Width="440">
@@ -892,6 +1153,79 @@
                 </TransitioningContentControl>
             </Grid>
         </DockPanel>
+
+        <Border Classes="class-view vote-stage" Classes.shown="{Binding Join.IsVoting}" Background="{DynamicResource BackgroundBrush}">
+            <Grid Margin="36,22" RowDefinitions="Auto,Auto,*">
+                <StackPanel>
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <controls:AnimatedIcon Classes="icon-sm" Kind="Vote" Stroke="{DynamicResource AccentBrush}" />
+                        <TextBlock Text="¿Pasa o se bloquea?" FontSize="12.5" FontWeight="SemiBold"
+                                   Foreground="{DynamicResource AccentBrush}" />
+                    </StackPanel>
+                    <TextBlock Text="{Binding Join.VoteExercise.Exercise.Title, FallbackValue=''}" FontSize="24" FontWeight="Bold"
+                               Margin="0,4,0,0" Foreground="{DynamicResource TextPrimaryBrush}" />
+                    <TextBlock Text="{Binding Join.VoteExercise.Exercise.Statement, FallbackValue=''}" FontSize="13.5"
+                               TextWrapping="Wrap" Foreground="{DynamicResource TextPrimaryBrush}" />
+                </StackPanel>
+                <ProgressBar Grid.Row="1" Classes="countdown" Minimum="0" Maximum="1" Value="{Binding Join.VoteRemaining}"
+                             Margin="0,12,0,14" />
+                <Grid Grid.Row="2" ColumnDefinitions="*,24,380">
+                    <Border CornerRadius="10" ClipToBounds="True" BorderThickness="1" BorderBrush="{DynamicResource BorderBrush}">
+                        <controls:CodeBox Code="{Binding Join.VoteExercise.Code, FallbackValue=''}" IsReadOnly="True"
+                                          ShowLineNumbers="True" Background="{DynamicResource EditorBackgroundBrush}"
+                                          Foreground="{DynamicResource TextPrimaryBrush}"
+                                          LineNumbersForeground="{DynamicResource TextDisabledBrush}"
+                                          FontFamily="Cascadia Code,Consolas,DejaVu Sans Mono,monospace" FontSize="14" Padding="8" />
+                    </Border>
+                    <StackPanel Grid.Column="2">
+                        <Border Classes="packet-card">
+                            <StackPanel Spacing="4">
+                                <TextBlock Text="Paquete" FontSize="12" Foreground="{DynamicResource TextMutedBrush}" />
+                                <TextBlock Text="{Binding Join.VotePacket}" FontSize="16" FontWeight="SemiBold" TextWrapping="Wrap"
+                                           FontFamily="Cascadia Code,Consolas,DejaVu Sans Mono,monospace"
+                                           Foreground="{DynamicResource TextPrimaryBrush}" />
+                            </StackPanel>
+                        </Border>
+                        <Panel Margin="0,18,0,0">
+                            <StackPanel Classes="swap" Classes.shown="{Binding !Join.IsRevealed}" Spacing="10">
+                                <Button Classes="vote-button allow" Classes.chosen="{Binding Join.ChoseAllow}"
+                                        Classes.faded="{Binding Join.ChoseBlock}" Command="{Binding Join.VoteCommand}"
+                                        CommandParameter="permitir">
+                                    <StackPanel Orientation="Horizontal" Spacing="10" HorizontalAlignment="Center">
+                                        <controls:AnimatedIcon Kind="Check" Width="20" Height="20" Stretch="Uniform" Stroke="White"
+                                                               StrokeThickness="2.5" />
+                                        <TextBlock Text="Pasa" FontSize="18" FontWeight="Bold" Foreground="White" VerticalAlignment="Center" />
+                                    </StackPanel>
+                                </Button>
+                                <Button Classes="vote-button block" Classes.chosen="{Binding Join.ChoseBlock}"
+                                        Classes.faded="{Binding Join.ChoseAllow}" Command="{Binding Join.VoteCommand}"
+                                        CommandParameter="bloquear">
+                                    <StackPanel Orientation="Horizontal" Spacing="10" HorizontalAlignment="Center">
+                                        <controls:AnimatedIcon Kind="X" Width="20" Height="20" Stretch="Uniform" Stroke="White"
+                                                               StrokeThickness="2.5" />
+                                        <TextBlock Text="Se bloquea" FontSize="18" FontWeight="Bold" Foreground="White" VerticalAlignment="Center" />
+                                    </StackPanel>
+                                </Button>
+                                <TextBlock Text="Respuesta enviada. Espera a que el profesor revele el resultado." FontSize="12.5"
+                                           TextWrapping="Wrap" HorizontalAlignment="Center" IsVisible="{Binding Join.HasVoted}"
+                                           Foreground="{DynamicResource TextMutedBrush}" />
+                            </StackPanel>
+                            <Border Classes="swap reveal-card" Classes.shown="{Binding Join.IsRevealed}"
+                                    Classes.correct="{Binding Join.VoteCorrect}">
+                                <StackPanel Spacing="6">
+                                    <TextBlock Text="{Binding Join.RevealTitle}" FontSize="26" FontWeight="Bold"
+                                               Foreground="{DynamicResource TextPrimaryBrush}" />
+                                    <TextBlock Text="{Binding Join.RevealText}" FontSize="13.5" TextWrapping="Wrap"
+                                               Foreground="{DynamicResource TextPrimaryBrush}" />
+                                    <TextBlock Text="{Binding Join.PointsText}" FontSize="14" FontWeight="SemiBold" Margin="0,6,0,0"
+                                               Foreground="{DynamicResource AccentBrush}" />
+                                </StackPanel>
+                            </Border>
+                        </Panel>
+                    </StackPanel>
+                </Grid>
+            </Grid>
+        </Border>
 
         <DockPanel Classes="class-view" Classes.shown="{Binding IsEditing}" Margin="36,26,36,20">
             <Grid DockPanel.Dock="Top" ColumnDefinitions="*,Auto" Margin="0,0,0,18">

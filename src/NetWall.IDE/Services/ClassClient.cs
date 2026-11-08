@@ -20,7 +20,7 @@ public sealed class ClassClient(IPEndPoint room, string name, PetColor color, in
     private readonly SemaphoreSlim _writeLock = new(1, 1);
     private StreamWriter? _writer;
 
-    public event Action<ClassMessage>? ResultReceived;
+    public event Action<ClassMessage>? MessageReceived;
 
     public event Action<ClassMessage>? Welcomed;
 
@@ -117,10 +117,7 @@ public sealed class ClassClient(IPEndPoint room, string name, PetColor color, in
                         return;
                     }
 
-                    if (message.Type == "result")
-                    {
-                        ResultReceived?.Invoke(message);
-                    }
+                    MessageReceived?.Invoke(message);
                 }
             }
             catch (Exception e) when (e is IOException or OperationCanceledException or SocketException

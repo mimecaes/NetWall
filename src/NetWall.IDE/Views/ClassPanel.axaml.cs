@@ -3,6 +3,8 @@ using System.IO;
 using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Controls.Primitives;
+using Avalonia.LogicalTree;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Platform.Storage;
@@ -79,6 +81,14 @@ public partial class ClassPanel : UserControl
     }
 
     private void OnCloseRoomClick(object? sender, RoutedEventArgs e) => ViewModel?.CloseRoom();
+
+    private void OnVoteChosen(object? sender, RoutedEventArgs e)
+    {
+        if (sender is Control control && control.FindLogicalAncestorOfType<Popup>() is { } popup)
+        {
+            popup.IsOpen = false;
+        }
+    }
 
     private void OnJoinClassClick(object? sender, RoutedEventArgs e) => ViewModel?.StartJoining();
 
