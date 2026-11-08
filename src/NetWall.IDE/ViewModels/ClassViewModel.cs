@@ -11,6 +11,15 @@ using NetWall.IDE.Services;
 
 namespace NetWall.IDE.ViewModels;
 
+public enum ClassStage
+{
+    Landing,
+    Editor,
+    Hosting,
+    Joining,
+    Student,
+}
+
 public sealed partial class ClassViewModel(Func<string?> cliPath) : ViewModelBase
 {
     private const int RevealDelay = 70;
@@ -24,11 +33,26 @@ public sealed partial class ClassViewModel(Func<string?> cliPath) : ViewModelBas
 
     public ObservableCollection<ExerciseEditor> Exercises { get; } = [];
 
+    public RoomHostViewModel Room { get; } = new();
+
+    public RoomJoinViewModel Join { get; } = new();
+
     [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(HasNoClass))]
     public partial bool HasClass { get; set; }
 
-    public bool HasNoClass => !HasClass;
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsLanding), nameof(IsEditing), nameof(IsHosting), nameof(IsJoining), nameof(IsStudent))]
+    public partial ClassStage Stage { get; set; }
+
+    public bool IsLanding => Stage == ClassStage.Landing;
+
+    public bool IsEditing => Stage == ClassStage.Editor;
+
+    public bool IsHosting => Stage == ClassStage.Hosting;
+
+    public bool IsJoining => Stage == ClassStage.Joining;
+
+    public bool IsStudent => Stage == ClassStage.Student;
 
     public string ClassId { get; private set; } = string.Empty;
 
@@ -93,6 +117,7 @@ public sealed partial class ClassViewModel(Func<string?> cliPath) : ViewModelBas
         Description = string.Empty;
         _loading = false;
         HasClass = true;
+        Stage = ClassStage.Editor;
         AddExercise(null);
         IsDirty = false;
     }
@@ -109,6 +134,7 @@ public sealed partial class ClassViewModel(Func<string?> cliPath) : ViewModelBas
         Name = file.Name;
         Description = file.Description ?? string.Empty;
         HasClass = true;
+        Stage = ClassStage.Editor;
         IsDirty = false;
         _loading = false;
         OnPropertyChanged(nameof(ExerciseCountText));
@@ -129,10 +155,50 @@ public sealed partial class ClassViewModel(Func<string?> cliPath) : ViewModelBas
         }
     }
 
+    public ClassFile BuildFile() => new(CurrentVersion, ClassId, Name.Trim(),
+        Description.Trim().Length > 0 ? Description.Trim() : null, [.. Exercises.Select(exercise => exercise.ToModel())]);
+
+    public void OpenRoom()
+    {
+        var file = BuildFile();
+        ClassFileLoader.Validate(file);
+        Room.Start(file);
+        Stage = ClassStage.Hosting;
+    }
+
+    public void CloseRoom()
+    {
+        Room.Stop();
+        Stage = ClassStage.Editor;
+    }
+
+    public void StartJoining()
+    {
+        Join.Leave();
+        Join.StartSearching();
+        Stage = ClassStage.Joining;
+    }
+
+    public void ShowStudent() => Stage = ClassStage.Student;
+
+    public void BackToStart()
+    {
+        Join.StopSearching();
+        Join.Leave();
+        Stage = HasClass ? ClassStage.Editor : ClassStage.Landing;
+    }
+
+    public void LeaveAll()
+    {
+        Room.Stop();
+        Join.StopSearching();
+        Join.Leave();
+        Stage = HasClass ? ClassStage.Editor : ClassStage.Landing;
+    }
+
     public void Save(string path)
     {
-        var file = new ClassFile(CurrentVersion, ClassId, Name.Trim(),
-            Description.Trim().Length > 0 ? Description.Trim() : null, [.. Exercises.Select(exercise => exercise.ToModel())]);
+        var file = BuildFile();
         ClassFileLoader.Save(file, path);
         FilePath = path;
         IsDirty = false;

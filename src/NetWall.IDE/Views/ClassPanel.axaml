@@ -308,6 +308,106 @@
         <Style Selector="Border.solution-result.testing">
             <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
         </Style>
+        <Style Selector="Border.room-code">
+            <Setter Property="Padding" Value="28,10" />
+            <Setter Property="CornerRadius" Value="12" />
+            <Setter Property="Background" Value="{DynamicResource SurfaceBackgroundBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}" />
+            <Setter Property="BorderThickness" Value="1.5" />
+        </Style>
+        <Style Selector=":is(Control).shown Ellipse.live">
+            <Style.Animations>
+                <Animation Duration="0:0:1.4" IterationCount="Infinite">
+                    <KeyFrame Cue="0%">
+                        <Setter Property="Opacity" Value="1" />
+                    </KeyFrame>
+                    <KeyFrame Cue="50%">
+                        <Setter Property="Opacity" Value="0.25" />
+                    </KeyFrame>
+                    <KeyFrame Cue="100%">
+                        <Setter Property="Opacity" Value="1" />
+                    </KeyFrame>
+                </Animation>
+            </Style.Animations>
+        </Style>
+        <Style Selector="Border.seat-chip">
+            <Setter Property="Padding" Value="11,6" />
+            <Setter Property="CornerRadius" Value="14" />
+            <Setter Property="Background" Value="{DynamicResource PanelBackgroundBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource RunGreenBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="Transitions">
+                <Transitions>
+                    <DoubleTransition Property="Opacity" Duration="0:0:0.25" />
+                    <BrushTransition Property="BorderBrush" Duration="0:0:0.25" />
+                </Transitions>
+            </Setter>
+            <Style.Animations>
+                <Animation Duration="0:0:0.35" Easing="BackEaseOut">
+                    <KeyFrame Cue="0%">
+                        <Setter Property="Opacity" Value="0" />
+                        <Setter Property="Margin" Value="0,10,0,0" />
+                    </KeyFrame>
+                    <KeyFrame Cue="100%">
+                        <Setter Property="Opacity" Value="1" />
+                        <Setter Property="Margin" Value="0" />
+                    </KeyFrame>
+                </Animation>
+            </Style.Animations>
+        </Style>
+        <Style Selector="Border.seat-chip.offline">
+            <Setter Property="Opacity" Value="0.45" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+        </Style>
+        <Style Selector="Button.room-card">
+            <Setter Property="HorizontalAlignment" Value="Stretch" />
+            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+            <Setter Property="Padding" Value="12,10" />
+            <Setter Property="Margin" Value="0,0,0,8" />
+            <Setter Property="CornerRadius" Value="9" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="Background" Value="{DynamicResource PanelBackgroundBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Style.Animations>
+                <Animation Duration="0:0:0.3" Easing="CubicEaseOut">
+                    <KeyFrame Cue="0%">
+                        <Setter Property="Opacity" Value="0" />
+                    </KeyFrame>
+                    <KeyFrame Cue="100%">
+                        <Setter Property="Opacity" Value="1" />
+                    </KeyFrame>
+                </Animation>
+            </Style.Animations>
+        </Style>
+        <Style Selector="Button.room-card:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource HoverBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}" />
+        </Style>
+        <Style Selector="Grid.shake-host.shake">
+            <Style.Animations>
+                <Animation Duration="0:0:0.4">
+                    <KeyFrame Cue="0%">
+                        <Setter Property="Margin" Value="0" />
+                    </KeyFrame>
+                    <KeyFrame Cue="20%">
+                        <Setter Property="Margin" Value="-10,0,10,0" />
+                    </KeyFrame>
+                    <KeyFrame Cue="40%">
+                        <Setter Property="Margin" Value="8,0,-8,0" />
+                    </KeyFrame>
+                    <KeyFrame Cue="60%">
+                        <Setter Property="Margin" Value="-6,0,6,0" />
+                    </KeyFrame>
+                    <KeyFrame Cue="80%">
+                        <Setter Property="Margin" Value="3,0,-3,0" />
+                    </KeyFrame>
+                    <KeyFrame Cue="100%">
+                        <Setter Property="Margin" Value="0" />
+                    </KeyFrame>
+                </Animation>
+            </Style.Animations>
+        </Style>
         <Style Selector="Ellipse.dirty">
             <Setter Property="Opacity" Value="0" />
             <Setter Property="Transitions">
@@ -322,7 +422,7 @@
     </UserControl.Styles>
 
     <Panel>
-        <StackPanel Classes="class-view" Classes.shown="{Binding HasNoClass}"
+        <StackPanel Classes="class-view" Classes.shown="{Binding IsLanding}"
                     HorizontalAlignment="Center" VerticalAlignment="Center" Width="460">
             <TextBlock Text="Modo Clase" FontSize="34" FontWeight="Bold" HorizontalAlignment="Center"
                        Foreground="{DynamicResource TextPrimaryBrush}" />
@@ -343,9 +443,156 @@
                     </StackPanel>
                 </Button>
             </StackPanel>
+            <TextBlock Text="¿Eres estudiante?" FontSize="12.5" HorizontalAlignment="Center" Margin="0,30,0,8"
+                       Foreground="{DynamicResource TextMutedBrush}" />
+            <Button Classes="class-secondary" HorizontalAlignment="Center" Click="OnJoinClassClick">
+                <StackPanel Orientation="Horizontal" Spacing="8">
+                    <controls:AnimatedIcon Classes="icon-sm" Kind="LogIn" />
+                    <TextBlock Text="Unirme a una clase" />
+                </StackPanel>
+            </Button>
         </StackPanel>
 
-        <DockPanel Classes="class-view" Classes.shown="{Binding HasClass}" Margin="36,26,36,20">
+        <Grid Classes="class-view" Classes.shown="{Binding IsHosting}" Margin="40,30" RowDefinitions="Auto,Auto,*,Auto">
+            <StackPanel HorizontalAlignment="Center">
+                <TextBlock Text="{Binding Room.ClassName}" FontSize="15" HorizontalAlignment="Center"
+                           Foreground="{DynamicResource TextMutedBrush}" />
+                <TextBlock Text="Código de la sala" FontSize="12" HorizontalAlignment="Center" Margin="0,16,0,4"
+                           Foreground="{DynamicResource TextMutedBrush}" />
+                <Border Classes="room-code" HorizontalAlignment="Center">
+                    <TextBlock Text="{Binding Room.Code}" FontSize="52" FontWeight="Bold" LetterSpacing="6"
+                               FontFamily="Cascadia Code,Consolas,DejaVu Sans Mono,monospace"
+                               Foreground="{DynamicResource TextPrimaryBrush}" />
+                </Border>
+                <TextBlock Text="Los estudiantes ven la sala en Unirme a una clase o escriben este código" FontSize="12.5"
+                           HorizontalAlignment="Center" Margin="0,10,0,0" Foreground="{DynamicResource TextMutedBrush}" />
+            </StackPanel>
+            <StackPanel Grid.Row="1" Orientation="Horizontal" Spacing="8" HorizontalAlignment="Center" Margin="0,26,0,12">
+                <Ellipse Classes="live" Width="9" Height="9" Fill="{DynamicResource RunGreenBrush}" VerticalAlignment="Center" />
+                <TextBlock Text="{Binding Room.ConnectedText}" FontSize="13.5" FontWeight="SemiBold"
+                           Foreground="{DynamicResource TextPrimaryBrush}" />
+            </StackPanel>
+            <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto">
+                <ItemsControl ItemsSource="{Binding Room.Seats}" HorizontalAlignment="Center" MaxWidth="900">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <WrapPanel HorizontalAlignment="Center" ItemSpacing="8" LineSpacing="8" />
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate x:DataType="vm:RoomSeat">
+                            <Border Classes="seat-chip" Classes.offline="{Binding !IsConnected}">
+                                <StackPanel Orientation="Horizontal" Spacing="7">
+                                    <TextBlock Text="{Binding Seat}" FontSize="11" VerticalAlignment="Center"
+                                               Foreground="{DynamicResource TextMutedBrush}" />
+                                    <TextBlock Text="{Binding Name}" FontSize="12.5" VerticalAlignment="Center"
+                                               Foreground="{DynamicResource TextPrimaryBrush}" />
+                                </StackPanel>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </ScrollViewer>
+            <Button Grid.Row="3" Classes="class-secondary" HorizontalAlignment="Center" Margin="0,12,0,0"
+                    Click="OnCloseRoomClick">
+                <StackPanel Orientation="Horizontal" Spacing="8">
+                    <controls:AnimatedIcon Classes="icon-sm" Kind="DoorClosed" />
+                    <TextBlock Text="Cerrar sala" />
+                </StackPanel>
+            </Button>
+        </Grid>
+
+        <StackPanel Classes="class-view" Classes.shown="{Binding IsJoining}" HorizontalAlignment="Center"
+                    VerticalAlignment="Center" Width="440">
+            <TextBlock Text="Unirme a una clase" FontSize="28" FontWeight="Bold" HorizontalAlignment="Center"
+                       Foreground="{DynamicResource TextPrimaryBrush}" />
+            <TextBlock Classes="label" Text="Tu nombre" Margin="0,22,0,6" />
+            <TextBox Classes="field" Text="{Binding Join.Name}" MaxLength="24" Watermark="Como te verá el profesor" />
+            <TextBlock Classes="label" Text="Salas en esta red" />
+            <Border Classes="searching" IsVisible="{Binding !Join.HasRooms}" Padding="12,10" CornerRadius="8"
+                    Background="{DynamicResource SurfaceBackgroundBrush}">
+                <StackPanel Orientation="Horizontal" Spacing="9">
+                    <Ellipse Classes="live" Width="8" Height="8" Fill="{DynamicResource AccentBrush}" VerticalAlignment="Center" />
+                    <TextBlock Text="Buscando salas abiertas…" FontSize="12.5" Foreground="{DynamicResource TextMutedBrush}" />
+                </StackPanel>
+            </Border>
+            <ItemsControl ItemsSource="{Binding Join.Rooms}">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate x:DataType="vm:FoundRoom">
+                        <Button Classes="room-card" Command="{Binding $parent[ItemsControl].((vm:ClassViewModel)DataContext).Join.JoinRoomCommand, FallbackValue={x:Null}}"
+                                CommandParameter="{Binding}">
+                            <Grid ColumnDefinitions="Auto,*,Auto">
+                                <controls:AnimatedIcon Classes="icon-sm" Kind="Presentation" Stroke="{DynamicResource AccentBrush}"
+                                                       Margin="0,0,10,0" />
+                                <StackPanel Grid.Column="1">
+                                    <TextBlock Text="{Binding ClassName}" FontSize="13" FontWeight="SemiBold"
+                                               Foreground="{DynamicResource TextPrimaryBrush}" />
+                                    <TextBlock Text="{Binding StudentsText}" FontSize="11.5"
+                                               Foreground="{DynamicResource TextMutedBrush}" />
+                                </StackPanel>
+                                <TextBlock Grid.Column="2" Text="Entrar" FontSize="12" VerticalAlignment="Center"
+                                           Foreground="{DynamicResource AccentBrush}" />
+                            </Grid>
+                        </Button>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+            <TextBlock Classes="label" Text="O escribe el código que muestra el profesor" />
+            <Grid ColumnDefinitions="*,Auto" Name="CodeBoxShell" Classes="shake-host">
+                <TextBox Classes="field" Text="{Binding Join.Code}" MaxLength="9" Watermark="K7M2-QX4"
+                         FontFamily="Cascadia Code,Consolas,DejaVu Sans Mono,monospace" FontSize="16" />
+                <Button Grid.Column="1" Classes="class-primary" Margin="8,0,0,0" Command="{Binding Join.JoinCodeCommand}"
+                        IsEnabled="{Binding Join.CanJoin}">
+                    <TextBlock Text="Unirme" FontWeight="SemiBold" Foreground="White" />
+                </Button>
+            </Grid>
+            <Button Classes="class-icon" Width="NaN" Padding="10,0" Margin="0,22,0,0" HorizontalAlignment="Center"
+                    Click="OnBackClick">
+                <StackPanel Orientation="Horizontal" Spacing="6">
+                    <controls:AnimatedIcon Classes="icon-sm" Kind="ArrowLeft" />
+                    <TextBlock Text="Volver" FontSize="12.5" Foreground="{DynamicResource TextMutedBrush}" />
+                </StackPanel>
+            </Button>
+        </StackPanel>
+
+        <StackPanel Classes="class-view" Classes.shown="{Binding IsStudent}" HorizontalAlignment="Center"
+                    VerticalAlignment="Center" Width="480">
+            <TextBlock Text="{Binding Join.ClassName}" FontSize="30" FontWeight="Bold" HorizontalAlignment="Center"
+                       TextAlignment="Center" TextWrapping="Wrap" Foreground="{DynamicResource TextPrimaryBrush}" />
+            <TextBlock Text="{Binding Join.SeatText}" FontSize="13.5" HorizontalAlignment="Center" Margin="0,8,0,0"
+                       Foreground="{DynamicResource AccentBrush}" />
+            <Border Padding="14,11" CornerRadius="9" Margin="0,22,0,0" Background="{DynamicResource SurfaceBackgroundBrush}">
+                <StackPanel Orientation="Horizontal" Spacing="10" HorizontalAlignment="Center">
+                    <Ellipse Classes="live" Width="9" Height="9" VerticalAlignment="Center"
+                             Fill="{DynamicResource RunGreenBrush}" IsVisible="{Binding !Join.IsReconnecting}" />
+                    <Ellipse Classes="live" Width="9" Height="9" VerticalAlignment="Center"
+                             Fill="{DynamicResource StopRedBrush}" IsVisible="{Binding Join.IsReconnecting}" />
+                    <TextBlock Text="Conectado. Espera a que el profesor empiece." FontSize="13"
+                               IsVisible="{Binding !Join.IsReconnecting}" Foreground="{DynamicResource TextPrimaryBrush}" />
+                    <TextBlock Text="Se cortó la conexión. Reconectando…" FontSize="13"
+                               IsVisible="{Binding Join.IsReconnecting}" Foreground="{DynamicResource TextPrimaryBrush}" />
+                </StackPanel>
+            </Border>
+            <TextBlock Classes="label" Text="Ejercicios de hoy" />
+            <ItemsControl ItemsSource="{Binding Join.Exercises}">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate x:DataType="x:String">
+                        <Border Classes="exercise-card" Padding="12,9" Cursor="Arrow">
+                            <TextBlock Text="{Binding}" FontSize="13" Foreground="{DynamicResource TextPrimaryBrush}" />
+                        </Border>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+            <Button Classes="class-icon" Width="NaN" Padding="10,0" Margin="0,16,0,0" HorizontalAlignment="Center"
+                    Click="OnBackClick">
+                <StackPanel Orientation="Horizontal" Spacing="6">
+                    <controls:AnimatedIcon Classes="icon-sm" Kind="LogOut" />
+                    <TextBlock Text="Salir de la clase" FontSize="12.5" Foreground="{DynamicResource TextMutedBrush}" />
+                </StackPanel>
+            </Button>
+        </StackPanel>
+
+        <DockPanel Classes="class-view" Classes.shown="{Binding IsEditing}" Margin="36,26,36,20">
             <Grid DockPanel.Dock="Top" ColumnDefinitions="*,Auto" Margin="0,0,0,18">
                 <StackPanel>
                     <TextBox Classes="title-field" Text="{Binding Name}" Watermark="Nombre de la clase" />
@@ -359,6 +606,12 @@
                     </Button>
                     <Button Classes="class-secondary" Click="OnOpenClassClick" ToolTip.Tip="Abrir clase">
                         <controls:AnimatedIcon Classes="icon-sm" Kind="FolderOpen" />
+                    </Button>
+                    <Button Classes="class-secondary" Click="OnOpenRoomClick" ToolTip.Tip="Abrir la sala para los estudiantes">
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <controls:AnimatedIcon Classes="icon-sm" Kind="Radio" Stroke="{DynamicResource AccentBrush}" />
+                            <TextBlock Text="Abrir sala" />
+                        </StackPanel>
                     </Button>
                     <Button Classes="class-primary" Click="OnSaveClick" ToolTip.Tip="Guardar (Ctrl+S)">
                         <StackPanel Orientation="Horizontal" Spacing="8">

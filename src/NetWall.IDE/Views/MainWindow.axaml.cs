@@ -169,7 +169,11 @@ public partial class MainWindow : Window
         }
 
         _exitingClass = true;
-        await ClassCurtain.PlayExitAsync(() => viewModel.IsClassMode = false);
+        await ClassCurtain.PlayExitAsync(() =>
+        {
+            viewModel.Classroom.LeaveAll();
+            viewModel.IsClassMode = false;
+        });
         _exitingClass = false;
     }
 

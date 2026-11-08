@@ -21,6 +21,7 @@ public partial class ClassPanel : UserControl
 
     private int _noticeVersion;
     private ExerciseEditor? _dragged;
+    private ClassViewModel? _wired;
 
     public ClassPanel()
     {
@@ -29,6 +30,59 @@ public partial class ClassPanel : UserControl
     }
 
     private ClassViewModel? ViewModel => DataContext as ClassViewModel;
+
+    protected override void OnDataContextChanged(EventArgs e)
+    {
+        base.OnDataContextChanged(e);
+        if (_wired is not null)
+        {
+            _wired.Join.Joined -= OnJoined;
+            _wired.Join.Failed -= OnJoinFailed;
+            _wired.Join.Ended -= OnClassEnded;
+        }
+
+        _wired = ViewModel;
+        if (_wired is not null)
+        {
+            _wired.Join.Joined += OnJoined;
+            _wired.Join.Failed += OnJoinFailed;
+            _wired.Join.Ended += OnClassEnded;
+        }
+    }
+
+    private void OnJoined() => ViewModel?.ShowStudent();
+
+    private void OnJoinFailed(string message)
+    {
+        CodeBoxShell.Classes.Set("shake", false);
+        Avalonia.Threading.Dispatcher.UIThread.Post(() => CodeBoxShell.Classes.Set("shake", true),
+            Avalonia.Threading.DispatcherPriority.Background);
+        _ = ShowNoticeAsync(message, false);
+    }
+
+    private void OnClassEnded(string message)
+    {
+        ViewModel?.StartJoining();
+        _ = ShowNoticeAsync(message, false);
+    }
+
+    private void OnOpenRoomClick(object? sender, RoutedEventArgs e)
+    {
+        try
+        {
+            ViewModel?.OpenRoom();
+        }
+        catch (ClassFileException error)
+        {
+            _ = ShowNoticeAsync(error.Message, false);
+        }
+    }
+
+    private void OnCloseRoomClick(object? sender, RoutedEventArgs e) => ViewModel?.CloseRoom();
+
+    private void OnJoinClassClick(object? sender, RoutedEventArgs e) => ViewModel?.StartJoining();
+
+    private void OnBackClick(object? sender, RoutedEventArgs e) => ViewModel?.BackToStart();
 
     private void OnNewClassClick(object? sender, RoutedEventArgs e) => ViewModel?.RunOrConfirm(ViewModel.NewClass);
 
@@ -66,7 +120,7 @@ public partial class ClassPanel : UserControl
 
     private async Task SaveAsync()
     {
-        if (ViewModel is not { HasClass: true } viewModel || TopLevel.GetTopLevel(this) is not { } topLevel)
+        if (ViewModel is not { IsEditing: true } viewModel || TopLevel.GetTopLevel(this) is not { } topLevel)
         {
             return;
         }
@@ -135,7 +189,7 @@ public partial class ClassPanel : UserControl
 
     private void OnPanelKeyDown(object? sender, KeyEventArgs e)
     {
-        if (e.Key == Key.S && e.KeyModifiers.HasFlag(KeyModifiers.Control) && ViewModel is { HasClass: true })
+        if (e.Key == Key.S && e.KeyModifiers.HasFlag(KeyModifiers.Control) && ViewModel is { IsEditing: true })
         {
             _ = SaveAsync();
             e.Handled = true;
