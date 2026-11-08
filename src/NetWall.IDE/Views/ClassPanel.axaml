@@ -264,6 +264,50 @@
             <Setter Property="Opacity" Value="1" />
             <Setter Property="RenderTransform" Value="translateY(0px)" />
         </Style>
+        <Style Selector="Border.check-badge">
+            <Setter Property="Width" Value="22" />
+            <Setter Property="Height" Value="22" />
+            <Setter Property="CornerRadius" Value="11" />
+            <Setter Property="Margin" Value="6,0,0,0" />
+            <Setter Property="Opacity" Value="0" />
+            <Setter Property="RenderTransformOrigin" Value="50%,50%" />
+            <Setter Property="RenderTransform" Value="scale(0.4)" />
+            <Setter Property="Transitions">
+                <Transitions>
+                    <DoubleTransition Property="Opacity" Duration="0:0:0.18" />
+                    <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.32" Easing="BackEaseOut" />
+                </Transitions>
+            </Setter>
+        </Style>
+        <Style Selector="Border.check-badge.shown">
+            <Setter Property="Opacity" Value="1" />
+            <Setter Property="RenderTransform" Value="scale(1)" />
+        </Style>
+        <Style Selector="Border.test-card.passed">
+            <Setter Property="BorderBrush" Value="{DynamicResource RunGreenBrush}" />
+        </Style>
+        <Style Selector="Border.test-card.failed">
+            <Setter Property="BorderBrush" Value="{DynamicResource StopRedBrush}" />
+        </Style>
+        <Style Selector="Border.solution-result">
+            <Setter Property="Padding" Value="12,9" />
+            <Setter Property="CornerRadius" Value="8" />
+            <Setter Property="Margin" Value="0,10,0,0" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="Background" Value="{DynamicResource SurfaceBackgroundBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource StopRedBrush}" />
+            <Setter Property="Transitions">
+                <Transitions>
+                    <BrushTransition Property="BorderBrush" Duration="0:0:0.2" />
+                </Transitions>
+            </Setter>
+        </Style>
+        <Style Selector="Border.solution-result.passed">
+            <Setter Property="BorderBrush" Value="{DynamicResource RunGreenBrush}" />
+        </Style>
+        <Style Selector="Border.solution-result.testing">
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+        </Style>
         <Style Selector="Ellipse.dirty">
             <Setter Property="Opacity" Value="0" />
             <Setter Property="Transitions">
@@ -494,9 +538,10 @@
                                     <ItemsControl ItemsSource="{Binding Tests}">
                                         <ItemsControl.ItemTemplate>
                                             <DataTemplate x:DataType="vm:TestEditor">
-                                                <Border Classes="test-card">
+                                                <Border Classes="test-card" Classes.passed="{Binding IsPassed}"
+                                                        Classes.failed="{Binding IsFailed}">
                                                     <StackPanel Spacing="8">
-                                                        <Grid ColumnDefinitions="Auto,Auto,*,Auto">
+                                                        <Grid ColumnDefinitions="Auto,Auto,*,Auto,Auto">
                                                             <controls:AnimatedIcon Classes="icon-sm" Kind="{Binding Icon}"
                                                                                    Stroke="{DynamicResource AccentBrush}" />
                                                             <TextBlock Grid.Column="1" Text="{Binding KindText}" Margin="8,0,12,0"
@@ -505,7 +550,19 @@
                                                             <TextBox Grid.Column="2" Classes="field" Padding="8,4" FontSize="12"
                                                                      Text="{Binding Label}" Watermark="{Binding AutoLabel}"
                                                                      ToolTip.Tip="Descripción que verán los estudiantes" />
-                                                            <Button Grid.Column="3" Classes="class-icon danger" Margin="6,0,0,0"
+                                                            <Panel Grid.Column="3">
+                                                                <Border Classes="check-badge" Classes.shown="{Binding IsPassed}"
+                                                                        Background="{DynamicResource RunGreenBrush}">
+                                                                    <controls:AnimatedIcon Classes="icon-sm" Kind="Check" Stroke="White"
+                                                                                           HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                                                </Border>
+                                                                <Border Classes="check-badge" Classes.shown="{Binding IsFailed}"
+                                                                        Background="{DynamicResource StopRedBrush}">
+                                                                    <controls:AnimatedIcon Classes="icon-sm" Kind="X" Stroke="White"
+                                                                                           HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                                                </Border>
+                                                            </Panel>
+                                                            <Button Grid.Column="4" Classes="class-icon danger" Margin="6,0,0,0"
                                                                     ToolTip.Tip="Quitar prueba" Command="{Binding RemoveCommand}"
                                                                     IsVisible="{Binding !IsComputed}">
                                                                 <controls:AnimatedIcon Classes="icon-sm" Kind="X" />
@@ -543,6 +600,31 @@
                                             </DataTemplate>
                                         </ItemsControl.ItemTemplate>
                                     </ItemsControl>
+                                    <StackPanel IsVisible="{Binding CanTestSolution}" Margin="0,0,0,24">
+                                        <TextBlock Classes="label" Text="Tu solución (solo la ves tú)" />
+                                        <Border CornerRadius="8" ClipToBounds="True" BorderThickness="1"
+                                                BorderBrush="{DynamicResource BorderBrush}">
+                                            <controls:CodeBox Code="{Binding Solution}" Height="150" ShowLineNumbers="True"
+                                                              Background="{DynamicResource EditorBackgroundBrush}"
+                                                              Foreground="{DynamicResource TextPrimaryBrush}"
+                                                              LineNumbersForeground="{DynamicResource TextDisabledBrush}"
+                                                              FontFamily="Cascadia Code,Consolas,DejaVu Sans Mono,monospace"
+                                                              FontSize="13" Padding="6" />
+                                        </Border>
+                                        <Button Classes="class-primary" HorizontalAlignment="Left" Margin="0,10,0,0"
+                                                Command="{Binding TestSolutionCommand}" IsEnabled="{Binding !IsTesting}">
+                                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                                <controls:AnimatedIcon Kind="Play" Width="14" Height="14" Stretch="Uniform"
+                                                                       Stroke="White" StrokeThickness="2" />
+                                                <TextBlock Text="Probar con mi solución" FontWeight="SemiBold" Foreground="White" />
+                                            </StackPanel>
+                                        </Button>
+                                        <Border Classes="solution-result swap" Classes.shown="{Binding HasSolutionResult}"
+                                                Classes.passed="{Binding SolutionPassed}" Classes.testing="{Binding IsTesting}">
+                                            <TextBlock Text="{Binding SolutionText}" FontSize="12.5" TextWrapping="Wrap"
+                                                       Foreground="{DynamicResource TextPrimaryBrush}" />
+                                        </Border>
+                                    </StackPanel>
                                 </StackPanel>
                             </ScrollViewer>
                         </DataTemplate>

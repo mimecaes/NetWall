@@ -15,6 +15,7 @@ public sealed partial class ClassViewModel(Func<string?> cliPath) : ViewModelBas
 {
     private const int RevealDelay = 70;
     private const int PredictDelay = 500;
+    private const int CheckDelay = 140;
     private const int CurrentVersion = 1;
 
     private int _revealVersion;
@@ -188,6 +189,9 @@ public sealed partial class ClassViewModel(Func<string?> cliPath) : ViewModelBas
                 Select(copy);
                 MarkDirty();
                 break;
+            case "test":
+                _ = TestSolutionAsync(exercise);
+                break;
             case "delete":
                 var index = Exercises.IndexOf(exercise);
                 exercise.Changed -= OnExerciseChanged;
@@ -226,10 +230,106 @@ public sealed partial class ClassViewModel(Func<string?> cliPath) : ViewModelBas
 
     private void OnExerciseChanged(ExerciseEditor exercise, bool predictInput)
     {
+        exercise.ClearChecks();
         MarkDirty();
         if (predictInput)
         {
             _ = PredictAsync(exercise);
+        }
+    }
+
+    private async Task TestSolutionAsync(ExerciseEditor exercise)
+    {
+        if (exercise.IsTesting)
+        {
+            return;
+        }
+
+        exercise.ClearChecks();
+        var version = exercise.SolutionVersion;
+        if (exercise.Tests.Count == 0)
+        {
+            ShowSolution(exercise, "Agrega al menos una prueba para probar tu solución.", false);
+            return;
+        }
+
+        if (exercise.Solution.Trim().Length == 0)
+        {
+            ShowSolution(exercise, "Escribe tu solución para probarla.", false);
+            return;
+        }
+
+        if (cliPath() is not { } cli)
+        {
+            ShowSolution(exercise, "No se encontró el compilador de NetWall.", false);
+            return;
+        }
+
+        var tests = exercise.Tests.Select(test => test.ToModel()).ToList();
+        exercise.IsTesting = true;
+        exercise.SolutionText = "Probando tu solución…";
+        var file = await WritePreviewAsync($"{exercise.Id}-solucion", exercise.Solution);
+        var result = file is null ? null
+            : await SimulationRunner.RunChallengeAsync(cli, file, tests.Where(test => test.Kind == "packet"));
+        if (version != exercise.SolutionVersion)
+        {
+            return;
+        }
+
+        if (result is null)
+        {
+            ShowSolution(exercise, "No se pudo ejecutar NetWall. Revisa que Python esté instalado.", false);
+            return;
+        }
+
+        if (result.Errors)
+        {
+            var error = result.Diagnostics.FirstOrDefault();
+            ShowSolution(exercise, error is null
+                ? "Tu solución tiene un error."
+                : $"Tu solución tiene un error en la línea {error.Line}: {error.Message}.", false);
+            return;
+        }
+
+        var checks = ClassChecker.Check(tests, result);
+        for (var i = 0; i < checks.Count && i < exercise.Tests.Count; i++)
+        {
+            await Task.Delay(CheckDelay);
+            if (version != exercise.SolutionVersion)
+            {
+                return;
+            }
+
+            exercise.Tests[i].Check = checks[i] ? TestCheck.Passed : TestCheck.Failed;
+        }
+
+        var passed = checks.Count(check => check);
+        ShowSolution(exercise, passed == checks.Count
+            ? "Tu solución pasa todas las pruebas. El ejercicio está listo."
+            : $"Tu solución pasa {passed} de {checks.Count} pruebas. Revisa las marcadas en rojo o tu solución.",
+            passed == checks.Count);
+    }
+
+    private static void ShowSolution(ExerciseEditor exercise, string text, bool passed)
+    {
+        exercise.IsTesting = false;
+        exercise.SolutionPassed = passed;
+        exercise.SolutionText = text;
+    }
+
+    private static async Task<string?> WritePreviewAsync(string name, string code)
+    {
+        var folder = Path.Combine(Path.GetTempPath(), "NetWall", "class-preview");
+        var file = Path.Combine(folder, $"{name}.nw");
+        try
+        {
+            Directory.CreateDirectory(folder);
+            await File.WriteAllTextAsync(file, code);
+            return file;
+        }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException)
+        {
+            return null;
         }
     }
 
@@ -262,14 +362,7 @@ public sealed partial class ClassViewModel(Func<string?> cliPath) : ViewModelBas
             return;
         }
 
-        var folder = Path.Combine(Path.GetTempPath(), "NetWall", "class-preview");
-        var file = Path.Combine(folder, $"{exercise.Id}.nw");
-        try
-        {
-            Directory.CreateDirectory(folder);
-            await File.WriteAllTextAsync(file, exercise.Starter);
-        }
-        catch (Exception e) when (e is IOException or UnauthorizedAccessException)
+        if (await WritePreviewAsync(exercise.Id, exercise.Starter) is not { } file)
         {
             exercise.PredictText = "No se pudo preparar el firewall para calcular la respuesta.";
             return;

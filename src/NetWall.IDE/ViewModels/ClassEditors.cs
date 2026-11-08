@@ -10,6 +10,13 @@ using NetWall.IDE.Models;
 
 namespace NetWall.IDE.ViewModels;
 
+public enum TestCheck
+{
+    None,
+    Passed,
+    Failed,
+}
+
 public sealed partial class TestEditor : ObservableObject
 {
     private const string AnyType = "Cualquiera";
@@ -58,6 +65,14 @@ public sealed partial class TestEditor : ObservableObject
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(HasExpect))]
     public partial bool IsComputed { get; set; }
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsPassed), nameof(IsFailed))]
+    public partial TestCheck Check { get; set; }
+
+    public bool IsPassed => Check == TestCheck.Passed;
+
+    public bool IsFailed => Check == TestCheck.Failed;
 
     [ObservableProperty]
     public partial string Label { get; set; } = string.Empty;
@@ -132,7 +147,7 @@ public sealed partial class TestEditor : ObservableObject
     {
         base.OnPropertyChanged(e);
         if (e.PropertyName is nameof(AutoLabel) or nameof(ExpectsAllow) or nameof(ExpectsBlock) or nameof(HasExpect)
-            or nameof(IsComputed))
+            or nameof(IsComputed) or nameof(Check) or nameof(IsPassed) or nameof(IsFailed))
         {
             return;
         }
@@ -197,6 +212,8 @@ public sealed partial class ExerciseEditor : ObservableObject
 
     public bool CanAddTests => !IsPredict;
 
+    public bool CanTestSolution => !IsPredict;
+
     public string TypeText => Type switch
     {
         "predict" => "¿Pasa o se bloquea?",
@@ -223,6 +240,23 @@ public sealed partial class ExerciseEditor : ObservableObject
     public string DisplayTitle => Title.Trim().Length > 0 ? Title.Trim() : "Sin título";
 
     public int PredictVersion { get; set; }
+
+    public int SolutionVersion { get; set; }
+
+    [ObservableProperty]
+    public partial string Solution { get; set; } = string.Empty;
+
+    [ObservableProperty]
+    public partial bool IsTesting { get; set; }
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasSolutionResult))]
+    public partial string SolutionText { get; set; } = string.Empty;
+
+    [ObservableProperty]
+    public partial bool SolutionPassed { get; set; }
+
+    public bool HasSolutionResult => SolutionText.Length > 0;
 
     [ObservableProperty]
     public partial int Number { get; set; }
@@ -269,6 +303,20 @@ public sealed partial class ExerciseEditor : ObservableObject
     [RelayCommand]
     private void Delete() => _action(this, "delete");
 
+    [RelayCommand]
+    private void TestSolution() => _action(this, "test");
+
+    public void ClearChecks()
+    {
+        SolutionVersion++;
+        IsTesting = false;
+        SolutionText = string.Empty;
+        foreach (var test in Tests)
+        {
+            test.Check = TestCheck.None;
+        }
+    }
+
     private void RemoveTest(TestEditor test) => Tests.Remove(test);
 
     private TestEditor Watch(TestEditor test)
@@ -281,14 +329,15 @@ public sealed partial class ExerciseEditor : ObservableObject
     protected override void OnPropertyChanged(PropertyChangedEventArgs e)
     {
         base.OnPropertyChanged(e);
-        if (e.PropertyName is nameof(Title) or nameof(Statement) or nameof(Starter))
+        if (e.PropertyName is nameof(Title) or nameof(Statement) or nameof(Starter) or nameof(Solution))
         {
             Changed?.Invoke(this, IsPredict && e.PropertyName == nameof(Starter));
         }
     }
 
     public ClassExercise ToModel() => new(Id, Title.Trim(), Statement.Trim(),
-        Starter.Trim().Length > 0 ? Starter : null, Type, [.. Tests.Select(test => test.ToModel())]);
+        Starter.Trim().Length > 0 ? Starter : null, Type, [.. Tests.Select(test => test.ToModel())],
+        !IsPredict && Solution.Trim().Length > 0 ? Solution : null);
 
     public static ExerciseEditor FromModel(ClassExercise exercise, string id, Action<ExerciseEditor, string> action)
     {
@@ -297,6 +346,7 @@ public sealed partial class ExerciseEditor : ObservableObject
             Title = exercise.Title,
             Statement = exercise.Statement,
             Starter = exercise.Starter ?? string.Empty,
+            Solution = exercise.Solution ?? string.Empty,
         };
         foreach (var test in exercise.Tests)
         {
