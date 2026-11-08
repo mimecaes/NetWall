@@ -185,7 +185,20 @@ public sealed partial class ClassViewModel(Func<string?> cliPath) : ViewModelBas
     {
         Join.StopSearching();
         Join.Leave();
-        Stage = HasClass ? ClassStage.Editor : ClassStage.Landing;
+        Stage = ClassStage.Landing;
+    }
+
+    public void CloseClass()
+    {
+        ++_revealVersion;
+        _loading = true;
+        Exercises.Clear();
+        Selected = null;
+        FilePath = null;
+        _loading = false;
+        HasClass = false;
+        IsDirty = false;
+        Stage = ClassStage.Landing;
     }
 
     public void LeaveAll()
@@ -193,7 +206,15 @@ public sealed partial class ClassViewModel(Func<string?> cliPath) : ViewModelBas
         Room.Stop();
         Join.StopSearching();
         Join.Leave();
-        Stage = HasClass ? ClassStage.Editor : ClassStage.Landing;
+        CancelDiscard();
+        if (HasClass && IsDirty)
+        {
+            Stage = ClassStage.Editor;
+        }
+        else
+        {
+            CloseClass();
+        }
     }
 
     public void Save(string path)

@@ -94,6 +94,8 @@ public partial class ClassPanel : UserControl
 
     private void OnBackClick(object? sender, RoutedEventArgs e) => ViewModel?.BackToStart();
 
+    private void OnEditorBackClick(object? sender, RoutedEventArgs e) => ViewModel?.RunOrConfirm(ViewModel.CloseClass);
+
     private void OnNewClassClick(object? sender, RoutedEventArgs e) => ViewModel?.RunOrConfirm(ViewModel.NewClass);
 
     private void OnOpenClassClick(object? sender, RoutedEventArgs e) => ViewModel?.RunOrConfirm(() => _ = OpenClassAsync());
