@@ -214,7 +214,7 @@ public partial class MainViewModel : ViewModelBase
     [NotifyPropertyChangedFor(nameof(ShowToolbar))]
     public partial bool IsChallengeMode { get; set; }
 
-    public ClassViewModel Classroom { get; } = new();
+    public ClassViewModel Classroom { get; } = new(FindNetWallCliPath);
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(ShowToolbar))]

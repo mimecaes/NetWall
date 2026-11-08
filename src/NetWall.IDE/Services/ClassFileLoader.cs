@@ -2,7 +2,9 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text.Encodings.Web;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
 using NetWall.IDE.Models;
 
@@ -18,9 +20,36 @@ public static partial class ClassFileLoader
 
     private static readonly JsonSerializerOptions Options = new() { PropertyNameCaseInsensitive = true };
 
+    private static readonly JsonSerializerOptions WriteOptions = new()
+    {
+        WriteIndented = true,
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+        DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
+        Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
+    };
+
     public static ClassFile Load(string path)
     {
         var file = Parse(Read(path));
+        Validate(file);
+        return file;
+    }
+
+    public static void Save(ClassFile file, string path)
+    {
+        Validate(file);
+        try
+        {
+            File.WriteAllText(path, JsonSerializer.Serialize(file, WriteOptions));
+        }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException)
+        {
+            throw new ClassFileException("No se pudo guardar el archivo.");
+        }
+    }
+
+    public static void Validate(ClassFile file)
+    {
         if (file.Version != CurrentVersion)
         {
             throw new ClassFileException($"Este archivo usa la versión {file.Version} y NetWall solo abre la {CurrentVersion}.");
@@ -46,8 +75,6 @@ public static partial class ClassFileLoader
         {
             Validate(exercise, index + 1, ids);
         }
-
-        return file;
     }
 
     private static string Read(string path)
