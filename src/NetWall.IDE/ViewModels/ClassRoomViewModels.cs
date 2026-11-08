@@ -224,6 +224,8 @@ public sealed partial class StudentExercise : ObservableObject
 
     public int CheckVersion { get; set; }
 
+    public int SentVersion { get; set; } = -1;
+
     [ObservableProperty]
     public partial string Code { get; set; }
 
@@ -488,9 +490,14 @@ public sealed partial class RoomJoinViewModel : ObservableObject
         exercise.ResultText = "Revisando tu código…";
         var tests = exercise.Tests.Select(test => test.Test).ToList();
         if (_cliPath() is { } cli && await WriteLocalAsync(exercise) is { } file
-            && await SimulationRunner.RunChallengeAsync(cli, file, tests.Where(test => test.Kind == "packet")) is { } result
-            && version == exercise.CheckVersion)
+            && await SimulationRunner.RunChallengeAsync(cli, file, tests.Where(test => test.Kind == "packet")) is { } result)
         {
+            if (version != exercise.CheckVersion)
+            {
+                StopChecking(exercise);
+                return;
+            }
+
             if (result.Errors)
             {
                 var error = result.Diagnostics.FirstOrDefault();
@@ -506,7 +513,7 @@ public sealed partial class RoomJoinViewModel : ObservableObject
                 await Task.Delay(CheckDelay);
                 if (version != exercise.CheckVersion)
                 {
-                    exercise.IsChecking = false;
+                    StopChecking(exercise);
                     return;
                 }
 
@@ -515,11 +522,18 @@ public sealed partial class RoomJoinViewModel : ObservableObject
         }
 
         exercise.ResultText = "Enviando al profesor…";
+        exercise.SentVersion = version;
         if (_client is null || !await _client.SendAsync(new ClassMessage("submit", Exercise: exercise.Exercise.Id, Source: exercise.Code)))
         {
             exercise.IsChecking = false;
             exercise.ResultText = "No hay conexión con la sala. Espera a que se reconecte y vuelve a intentarlo.";
         }
+    }
+
+    private static void StopChecking(StudentExercise exercise)
+    {
+        exercise.IsChecking = false;
+        exercise.ResultText = string.Empty;
     }
 
     private static async Task<string?> WriteLocalAsync(StudentExercise exercise)
@@ -545,6 +559,13 @@ public sealed partial class RoomJoinViewModel : ObservableObject
             return;
         }
 
+        exercise.IsSolved |= message.Passed == true;
+        if (exercise.SentVersion != exercise.CheckVersion)
+        {
+            StopChecking(exercise);
+            return;
+        }
+
         exercise.IsChecking = false;
         if (message.Checks is { } checks)
         {
@@ -555,7 +576,6 @@ public sealed partial class RoomJoinViewModel : ObservableObject
         }
 
         exercise.ResultPassed = message.Passed == true;
-        exercise.IsSolved |= exercise.ResultPassed;
         exercise.ResultText = message.Passed == true ? "¡Correcto! El profesor recibió tu solución."
             : message.Reason ?? "Todavía no pasan todas las pruebas. Revisa las marcadas en rojo.";
     }

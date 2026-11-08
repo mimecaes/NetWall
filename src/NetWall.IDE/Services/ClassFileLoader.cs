@@ -137,7 +137,7 @@ public static partial class ClassFileLoader
 
         if (exercise.Type is not null && string.IsNullOrWhiteSpace(exercise.Starter))
         {
-            throw new ClassFileException($"{name}: necesita código inicial.");
+            throw new ClassFileException($"{name}: necesita el código con errores que recibirán los estudiantes.");
         }
 
         if (exercise.Tests is not { Count: > 0 })

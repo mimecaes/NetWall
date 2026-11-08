@@ -53,6 +53,7 @@ public partial class MainWindow : Window
         TerminalScrollViewer.AddHandler(AnsiTextBlock.LinkClickedEvent, OnTerminalLinkClicked);
         ThemeManager.ThemeApplied += OnThemeApplied;
         Closed += (_, _) => ThemeManager.ThemeApplied -= OnThemeApplied;
+        Closed += (_, _) => ViewModel?.Classroom.LeaveAll();
         SizeChanged += OnWindowSizeChanged;
         KeyDown += OnWindowKeyDown;
         SnippetHelpy.Paused = true;

@@ -13,6 +13,7 @@ public sealed class ClassClient(IPEndPoint room, string name, PetColor color, in
 {
     private static readonly TimeSpan ConnectTimeout = TimeSpan.FromSeconds(6);
     private static readonly TimeSpan RetryDelay = TimeSpan.FromSeconds(2);
+    private static readonly TimeSpan LeaveTimeout = TimeSpan.FromMilliseconds(500);
     private const int MaxRetries = 15;
 
     private readonly string _token = Guid.NewGuid().ToString("N");
@@ -44,11 +45,24 @@ public sealed class ClassClient(IPEndPoint room, string name, PetColor color, in
         return reply;
     }
 
-    public void Leave() => _ = LeaveAsync();
-
-    private async Task LeaveAsync()
+    public void Leave()
     {
-        await SendAsync(new ClassMessage("leave"));
+        if (_writer is { } writer && _writeLock.Wait(LeaveTimeout))
+        {
+            try
+            {
+                writer.WriteLine(ClassProtocol.Serialize(new ClassMessage("leave")));
+                writer.Flush();
+            }
+            catch (Exception e) when (e is IOException or ObjectDisposedException)
+            {
+            }
+            finally
+            {
+                _writeLock.Release();
+            }
+        }
+
         _stop.Cancel();
     }
 
