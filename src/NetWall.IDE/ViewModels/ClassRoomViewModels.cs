@@ -1,5 +1,7 @@
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using Avalonia.Threading;
@@ -36,6 +38,12 @@ public sealed partial class LabSeat(int number) : ObservableObject
 
     [ObservableProperty]
     public partial string Address { get; set; } = string.Empty;
+
+    [ObservableProperty]
+    public partial bool HasAnswered { get; set; }
+
+    [ObservableProperty]
+    public partial string ProgressText { get; set; } = string.Empty;
 
     public bool IsAway => IsOccupied && !IsConnected;
 
@@ -79,6 +87,7 @@ public sealed partial class RoomHostViewModel : ObservableObject
     private const int StartingSeats = 30;
 
     private ClassHost? _host;
+    private int _exerciseCount;
 
     public ObservableCollection<LabSeat> Seats { get; } = [];
 
@@ -95,10 +104,11 @@ public sealed partial class RoomHostViewModel : ObservableObject
 
     partial void OnConnectedCountChanged(int value) => OnPropertyChanged(nameof(ConnectedText));
 
-    public void Start(ClassFile file)
+    public void Start(ClassFile file, Func<string?> cliPath)
     {
         Stop();
-        var host = new ClassHost(file);
+        var host = new ClassHost(file, cliPath);
+        _exerciseCount = host.ExerciseCount;
         host.StudentChanged += student => Dispatcher.UIThread.Post(() => OnStudentChanged(student));
         host.Start();
         _host = host;
@@ -142,27 +152,131 @@ public sealed partial class RoomHostViewModel : ObservableObject
         seat.Address = student.Address;
         seat.IsConnected = student.IsConnected;
         seat.IsOccupied = true;
+        seat.HasAnswered = student.Attempts > 0;
+        seat.ProgressText = $"Resueltos: {student.Solved.Count} de {_exerciseCount} · Intentos: {student.Attempts}";
         ConnectedCount = Seats.Count(item => item.IsConnected);
+    }
+}
+
+public sealed partial class StudentTest(ChallengeTest test) : ObservableObject
+{
+    public ChallengeTest Test { get; } = test;
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsPassed), nameof(IsFailed))]
+    public partial TestCheck Check { get; set; }
+
+    public bool IsPassed => Check == TestCheck.Passed;
+
+    public bool IsFailed => Check == TestCheck.Failed;
+}
+
+public sealed partial class StudentExercise : ObservableObject
+{
+    private readonly Action<StudentExercise, string> _action;
+
+    public StudentExercise(ClassExercise exercise, int number, Action<StudentExercise, string> action)
+    {
+        Exercise = exercise;
+        Number = number;
+        _action = action;
+        Code = exercise.Starter ?? string.Empty;
+        foreach (var test in exercise.Tests)
+        {
+            Tests.Add(new StudentTest(test));
+        }
+    }
+
+    public ClassExercise Exercise { get; }
+
+    public int Number { get; }
+
+    public ObservableCollection<StudentTest> Tests { get; } = [];
+
+    public bool IsVote => Exercise.Type == "predict";
+
+    public bool IsWritable => !IsVote;
+
+    public string TypeText => Exercise.Type switch
+    {
+        "predict" => "¿Pasa o se bloquea? · en votación",
+        "fix" => "Arregla el firewall",
+        _ => "Reto libre",
+    };
+
+    public Lucide.Avalonia.LucideIconKind Icon => Exercise.Type switch
+    {
+        "predict" => Lucide.Avalonia.LucideIconKind.Vote,
+        "fix" => Lucide.Avalonia.LucideIconKind.Wrench,
+        _ => Lucide.Avalonia.LucideIconKind.Pencil,
+    };
+
+    public int CheckVersion { get; set; }
+
+    [ObservableProperty]
+    public partial string Code { get; set; }
+
+    [ObservableProperty]
+    public partial bool IsSelected { get; set; }
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(CanCheck))]
+    public partial bool IsChecking { get; set; }
+
+    [ObservableProperty]
+    public partial bool IsSolved { get; set; }
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasResult))]
+    public partial string ResultText { get; set; } = string.Empty;
+
+    [ObservableProperty]
+    public partial bool ResultPassed { get; set; }
+
+    public bool HasResult => ResultText.Length > 0;
+
+    public bool CanCheck => !IsChecking;
+
+    [RelayCommand]
+    private void Select() => _action(this, "select");
+
+    [RelayCommand]
+    private void Submit() => _action(this, "submit");
+
+    partial void OnCodeChanged(string value)
+    {
+        CheckVersion++;
+        foreach (var test in Tests)
+        {
+            test.Check = TestCheck.None;
+        }
     }
 }
 
 public sealed partial class RoomJoinViewModel : ObservableObject
 {
+    private const int CheckDelay = 140;
+
     private static readonly TimeSpan RoomLifetime = TimeSpan.FromSeconds(5);
 
     private readonly RoomDiscovery _discovery = new();
     private readonly DispatcherTimer _prune = new() { Interval = TimeSpan.FromSeconds(1) };
+    private readonly Func<string?> _cliPath;
     private ClassClient? _client;
 
-    public RoomJoinViewModel()
+    public RoomJoinViewModel(Func<string?> cliPath)
     {
+        _cliPath = cliPath;
         _discovery.RoomFound += room => Dispatcher.UIThread.Post(() => OnRoomFound(room));
         _prune.Tick += (_, _) => PruneRooms();
     }
 
     public ObservableCollection<FoundRoom> Rooms { get; } = [];
 
-    public ObservableCollection<string> Exercises { get; } = [];
+    public ObservableCollection<StudentExercise> Exercises { get; } = [];
+
+    [ObservableProperty]
+    public partial StudentExercise? Selected { get; set; }
 
     public ObservableCollection<AvatarChoice> Colors { get; } =
     [
@@ -281,6 +395,7 @@ public sealed partial class RoomJoinViewModel : ObservableObject
         client.Welcomed += message => Dispatcher.UIThread.Post(() => Welcome(message));
         client.Reconnecting += () => Dispatcher.UIThread.Post(() => IsReconnecting = true);
         client.Ended += reason => Dispatcher.UIThread.Post(() => End(client, reason));
+        client.ResultReceived += message => Dispatcher.UIThread.Post(() => OnResult(message));
         try
         {
             var welcome = await client.JoinAsync();
@@ -312,11 +427,126 @@ public sealed partial class RoomJoinViewModel : ObservableObject
         ClassName = message.ClassName ?? string.Empty;
         Seat = message.Seat ?? 0;
         SeatText = $"Estás en el puesto {message.Seat}";
-        Exercises.Clear();
-        foreach (var exercise in message.Exercises ?? [])
+        var exercises = message.Exercises ?? [];
+        if (Exercises.Select(item => item.Exercise.Id).SequenceEqual(exercises.Select(exercise => exercise.Id)))
         {
-            Exercises.Add(exercise.Title);
+            return;
         }
+
+        Exercises.Clear();
+        for (var i = 0; i < exercises.Count; i++)
+        {
+            Exercises.Add(new StudentExercise(exercises[i], i + 1, OnExerciseAction));
+        }
+
+        Pick(Exercises.FirstOrDefault(exercise => exercise.IsWritable) ?? Exercises.FirstOrDefault());
+    }
+
+    private void OnExerciseAction(StudentExercise exercise, string action)
+    {
+        if (action == "select")
+        {
+            Pick(exercise);
+        }
+        else if (action == "submit")
+        {
+            _ = SubmitAsync(exercise);
+        }
+    }
+
+    private void Pick(StudentExercise? exercise)
+    {
+        foreach (var item in Exercises)
+        {
+            item.IsSelected = item == exercise;
+        }
+
+        Selected = exercise;
+    }
+
+    private async Task SubmitAsync(StudentExercise exercise)
+    {
+        if (exercise.IsChecking || !exercise.IsWritable)
+        {
+            return;
+        }
+
+        var version = exercise.CheckVersion;
+        exercise.IsChecking = true;
+        exercise.ResultPassed = false;
+        exercise.ResultText = "Revisando tu código…";
+        var tests = exercise.Tests.Select(test => test.Test).ToList();
+        if (_cliPath() is { } cli && await WriteLocalAsync(exercise) is { } file
+            && await SimulationRunner.RunChallengeAsync(cli, file, tests.Where(test => test.Kind == "packet")) is { } result
+            && version == exercise.CheckVersion)
+        {
+            if (result.Errors)
+            {
+                var error = result.Diagnostics.FirstOrDefault();
+                exercise.IsChecking = false;
+                exercise.ResultText = error is null ? "Tu código tiene un error."
+                    : $"Tu código tiene un error en la línea {error.Line}: {error.Message}.";
+                return;
+            }
+
+            var checks = ClassChecker.Check(tests, result);
+            for (var i = 0; i < checks.Count; i++)
+            {
+                await Task.Delay(CheckDelay);
+                if (version != exercise.CheckVersion)
+                {
+                    exercise.IsChecking = false;
+                    return;
+                }
+
+                exercise.Tests[i].Check = checks[i] ? TestCheck.Passed : TestCheck.Failed;
+            }
+        }
+
+        exercise.ResultText = "Enviando al profesor…";
+        if (_client is null || !await _client.SendAsync(new ClassMessage("submit", Exercise: exercise.Exercise.Id, Source: exercise.Code)))
+        {
+            exercise.IsChecking = false;
+            exercise.ResultText = "No hay conexión con la sala. Espera a que se reconecte y vuelve a intentarlo.";
+        }
+    }
+
+    private static async Task<string?> WriteLocalAsync(StudentExercise exercise)
+    {
+        var folder = Path.Combine(Path.GetTempPath(), "NetWall", "class-student");
+        var file = Path.Combine(folder, $"{exercise.Exercise.Id}.nw");
+        try
+        {
+            Directory.CreateDirectory(folder);
+            await File.WriteAllTextAsync(file, exercise.Code);
+            return file;
+        }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException)
+        {
+            return null;
+        }
+    }
+
+    private void OnResult(ClassMessage message)
+    {
+        if (Exercises.FirstOrDefault(exercise => exercise.Exercise.Id == message.Exercise) is not { } exercise)
+        {
+            return;
+        }
+
+        exercise.IsChecking = false;
+        if (message.Checks is { } checks)
+        {
+            for (var i = 0; i < checks.Count && i < exercise.Tests.Count; i++)
+            {
+                exercise.Tests[i].Check = checks[i] ? TestCheck.Passed : TestCheck.Failed;
+            }
+        }
+
+        exercise.ResultPassed = message.Passed == true;
+        exercise.IsSolved |= exercise.ResultPassed;
+        exercise.ResultText = message.Passed == true ? "¡Correcto! El profesor recibió tu solución."
+            : message.Reason ?? "Todavía no pasan todas las pruebas. Revisa las marcadas en rojo.";
     }
 
     private void End(ClassClient client, string reason)

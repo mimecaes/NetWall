@@ -17,6 +17,10 @@ public sealed class ClassClient(IPEndPoint room, string name, PetColor color, in
 
     private readonly string _token = Guid.NewGuid().ToString("N");
     private readonly CancellationTokenSource _stop = new();
+    private readonly SemaphoreSlim _writeLock = new(1, 1);
+    private StreamWriter? _writer;
+
+    public event Action<ClassMessage>? ResultReceived;
 
     public event Action<ClassMessage>? Welcomed;
 
@@ -42,6 +46,29 @@ public sealed class ClassClient(IPEndPoint room, string name, PetColor color, in
 
     public void Leave() => _stop.Cancel();
 
+    public async Task<bool> SendAsync(ClassMessage message)
+    {
+        if (_writer is not { } writer)
+        {
+            return false;
+        }
+
+        await _writeLock.WaitAsync();
+        try
+        {
+            await ClassProtocol.SendAsync(writer, message, _stop.Token);
+            return true;
+        }
+        catch (Exception e) when (e is IOException or ObjectDisposedException or OperationCanceledException)
+        {
+            return false;
+        }
+        finally
+        {
+            _writeLock.Release();
+        }
+    }
+
     private async Task<ClassMessage?> TryJoinAsync(CancellationToken token)
     {
         var connection = new TcpClient();
@@ -58,6 +85,7 @@ public sealed class ClassClient(IPEndPoint room, string name, PetColor color, in
             var reply = await ClassProtocol.ReceiveAsync(reader, timeout.Token);
             if (reply is { Type: "welcome" })
             {
+                _writer = writer;
                 _ = ListenAsync(connection, reader, token);
             }
             else
@@ -88,6 +116,11 @@ public sealed class ClassClient(IPEndPoint room, string name, PetColor color, in
                         Ended?.Invoke("El profesor cerró la sala.");
                         return;
                     }
+
+                    if (message.Type == "result")
+                    {
+                        ResultReceived?.Invoke(message);
+                    }
                 }
             }
             catch (Exception e) when (e is IOException or OperationCanceledException or SocketException
@@ -96,6 +129,7 @@ public sealed class ClassClient(IPEndPoint room, string name, PetColor color, in
             }
         }
 
+        _writer = null;
         if (!token.IsCancellationRequested)
         {
             await ReconnectAsync(token);

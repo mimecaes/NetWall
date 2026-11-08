@@ -425,6 +425,21 @@
         <Style Selector="Border.lab-seat.away StackPanel.screen-lines">
             <Setter Property="Opacity" Value="0" />
         </Style>
+        <Style Selector="Ellipse.answered">
+            <Setter Property="Opacity" Value="0" />
+            <Setter Property="RenderTransformOrigin" Value="50%,50%" />
+            <Setter Property="RenderTransform" Value="scale(0.2)" />
+            <Setter Property="Transitions">
+                <Transitions>
+                    <DoubleTransition Property="Opacity" Duration="0:0:0.2" />
+                    <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.4" Easing="BackEaseOut" />
+                </Transitions>
+            </Setter>
+        </Style>
+        <Style Selector="Ellipse.answered.shown">
+            <Setter Property="Opacity" Value="1" />
+            <Setter Property="RenderTransform" Value="scale(1)" />
+        </Style>
         <Style Selector="Border.avatar-preview">
             <Setter Property="CornerRadius" Value="46" />
             <Setter Property="Background" Value="{DynamicResource SurfaceBackgroundBrush}" />
@@ -608,13 +623,18 @@
                                                 <TextBlock Text="{Binding Address}" FontSize="11.5"
                                                            FontFamily="Cascadia Code,Consolas,DejaVu Sans Mono,monospace" />
                                                 <TextBlock Text="{Binding StatusText}" FontSize="11.5" />
+                                                <TextBlock Text="{Binding ProgressText}" FontSize="11.5" />
                                             </StackPanel>
                                         </ToolTip.Tip>
                                         <Grid RowDefinitions="*,Auto,Auto">
                                             <Grid ColumnDefinitions="*,Auto" Margin="8,6,8,0">
-                                                <controls:KittenAvatar Classes="seat-kitten" Width="38" Height="38"
-                                                                       Color="{Binding Color}" Accessory="{Binding Accessory}"
-                                                                       HorizontalAlignment="Left" VerticalAlignment="Bottom" />
+                                                <Panel HorizontalAlignment="Left" VerticalAlignment="Bottom">
+                                                    <controls:KittenAvatar Classes="seat-kitten" Width="38" Height="38"
+                                                                           Color="{Binding Color}" Accessory="{Binding Accessory}" />
+                                                    <Ellipse Classes="answered" Classes.shown="{Binding HasAnswered}" Width="10" Height="10"
+                                                             Fill="{DynamicResource RunGreenBrush}" Stroke="{DynamicResource PanelBackgroundBrush}"
+                                                             StrokeThickness="1.5" HorizontalAlignment="Right" VerticalAlignment="Bottom" />
+                                                </Panel>
                                                 <Border Grid.Column="1" Classes="monitor" Width="42" Height="28"
                                                         VerticalAlignment="Center">
                                                     <StackPanel Classes="screen-lines" Margin="6,6,0,0" Spacing="3">
@@ -735,45 +755,143 @@
             </Button>
         </StackPanel>
 
-        <StackPanel Classes="class-view" Classes.shown="{Binding IsStudent}" HorizontalAlignment="Center"
-                    VerticalAlignment="Center" Width="480">
-            <Border Classes="avatar-preview" Width="96" Height="96" HorizontalAlignment="Center" Margin="0,0,0,14">
-                <controls:KittenAvatar Width="80" Height="80" Color="{Binding Join.Color}" Accessory="{Binding Join.Accessory}" />
-            </Border>
-            <TextBlock Text="{Binding Join.ClassName}" FontSize="30" FontWeight="Bold" HorizontalAlignment="Center"
-                       TextAlignment="Center" TextWrapping="Wrap" Foreground="{DynamicResource TextPrimaryBrush}" />
-            <TextBlock Text="{Binding Join.SeatText}" FontSize="13.5" HorizontalAlignment="Center" Margin="0,8,0,0"
-                       Foreground="{DynamicResource AccentBrush}" />
-            <Border Padding="14,11" CornerRadius="9" Margin="0,22,0,0" Background="{DynamicResource SurfaceBackgroundBrush}">
-                <StackPanel Orientation="Horizontal" Spacing="10" HorizontalAlignment="Center">
-                    <Ellipse Classes="live" Width="9" Height="9" VerticalAlignment="Center"
-                             Fill="{DynamicResource RunGreenBrush}" IsVisible="{Binding !Join.IsReconnecting}" />
-                    <Ellipse Classes="live" Width="9" Height="9" VerticalAlignment="Center"
-                             Fill="{DynamicResource StopRedBrush}" IsVisible="{Binding Join.IsReconnecting}" />
-                    <TextBlock Text="Conectado. Espera a que el profesor empiece." FontSize="13"
-                               IsVisible="{Binding !Join.IsReconnecting}" Foreground="{DynamicResource TextPrimaryBrush}" />
-                    <TextBlock Text="Se cortó la conexión. Reconectando…" FontSize="13"
-                               IsVisible="{Binding Join.IsReconnecting}" Foreground="{DynamicResource TextPrimaryBrush}" />
+        <DockPanel Classes="class-view" Classes.shown="{Binding IsStudent}" Margin="30,20,30,16">
+            <Grid DockPanel.Dock="Top" ColumnDefinitions="Auto,*,Auto" Margin="0,0,0,16">
+                <Border Classes="avatar-preview" Width="58" Height="58" CornerRadius="29" Margin="0,0,14,0">
+                    <controls:KittenAvatar Width="46" Height="46" Color="{Binding Join.Color}" Accessory="{Binding Join.Accessory}" />
+                </Border>
+                <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                    <TextBlock Text="{Binding Join.ClassName}" FontSize="22" FontWeight="Bold" TextTrimming="CharacterEllipsis"
+                               Foreground="{DynamicResource TextPrimaryBrush}" />
+                    <StackPanel Orientation="Horizontal" Spacing="8" Margin="0,3,0,0">
+                        <Ellipse Classes="live" Width="8" Height="8" VerticalAlignment="Center"
+                                 Fill="{DynamicResource RunGreenBrush}" IsVisible="{Binding !Join.IsReconnecting}" />
+                        <Ellipse Classes="live" Width="8" Height="8" VerticalAlignment="Center"
+                                 Fill="{DynamicResource StopRedBrush}" IsVisible="{Binding Join.IsReconnecting}" />
+                        <TextBlock Text="{Binding Join.SeatText}" FontSize="12.5" IsVisible="{Binding !Join.IsReconnecting}"
+                                   Foreground="{DynamicResource TextMutedBrush}" />
+                        <TextBlock Text="Se cortó la conexión. Reconectando…" FontSize="12.5"
+                                   IsVisible="{Binding Join.IsReconnecting}" Foreground="{DynamicResource TextMutedBrush}" />
+                    </StackPanel>
                 </StackPanel>
-            </Border>
-            <TextBlock Classes="label" Text="Ejercicios de hoy" />
-            <ItemsControl ItemsSource="{Binding Join.Exercises}">
-                <ItemsControl.ItemTemplate>
-                    <DataTemplate x:DataType="x:String">
-                        <Border Classes="exercise-card" Padding="12,9" Cursor="Arrow">
-                            <TextBlock Text="{Binding}" FontSize="13" Foreground="{DynamicResource TextPrimaryBrush}" />
-                        </Border>
-                    </DataTemplate>
-                </ItemsControl.ItemTemplate>
-            </ItemsControl>
-            <Button Classes="class-icon" Width="NaN" Padding="10,0" Margin="0,16,0,0" HorizontalAlignment="Center"
-                    Click="OnBackClick">
-                <StackPanel Orientation="Horizontal" Spacing="6">
-                    <controls:AnimatedIcon Classes="icon-sm" Kind="LogOut" />
-                    <TextBlock Text="Salir de la clase" FontSize="12.5" Foreground="{DynamicResource TextMutedBrush}" />
-                </StackPanel>
-            </Button>
-        </StackPanel>
+                <Button Grid.Column="2" Classes="class-secondary" VerticalAlignment="Center" Click="OnBackClick">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <controls:AnimatedIcon Classes="icon-sm" Kind="LogOut" />
+                        <TextBlock Text="Salir de la clase" />
+                    </StackPanel>
+                </Button>
+            </Grid>
+            <Grid ColumnDefinitions="270,22,*">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <ItemsControl ItemsSource="{Binding Join.Exercises}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate x:DataType="vm:StudentExercise">
+                                <Border Classes="exercise-card" Classes.selected="{Binding IsSelected}" Padding="10,10"
+                                        PointerPressed="OnStudentCardPressed">
+                                    <Grid ColumnDefinitions="Auto,*,Auto">
+                                        <controls:AnimatedIcon Classes="type" Kind="{Binding Icon}" Margin="2,0,10,0"
+                                                               VerticalAlignment="Center" />
+                                        <StackPanel Grid.Column="1" Spacing="1" VerticalAlignment="Center">
+                                            <TextBlock FontSize="13" FontWeight="SemiBold" TextTrimming="CharacterEllipsis"
+                                                       Foreground="{DynamicResource TextPrimaryBrush}">
+                                                <Run Text="{Binding Number}" />
+                                                <Run Text="·" />
+                                                <Run Text="{Binding Exercise.Title}" />
+                                            </TextBlock>
+                                            <TextBlock Text="{Binding TypeText}" FontSize="11" Foreground="{DynamicResource TextMutedBrush}" />
+                                        </StackPanel>
+                                        <Border Grid.Column="2" Classes="check-badge" Classes.shown="{Binding IsSolved}"
+                                                Background="{DynamicResource RunGreenBrush}">
+                                            <controls:AnimatedIcon Classes="icon-sm" Kind="Check" Stroke="White"
+                                                                   HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                        </Border>
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </ScrollViewer>
+                <TransitioningContentControl Grid.Column="2" Content="{Binding Join.Selected}">
+                    <TransitioningContentControl.PageTransition>
+                        <CrossFade Duration="0:0:0.22" />
+                    </TransitioningContentControl.PageTransition>
+                    <TransitioningContentControl.ContentTemplate>
+                        <DataTemplate x:DataType="vm:StudentExercise">
+                            <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="0,0,12,0">
+                                <StackPanel>
+                                    <StackPanel Orientation="Horizontal" Spacing="8">
+                                        <controls:AnimatedIcon Classes="icon-sm" Kind="{Binding Icon}" Stroke="{DynamicResource AccentBrush}" />
+                                        <TextBlock Text="{Binding TypeText}" FontSize="12" FontWeight="SemiBold"
+                                                   Foreground="{DynamicResource AccentBrush}" />
+                                    </StackPanel>
+                                    <TextBlock Text="{Binding Exercise.Title}" FontSize="20" FontWeight="Bold" Margin="0,8,0,4"
+                                               TextWrapping="Wrap" Foreground="{DynamicResource TextPrimaryBrush}" />
+                                    <TextBlock Text="{Binding Exercise.Statement}" FontSize="13.5" TextWrapping="Wrap"
+                                               Foreground="{DynamicResource TextPrimaryBrush}" />
+                                    <Border IsVisible="{Binding IsVote}" Margin="0,16,0,0" Padding="14,11" CornerRadius="8"
+                                            Background="{DynamicResource SurfaceBackgroundBrush}">
+                                        <TextBlock Text="Este ejercicio se responde todos juntos cuando el profesor inicie la votación."
+                                                   FontSize="12.5" TextWrapping="Wrap" Foreground="{DynamicResource TextMutedBrush}" />
+                                    </Border>
+                                    <StackPanel IsVisible="{Binding IsWritable}">
+                                        <TextBlock Classes="label" Text="Tu código" />
+                                        <Border CornerRadius="8" ClipToBounds="True" BorderThickness="1"
+                                                BorderBrush="{DynamicResource BorderBrush}">
+                                            <controls:CodeBox Code="{Binding Code}" Height="230" ShowLineNumbers="True"
+                                                              Background="{DynamicResource EditorBackgroundBrush}"
+                                                              Foreground="{DynamicResource TextPrimaryBrush}"
+                                                              LineNumbersForeground="{DynamicResource TextDisabledBrush}"
+                                                              FontFamily="Cascadia Code,Consolas,DejaVu Sans Mono,monospace"
+                                                              FontSize="13.5" Padding="6" />
+                                        </Border>
+                                        <TextBlock Classes="label" Text="Pruebas" />
+                                        <ItemsControl ItemsSource="{Binding Tests}">
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate x:DataType="vm:StudentTest">
+                                                    <Border Classes="test-card" Classes.passed="{Binding IsPassed}"
+                                                            Classes.failed="{Binding IsFailed}" Padding="12,8">
+                                                        <Grid ColumnDefinitions="*,Auto">
+                                                            <TextBlock Text="{Binding Test.Label}" FontSize="12.5" VerticalAlignment="Center"
+                                                                       TextWrapping="Wrap" Foreground="{DynamicResource TextPrimaryBrush}" />
+                                                            <Panel Grid.Column="1">
+                                                                <Border Classes="check-badge" Classes.shown="{Binding IsPassed}"
+                                                                        Background="{DynamicResource RunGreenBrush}">
+                                                                    <controls:AnimatedIcon Classes="icon-sm" Kind="Check" Stroke="White"
+                                                                                           HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                                                </Border>
+                                                                <Border Classes="check-badge" Classes.shown="{Binding IsFailed}"
+                                                                        Background="{DynamicResource StopRedBrush}">
+                                                                    <controls:AnimatedIcon Classes="icon-sm" Kind="X" Stroke="White"
+                                                                                           HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                                                </Border>
+                                                            </Panel>
+                                                        </Grid>
+                                                    </Border>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+                                        <Button Classes="class-primary" HorizontalAlignment="Left" Margin="0,6,0,0"
+                                                Command="{Binding SubmitCommand}" IsEnabled="{Binding CanCheck}">
+                                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                                <controls:AnimatedIcon Kind="Send" Width="14" Height="14" Stretch="Uniform"
+                                                                       Stroke="White" StrokeThickness="2" />
+                                                <TextBlock Text="Comprobar y enviar" FontWeight="SemiBold" Foreground="White" />
+                                            </StackPanel>
+                                        </Button>
+                                        <Border Classes="solution-result swap" Classes.shown="{Binding HasResult}"
+                                                Classes.passed="{Binding ResultPassed}" Classes.testing="{Binding IsChecking}"
+                                                Margin="0,10,0,24">
+                                            <TextBlock Text="{Binding ResultText}" FontSize="12.5" TextWrapping="Wrap"
+                                                       Foreground="{DynamicResource TextPrimaryBrush}" />
+                                        </Border>
+                                    </StackPanel>
+                                </StackPanel>
+                            </ScrollViewer>
+                        </DataTemplate>
+                    </TransitioningContentControl.ContentTemplate>
+                </TransitioningContentControl>
+            </Grid>
+        </DockPanel>
 
         <DockPanel Classes="class-view" Classes.shown="{Binding IsEditing}" Margin="36,26,36,20">
             <Grid DockPanel.Dock="Top" ColumnDefinitions="*,Auto" Margin="0,0,0,18">

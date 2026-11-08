@@ -17,7 +17,8 @@ namespace NetWall.IDE.Services;
 
 public sealed record ClassMessage(string Type, string? Name = null, string? Token = null, int? Seat = null,
     string? ClassName = null, string? Description = null, List<ClassExercise>? Exercises = null, string? Reason = null,
-    string? Code = null, int? Students = null, string? App = null, string? Color = null, int? Accessory = null);
+    string? Code = null, int? Students = null, string? App = null, string? Color = null, int? Accessory = null,
+    string? Exercise = null, string? Source = null, bool? Passed = null, List<bool>? Checks = null);
 
 public static class ClassProtocol
 {
@@ -27,6 +28,7 @@ public static class ClassProtocol
     public const int RoomPorts = 4;
     public const int MaxNameLength = 24;
     public const int MaxMessageChars = 1024 * 1024;
+    public const int MaxSourceChars = 64 * 1024;
 
     private const string Alphabet = "23456789ABCDEFGHJKLMNPQRSTUVWXYZ";
     private const int CodeLength = 7;

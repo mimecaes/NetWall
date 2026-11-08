@@ -204,6 +204,14 @@ public partial class ClassPanel : UserControl
         }
     }
 
+    private void OnStudentCardPressed(object? sender, PointerPressedEventArgs e)
+    {
+        if (sender is Control { DataContext: StudentExercise exercise } && !exercise.IsSelected)
+        {
+            exercise.SelectCommand.Execute(null);
+        }
+    }
+
     private void OnGripPressed(object? sender, PointerPressedEventArgs e)
     {
         if (sender is not Control { DataContext: ExerciseEditor exercise } grip)

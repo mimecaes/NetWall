@@ -23,6 +23,14 @@ public sealed class RoomStudent(string token, string name, int seat)
 
     public string Address { get; set; } = string.Empty;
 
+    public HashSet<string> Solved { get; } = [];
+
+    public int Attempts { get; set; }
+
+    public bool IsReviewing { get; set; }
+
+    public SemaphoreSlim WriteLock { get; } = new(1, 1);
+
     public int Seat { get; } = seat;
 
     public bool IsConnected { get; set; }
@@ -32,29 +40,35 @@ public sealed class RoomStudent(string token, string name, int seat)
     public TcpClient? Connection { get; set; }
 }
 
-public sealed class ClassHost
+public sealed partial class ClassHost
 {
     public const int MaxStudents = 60;
 
     private const int KittenAvatarAccessories = 5;
 
     private static readonly TimeSpan JoinTimeout = TimeSpan.FromSeconds(10);
+    private static readonly TimeSpan ReviewTimeout = TimeSpan.FromSeconds(10);
     private static readonly TimeSpan AnnounceInterval = TimeSpan.FromSeconds(1.5);
 
     private readonly ClassFile _file;
+    private readonly Func<string?> _cliPath;
+    private readonly SemaphoreSlim _reviews = new(2, 2);
     private readonly Dictionary<string, RoomStudent> _students = [];
     private readonly CancellationTokenSource _stop = new();
     private TcpListener? _listener;
     private IPAddress _broadcast = IPAddress.Broadcast;
 
-    public ClassHost(ClassFile file)
+    public ClassHost(ClassFile file, Func<string?> cliPath)
     {
+        _cliPath = cliPath;
         _file = file with { Exercises = [.. file.Exercises.Select(exercise => exercise with { Solution = null })] };
     }
 
     public string Code { get; private set; } = string.Empty;
 
     public event Action<RoomStudent>? StudentChanged;
+
+    public int ExerciseCount => _file.Exercises.Count(exercise => exercise.Type != "predict");
 
     public void Start()
     {
@@ -170,11 +184,15 @@ public sealed class ClassHost
                 student.Connection = connection;
                 student.Writer = writer;
                 student.IsConnected = true;
-                await ClassProtocol.SendAsync(writer, new ClassMessage("welcome", Seat: student.Seat, ClassName: _file.Name,
+                await SendAsync(student, new ClassMessage("welcome", Seat: student.Seat, ClassName: _file.Name,
                     Description: _file.Description, Exercises: _file.Exercises), token);
                 StudentChanged?.Invoke(student);
-                while (await ClassProtocol.ReceiveAsync(reader, token) is not null)
+                while (await ClassProtocol.ReceiveAsync(reader, token) is { } message)
                 {
+                    if (message.Type == "submit")
+                    {
+                        _ = ReviewAsync(student, message, token);
+                    }
                 }
             }
         }
@@ -196,6 +214,110 @@ public sealed class ClassHost
             }
         }
     }
+
+    private async Task ReviewAsync(RoomStudent student, ClassMessage message, CancellationToken token)
+    {
+        if (student.IsReviewing)
+        {
+            await SendResultAsync(student, message.Exercise, false, null, "Espera el resultado de tu envío anterior.", token);
+            return;
+        }
+
+        var exercise = _file.Exercises.FirstOrDefault(item => item.Id == message.Exercise && item.Type != "predict");
+        var source = message.Source ?? string.Empty;
+        var problem = exercise is null ? "Ese ejercicio no existe en esta clase."
+            : source.Length > ClassProtocol.MaxSourceChars ? "Tu código es demasiado largo."
+            : ImportPattern().IsMatch(source) ? "En la sala no se puede usar importar."
+            : _cliPath() is null ? "La computadora del profesor no encontró el compilador de NetWall."
+            : null;
+        if (exercise is null || problem is not null)
+        {
+            await SendResultAsync(student, message.Exercise, false, null, problem, token);
+            return;
+        }
+
+        student.IsReviewing = true;
+        try
+        {
+            await _reviews.WaitAsync(token);
+            ChallengeResult? result;
+            var timedOut = false;
+            try
+            {
+                var folder = Path.Combine(Path.GetTempPath(), "NetWall", "class-room");
+                Directory.CreateDirectory(folder);
+                var file = Path.Combine(folder, $"{student.Token}-{exercise.Id}.nw");
+                await File.WriteAllTextAsync(file, source, token);
+                using var timeout = CancellationTokenSource.CreateLinkedTokenSource(token);
+                timeout.CancelAfter(ReviewTimeout);
+                result = await SimulationRunner.RunChallengeAsync(_cliPath()!, file,
+                    exercise.Tests.Where(test => test.Kind == "packet"), timeout.Token);
+                timedOut = timeout.IsCancellationRequested && !token.IsCancellationRequested;
+            }
+            finally
+            {
+                _reviews.Release();
+            }
+
+            student.Attempts++;
+            if (result is null || result.Errors)
+            {
+                var error = result?.Diagnostics.FirstOrDefault();
+                var reason = timedOut ? "Tu código tardó demasiado en revisarse."
+                    : error is null ? "No se pudo revisar tu código."
+                    : $"Tu código tiene un error en la línea {error.Line}: {error.Message}.";
+                await SendResultAsync(student, exercise.Id, false, null, reason, token);
+            }
+            else
+            {
+                var checks = ClassChecker.Check(exercise.Tests, result);
+                var passed = checks.All(check => check);
+                if (passed)
+                {
+                    student.Solved.Add(exercise.Id);
+                }
+
+                await SendResultAsync(student, exercise.Id, passed, checks, null, token);
+            }
+
+            StudentChanged?.Invoke(student);
+        }
+        catch (Exception e) when (e is IOException or OperationCanceledException or UnauthorizedAccessException)
+        {
+        }
+        finally
+        {
+            student.IsReviewing = false;
+        }
+    }
+
+    private Task SendResultAsync(RoomStudent student, string? exercise, bool passed, List<bool>? checks, string? reason,
+        CancellationToken token) =>
+        SendAsync(student, new ClassMessage("result", Exercise: exercise, Passed: passed, Checks: checks, Reason: reason), token);
+
+    private static async Task SendAsync(RoomStudent student, ClassMessage message, CancellationToken token)
+    {
+        if (student.Writer is not { } writer)
+        {
+            return;
+        }
+
+        await student.WriteLock.WaitAsync(token);
+        try
+        {
+            await ClassProtocol.SendAsync(writer, message, token);
+        }
+        catch (Exception e) when (e is IOException or ObjectDisposedException)
+        {
+        }
+        finally
+        {
+            student.WriteLock.Release();
+        }
+    }
+
+    [System.Text.RegularExpressions.GeneratedRegex(@"\bimportar\b")]
+    private static partial System.Text.RegularExpressions.Regex ImportPattern();
 
     private RoomStudent? Seat(string token, string name)
     {

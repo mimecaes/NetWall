@@ -35,7 +35,7 @@ public sealed partial class ClassViewModel(Func<string?> cliPath) : ViewModelBas
 
     public RoomHostViewModel Room { get; } = new();
 
-    public RoomJoinViewModel Join { get; } = new();
+    public RoomJoinViewModel Join { get; } = new(cliPath);
 
     [ObservableProperty]
     public partial bool HasClass { get; set; }
@@ -162,7 +162,7 @@ public sealed partial class ClassViewModel(Func<string?> cliPath) : ViewModelBas
     {
         var file = BuildFile();
         ClassFileLoader.Validate(file);
-        Room.Start(file);
+        Room.Start(file, cliPath);
         Stage = ClassStage.Hosting;
     }
 

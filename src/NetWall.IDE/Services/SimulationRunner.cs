@@ -6,6 +6,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Text.Json;
+using System.Threading;
 using System.Threading.Tasks;
 using NetWall.IDE.Models;
 
@@ -36,7 +37,7 @@ public static class SimulationRunner
     }
 
     public static Task<ChallengeResult?> RunChallengeAsync(string cliPath, string filePath,
-        IEnumerable<ChallengeTest> packets)
+        IEnumerable<ChallengeTest> packets, CancellationToken token = default)
     {
         var request = JsonSerializer.Serialize(new
         {
@@ -48,10 +49,11 @@ public static class SimulationRunner
                 destination = packet.Destination,
             }),
         });
-        return RunCliAsync<ChallengeResult>(cliPath, filePath, "--retos", request);
+        return RunCliAsync<ChallengeResult>(cliPath, filePath, "--retos", request, token);
     }
 
-    private static async Task<T?> RunCliAsync<T>(string cliPath, string filePath, string mode, string? request)
+    private static async Task<T?> RunCliAsync<T>(string cliPath, string filePath, string mode, string? request,
+        CancellationToken token = default)
         where T : class
     {
         var startInfo = new ProcessStartInfo("python")
@@ -86,9 +88,17 @@ public static class SimulationRunner
                 }
             }
 
-            var output = await process.StandardOutput.ReadToEndAsync();
-            await process.WaitForExitAsync();
-            return JsonSerializer.Deserialize<T>(output, Options);
+            try
+            {
+                var output = await process.StandardOutput.ReadToEndAsync(token);
+                await process.WaitForExitAsync(token);
+                return JsonSerializer.Deserialize<T>(output, Options);
+            }
+            catch (OperationCanceledException)
+            {
+                process.Kill(true);
+                return null;
+            }
         }
         catch (Exception e) when (e is Win32Exception or JsonException)
         {
