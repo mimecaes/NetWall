@@ -676,9 +676,7 @@
                             <ItemsControl ItemsSource="{Binding Room.VoteExercises}" MinWidth="260">
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate x:DataType="models:ClassExercise">
-                                        <Button Classes="room-card" Content="{Binding Title}"
-                                                Command="{Binding $parent[ItemsControl].((vm:ClassViewModel)DataContext).Room.StartVoteCommand, FallbackValue={x:Null}}"
-                                                CommandParameter="{Binding}" Click="OnVoteChosen" />
+                                        <Button Classes="room-card" Content="{Binding Title}" Click="OnVoteChosen" />
                                     </DataTemplate>
                                 </ItemsControl.ItemTemplate>
                             </ItemsControl>

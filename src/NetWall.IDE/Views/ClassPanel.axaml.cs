@@ -9,6 +9,7 @@ using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Platform.Storage;
 using Lucide.Avalonia;
+using NetWall.IDE.Models;
 using NetWall.IDE.Services;
 using NetWall.IDE.ViewModels;
 
@@ -84,10 +85,17 @@ public partial class ClassPanel : UserControl
 
     private void OnVoteChosen(object? sender, RoutedEventArgs e)
     {
-        if (sender is Control control && control.FindLogicalAncestorOfType<Popup>() is { } popup)
+        if (sender is not Control { DataContext: ClassExercise exercise } control)
+        {
+            return;
+        }
+
+        if (control.FindLogicalAncestorOfType<Popup>() is { } popup)
         {
             popup.IsOpen = false;
         }
+
+        ViewModel?.Room.StartVoteCommand.Execute(exercise);
     }
 
     private void OnJoinClassClick(object? sender, RoutedEventArgs e) => ViewModel?.StartJoining();
