@@ -950,6 +950,7 @@
                         <Button.Flyout>
                             <MenuFlyout Placement="TopEdgeAlignedLeft">
                                 <MenuItem Header="Reto libre" Command="{Binding AddExerciseCommand}" CommandParameter="free" />
+                                <MenuItem Header="Arreglar código" Command="{Binding AddExerciseCommand}" CommandParameter="fix" />
                             </MenuFlyout>
                         </Button.Flyout>
                     </Button>

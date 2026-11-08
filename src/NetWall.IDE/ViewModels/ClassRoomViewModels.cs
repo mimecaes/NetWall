@@ -212,11 +212,13 @@ public sealed partial class StudentExercise : ObservableObject
 
     public string TypeText => Exercise.Type switch
     {
+        "fix" => "Arreglar código",
         _ => "Reto libre",
     };
 
     public Lucide.Avalonia.LucideIconKind Icon => Exercise.Type switch
     {
+        "fix" => Lucide.Avalonia.LucideIconKind.Wrench,
         _ => Lucide.Avalonia.LucideIconKind.Pencil,
     };
 

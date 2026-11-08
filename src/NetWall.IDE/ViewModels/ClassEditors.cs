@@ -201,18 +201,23 @@ public sealed partial class ExerciseEditor : ObservableObject
 
     public ObservableCollection<TestEditor> Tests { get; } = [];
 
+    public bool IsFix => Type == "fix";
+
     public string TypeText => Type switch
     {
+        "fix" => "Arreglar código",
         _ => "Reto libre",
     };
 
     public LucideIconKind Icon => Type switch
     {
+        "fix" => LucideIconKind.Wrench,
         _ => LucideIconKind.Pencil,
     };
 
     public string StarterText => Type switch
     {
+        "fix" => "Código con errores (lo reciben los estudiantes)",
         _ => "Código inicial (opcional)",
     };
 

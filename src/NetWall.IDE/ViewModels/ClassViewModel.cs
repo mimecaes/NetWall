@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.IO;
@@ -332,6 +333,12 @@ public sealed partial class ClassViewModel(Func<string?> cliPath) : ViewModelBas
             return;
         }
 
+        if (exercise.IsFix && exercise.Starter.Trim().Length == 0)
+        {
+            ShowSolution(exercise, "Escribe el código con errores que recibirán los estudiantes.", false);
+            return;
+        }
+
         if (cliPath() is not { } cli)
         {
             ShowSolution(exercise, "No se encontró el compilador de NetWall.", false);
@@ -377,10 +384,35 @@ public sealed partial class ClassViewModel(Func<string?> cliPath) : ViewModelBas
         }
 
         var passed = checks.Count(check => check);
+        if (passed == checks.Count && exercise.IsFix && await StarterPassesAsync(cli, exercise, tests))
+        {
+            if (version == exercise.SolutionVersion)
+            {
+                ShowSolution(exercise,
+                    "Tu solución pasa todas las pruebas, pero el código con errores también: los estudiantes no tendrían nada que arreglar.",
+                    false);
+            }
+
+            return;
+        }
+
+        if (version != exercise.SolutionVersion)
+        {
+            return;
+        }
+
         ShowSolution(exercise, passed == checks.Count
             ? "Tu solución pasa todas las pruebas. El ejercicio está listo."
             : $"Tu solución pasa {passed} de {checks.Count} pruebas. Revisa las marcadas en rojo o tu solución.",
             passed == checks.Count);
+    }
+
+    private static async Task<bool> StarterPassesAsync(string cli, ExerciseEditor exercise, List<ChallengeTest> tests)
+    {
+        var file = await WritePreviewAsync($"{exercise.Id}-errores", exercise.Starter);
+        var result = file is null ? null
+            : await SimulationRunner.RunChallengeAsync(cli, file, tests.Where(test => test.Kind == "packet"));
+        return result is { Errors: false } && ClassChecker.Check(tests, result).All(check => check);
     }
 
     private static void ShowSolution(ExerciseEditor exercise, string text, bool passed)
