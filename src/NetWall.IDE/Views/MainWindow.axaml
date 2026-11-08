@@ -207,6 +207,12 @@
                                 </ToolTip.Tip>
                                 <controls:AnimatedIcon Classes="icon" Kind="BrickWall" />
                             </Button>
+                            <Button Classes="icon toolbar-icon" Click="OnClassModeClick">
+                                <ToolTip.Tip>
+                                    <TextBlock Text="Modo clase" />
+                                </ToolTip.Tip>
+                                <controls:AnimatedIcon Classes="icon" Kind="Presentation" />
+                            </Button>
                         </StackPanel>
                     </Border>
 
@@ -575,6 +581,12 @@
                                             <TextBlock Text="Simulación" />
                                         </StackPanel>
                                     </Button>
+                                    <Button Classes="welcome-secondary" Click="OnClassModeClick">
+                                        <StackPanel Orientation="Horizontal" Spacing="8">
+                                            <controls:AnimatedIcon Classes="icon-sm" Kind="Presentation" />
+                                            <TextBlock Text="Modo clase" />
+                                        </StackPanel>
+                                    </Button>
                                 </StackPanel>
                                 <TextBlock Text="o presiona Ctrl+O" Foreground="{DynamicResource TextDisabledBrush}"
                                            FontSize="11" HorizontalAlignment="Center" Margin="0,10,0,34" Classes="welcome-hint" />
@@ -799,8 +811,30 @@
             <views:ChallengePanel Name="ChallengeView" DataContext="{Binding Challenges}" />
         </DockPanel>
 
+        <DockPanel IsVisible="{Binding IsClassMode}" Background="{DynamicResource BackgroundBrush}">
+            <Border DockPanel.Dock="Top" Classes="simulation-header">
+                <Grid ColumnDefinitions="Auto,Auto,*,Auto">
+                    <controls:AnimatedIcon Classes="icon" Kind="Presentation" Stroke="{DynamicResource AccentBrush}"
+                                           VerticalAlignment="Center" />
+                    <TextBlock Grid.Column="1" Classes="sidebar-header" Text="MODO CLASE" Margin="10,0"
+                               VerticalAlignment="Center" />
+                    <Button Grid.Column="3" Classes="simulation-exit" Click="OnExitClassClick">
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <controls:AnimatedIcon Classes="icon-sm" Kind="LogOut" />
+                            <TextBlock Text="Salir" VerticalAlignment="Center" />
+                        </StackPanel>
+                    </Button>
+                </Grid>
+            </Border>
+            <Panel>
+                <controls:NetworkBackground IsVisible="{Binding IsClassMode}" />
+                <views:ClassPanel DataContext="{Binding Classroom}" />
+            </Panel>
+        </DockPanel>
+
         <controls:SimulationIntro Name="Intro" />
         <controls:ChallengeIntro Name="ChallengeCurtain" />
+        <controls:ClassIntro Name="ClassCurtain" />
         <views:CatGalleryPanel Name="CatGallery" />
         </Panel>
     </DockPanel>

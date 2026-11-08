@@ -214,7 +214,13 @@ public partial class MainViewModel : ViewModelBase
     [NotifyPropertyChangedFor(nameof(ShowToolbar))]
     public partial bool IsChallengeMode { get; set; }
 
-    public bool ShowToolbar => !IsSimulationMode && !IsChallengeMode;
+    public ClassViewModel Classroom { get; } = new();
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(ShowToolbar))]
+    public partial bool IsClassMode { get; set; }
+
+    public bool ShowToolbar => !IsSimulationMode && !IsChallengeMode && !IsClassMode;
 
     public void EnterChallengeMode()
     {

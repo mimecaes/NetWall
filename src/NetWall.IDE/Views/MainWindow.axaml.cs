@@ -33,6 +33,8 @@ public partial class MainWindow : Window
     private bool _exitingSimulation;
     private bool _enteringChallenge;
     private bool _exitingChallenge;
+    private bool _enteringClass;
+    private bool _exitingClass;
     private IReadOnlyList<HelpyField> _fields = [];
     private int _helpyVersion;
     private bool _celebrating;
@@ -145,6 +147,32 @@ public partial class MainWindow : Window
         _enteringChallenge = false;
     }
 
+    private async void OnClassModeClick(object? sender, RoutedEventArgs e)
+    {
+        if (_enteringClass || ViewModel is not { } viewModel)
+        {
+            return;
+        }
+
+        _enteringClass = true;
+        await ClassCurtain.PlayAsync(() => viewModel.IsClassMode = true);
+        _enteringClass = false;
+    }
+
+    private void OnExitClassClick(object? sender, RoutedEventArgs e) => _ = ExitClassAsync();
+
+    private async Task ExitClassAsync()
+    {
+        if (_enteringClass || _exitingClass || ViewModel is not { IsClassMode: true } viewModel)
+        {
+            return;
+        }
+
+        _exitingClass = true;
+        await ClassCurtain.PlayExitAsync(() => viewModel.IsClassMode = false);
+        _exitingClass = false;
+    }
+
     private void OnExitChallengeClick(object? sender, RoutedEventArgs e) => _ = ExitChallengeAsync();
 
     private async Task ExitChallengeAsync()
@@ -169,6 +197,11 @@ public partial class MainWindow : Window
         else if (e.Key == Key.Escape && ViewModel is { IsChallengeMode: true })
         {
             _ = ExitChallengeAsync();
+            e.Handled = true;
+        }
+        else if (e.Key == Key.Escape && ViewModel is { IsClassMode: true })
+        {
+            _ = ExitClassAsync();
             e.Handled = true;
         }
     }
