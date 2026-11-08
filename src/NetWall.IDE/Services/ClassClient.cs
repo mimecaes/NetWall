@@ -5,10 +5,11 @@ using System.Net.Sockets;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using NetWall.IDE.Models;
 
 namespace NetWall.IDE.Services;
 
-public sealed class ClassClient(IPEndPoint room, string name)
+public sealed class ClassClient(IPEndPoint room, string name, PetColor color, int accessory)
 {
     private static readonly TimeSpan ConnectTimeout = TimeSpan.FromSeconds(6);
     private static readonly TimeSpan RetryDelay = TimeSpan.FromSeconds(2);
@@ -52,7 +53,8 @@ public sealed class ClassClient(IPEndPoint room, string name)
             var stream = connection.GetStream();
             var reader = new StreamReader(stream, Encoding.UTF8);
             var writer = new StreamWriter(stream, new UTF8Encoding(false));
-            await ClassProtocol.SendAsync(writer, new ClassMessage("join", Name: name, Token: _token), timeout.Token);
+            await ClassProtocol.SendAsync(writer, new ClassMessage("join", Name: name, Token: _token, Color: color.ToString(),
+                Accessory: accessory), timeout.Token);
             var reply = await ClassProtocol.ReceiveAsync(reader, timeout.Token);
             if (reply is { Type: "welcome" })
             {

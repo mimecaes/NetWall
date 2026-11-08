@@ -10,17 +10,50 @@ using NetWall.IDE.Services;
 
 namespace NetWall.IDE.ViewModels;
 
-public sealed partial class RoomSeat(string token, string name, int seat) : ObservableObject
+public sealed partial class LabSeat(int number) : ObservableObject
 {
-    public string Token { get; } = token;
+    public int Number { get; } = number;
 
-    public int Seat { get; } = seat;
-
-    [ObservableProperty]
-    public partial string Name { get; set; } = name;
+    public string? Token { get; set; }
 
     [ObservableProperty]
-    public partial bool IsConnected { get; set; } = true;
+    [NotifyPropertyChangedFor(nameof(IsAway), nameof(Label), nameof(StatusText))]
+    public partial bool IsOccupied { get; set; }
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsAway), nameof(StatusText))]
+    public partial bool IsConnected { get; set; }
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(Label))]
+    public partial string Name { get; set; } = string.Empty;
+
+    [ObservableProperty]
+    public partial PetColor Color { get; set; }
+
+    [ObservableProperty]
+    public partial int Accessory { get; set; }
+
+    [ObservableProperty]
+    public partial string Address { get; set; } = string.Empty;
+
+    public bool IsAway => IsOccupied && !IsConnected;
+
+    public string Label => IsOccupied ? Name : $"Puesto {Number}";
+
+    public string StatusText => IsConnected ? "Conectado" : "Desconectado, esperando que vuelva";
+}
+
+public sealed partial class AvatarChoice(PetColor color, int accessory, string label) : ObservableObject
+{
+    public PetColor Color { get; } = color;
+
+    public int Accessory { get; } = accessory;
+
+    public string Label { get; } = label;
+
+    [ObservableProperty]
+    public partial bool IsSelected { get; set; }
 }
 
 public sealed partial class FoundRoom(string code) : ObservableObject
@@ -42,9 +75,12 @@ public sealed partial class FoundRoom(string code) : ObservableObject
 
 public sealed partial class RoomHostViewModel : ObservableObject
 {
+    private const int Columns = 6;
+    private const int StartingSeats = 30;
+
     private ClassHost? _host;
 
-    public ObservableCollection<RoomSeat> Seats { get; } = [];
+    public ObservableCollection<LabSeat> Seats { get; } = [];
 
     [ObservableProperty]
     public partial string Code { get; set; } = string.Empty;
@@ -67,6 +103,11 @@ public sealed partial class RoomHostViewModel : ObservableObject
         host.Start();
         _host = host;
         Seats.Clear();
+        for (var number = 1; number <= StartingSeats; number++)
+        {
+            Seats.Add(new LabSeat(number));
+        }
+
         ConnectedCount = 0;
         ClassName = file.Name;
         Code = host.Code;
@@ -85,18 +126,23 @@ public sealed partial class RoomHostViewModel : ObservableObject
             return;
         }
 
-        if (Seats.FirstOrDefault(seat => seat.Token == student.Token) is { } existing)
+        while (Seats.Count < student.Seat)
         {
-            existing.Name = student.Name;
-            existing.IsConnected = student.IsConnected;
-        }
-        else
-        {
-            var index = Seats.TakeWhile(seat => seat.Seat < student.Seat).Count();
-            Seats.Insert(index, new RoomSeat(student.Token, student.Name, student.Seat) { IsConnected = student.IsConnected });
+            for (var column = 0; column < Columns; column++)
+            {
+                Seats.Add(new LabSeat(Seats.Count + 1));
+            }
         }
 
-        ConnectedCount = Seats.Count(seat => seat.IsConnected);
+        var seat = Seats[student.Seat - 1];
+        seat.Token = student.Token;
+        seat.Name = student.Name;
+        seat.Color = student.Color;
+        seat.Accessory = student.Accessory;
+        seat.Address = student.Address;
+        seat.IsConnected = student.IsConnected;
+        seat.IsOccupied = true;
+        ConnectedCount = Seats.Count(item => item.IsConnected);
     }
 }
 
@@ -117,6 +163,53 @@ public sealed partial class RoomJoinViewModel : ObservableObject
     public ObservableCollection<FoundRoom> Rooms { get; } = [];
 
     public ObservableCollection<string> Exercises { get; } = [];
+
+    public ObservableCollection<AvatarChoice> Colors { get; } =
+    [
+        new(PetColor.Gray, 0, "Gris") { IsSelected = true },
+        new(PetColor.Orange, 0, "Naranja"),
+        new(PetColor.White, 0, "Blanco"),
+    ];
+
+    public ObservableCollection<AvatarChoice> Accessories { get; } =
+    [
+        new(PetColor.Gray, 0, "Ninguno") { IsSelected = true },
+        new(PetColor.Gray, 1, "Moño"),
+        new(PetColor.Gray, 2, "Lentes"),
+        new(PetColor.Gray, 3, "Bufanda"),
+        new(PetColor.Gray, 4, "Gorro"),
+    ];
+
+    [ObservableProperty]
+    public partial PetColor Color { get; set; }
+
+    [ObservableProperty]
+    public partial int Accessory { get; set; }
+
+    [ObservableProperty]
+    public partial int Seat { get; set; }
+
+    [RelayCommand]
+    private void PickColor(AvatarChoice choice)
+    {
+        foreach (var item in Colors)
+        {
+            item.IsSelected = item == choice;
+        }
+
+        Color = choice.Color;
+    }
+
+    [RelayCommand]
+    private void PickAccessory(AvatarChoice choice)
+    {
+        foreach (var item in Accessories)
+        {
+            item.IsSelected = item == choice;
+        }
+
+        Accessory = choice.Accessory;
+    }
 
     public event Action? Joined;
 
@@ -184,7 +277,7 @@ public sealed partial class RoomJoinViewModel : ObservableObject
 
         IsConnecting = true;
         Leave();
-        var client = new ClassClient(room, name);
+        var client = new ClassClient(room, name, Color, Accessory);
         client.Welcomed += message => Dispatcher.UIThread.Post(() => Welcome(message));
         client.Reconnecting += () => Dispatcher.UIThread.Post(() => IsReconnecting = true);
         client.Ended += reason => Dispatcher.UIThread.Post(() => End(client, reason));
@@ -217,6 +310,7 @@ public sealed partial class RoomJoinViewModel : ObservableObject
     {
         IsReconnecting = false;
         ClassName = message.ClassName ?? string.Empty;
+        Seat = message.Seat ?? 0;
         SeatText = $"Estás en el puesto {message.Seat}";
         Exercises.Clear();
         foreach (var exercise in message.Exercises ?? [])

@@ -17,7 +17,7 @@ namespace NetWall.IDE.Services;
 
 public sealed record ClassMessage(string Type, string? Name = null, string? Token = null, int? Seat = null,
     string? ClassName = null, string? Description = null, List<ClassExercise>? Exercises = null, string? Reason = null,
-    string? Code = null, int? Students = null, string? App = null);
+    string? Code = null, int? Students = null, string? App = null, string? Color = null, int? Accessory = null);
 
 public static class ClassProtocol
 {

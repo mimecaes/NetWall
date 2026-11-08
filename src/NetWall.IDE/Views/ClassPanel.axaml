@@ -330,34 +330,130 @@
                 </Animation>
             </Style.Animations>
         </Style>
-        <Style Selector="Border.seat-chip">
-            <Setter Property="Padding" Value="11,6" />
-            <Setter Property="CornerRadius" Value="14" />
+        <Style Selector="Border.firewall-box">
+            <Setter Property="Padding" Value="18,12" />
+            <Setter Property="CornerRadius" Value="12" />
+            <Setter Property="Background" Value="{DynamicResource SurfaceBackgroundBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}" />
+            <Setter Property="BorderThickness" Value="1.5" />
+        </Style>
+        <Style Selector="Border.cable">
+            <Setter Property="Background" Value="{DynamicResource BorderBrush}" />
+            <Setter Property="Transitions">
+                <Transitions>
+                    <BrushTransition Property="Background" Duration="0:0:0.4" />
+                </Transitions>
+            </Setter>
+        </Style>
+        <Style Selector="Border.cable.on">
+            <Setter Property="Background" Value="{DynamicResource AccentBrush}" />
+        </Style>
+        <Style Selector="Border.lab-seat">
+            <Setter Property="Height" Value="96" />
+            <Setter Property="Margin" Value="5,0,5,10" />
+            <Setter Property="CornerRadius" Value="10" />
             <Setter Property="Background" Value="{DynamicResource PanelBackgroundBrush}" />
-            <Setter Property="BorderBrush" Value="{DynamicResource RunGreenBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
             <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="Opacity" Value="0.55" />
+            <Setter Property="RenderTransformOrigin" Value="50%,50%" />
+            <Setter Property="Transitions">
+                <Transitions>
+                    <DoubleTransition Property="Opacity" Duration="0:0:0.35" />
+                    <BrushTransition Property="BorderBrush" Duration="0:0:0.35" />
+                    <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.18" Easing="CubicEaseOut" />
+                </Transitions>
+            </Setter>
+        </Style>
+        <Style Selector="Border.lab-seat.on">
+            <Setter Property="Opacity" Value="1" />
+            <Setter Property="BorderBrush" Value="{DynamicResource RunGreenBrush}" />
+        </Style>
+        <Style Selector="Border.lab-seat.on:pointerover">
+            <Setter Property="RenderTransform" Value="scale(1.06)" />
+        </Style>
+        <Style Selector="Border.lab-seat.away">
+            <Setter Property="Opacity" Value="0.45" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+        </Style>
+        <Style Selector="Border.lab-seat controls|KittenAvatar.seat-kitten">
+            <Setter Property="Opacity" Value="0" />
+            <Setter Property="RenderTransformOrigin" Value="50%,100%" />
+            <Setter Property="RenderTransform" Value="scale(0.3)" />
             <Setter Property="Transitions">
                 <Transitions>
                     <DoubleTransition Property="Opacity" Duration="0:0:0.25" />
-                    <BrushTransition Property="BorderBrush" Duration="0:0:0.25" />
+                    <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.45" Easing="BackEaseOut" />
                 </Transitions>
             </Setter>
-            <Style.Animations>
-                <Animation Duration="0:0:0.35" Easing="BackEaseOut">
-                    <KeyFrame Cue="0%">
-                        <Setter Property="Opacity" Value="0" />
-                        <Setter Property="Margin" Value="0,10,0,0" />
-                    </KeyFrame>
-                    <KeyFrame Cue="100%">
-                        <Setter Property="Opacity" Value="1" />
-                        <Setter Property="Margin" Value="0" />
-                    </KeyFrame>
-                </Animation>
-            </Style.Animations>
         </Style>
-        <Style Selector="Border.seat-chip.offline">
-            <Setter Property="Opacity" Value="0.45" />
+        <Style Selector="Border.lab-seat.on controls|KittenAvatar.seat-kitten">
+            <Setter Property="Opacity" Value="1" />
+            <Setter Property="RenderTransform" Value="scale(1)" />
+        </Style>
+        <Style Selector="Border.monitor">
+            <Setter Property="CornerRadius" Value="4" />
+            <Setter Property="BorderThickness" Value="1.5" />
             <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+            <Setter Property="Background" Value="{DynamicResource BackgroundBrush}" />
+            <Setter Property="Transitions">
+                <Transitions>
+                    <BrushTransition Property="Background" Duration="0:0:0.5" />
+                    <BrushTransition Property="BorderBrush" Duration="0:0:0.5" />
+                </Transitions>
+            </Setter>
+        </Style>
+        <Style Selector="Border.lab-seat.on Border.monitor">
+            <Setter Property="Background" Value="{DynamicResource HoverBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}" />
+        </Style>
+        <Style Selector="StackPanel.screen-lines">
+            <Setter Property="Opacity" Value="0" />
+            <Setter Property="Transitions">
+                <Transitions>
+                    <DoubleTransition Property="Opacity" Duration="0:0:0.5" />
+                </Transitions>
+            </Setter>
+        </Style>
+        <Style Selector="StackPanel.screen-lines Border">
+            <Setter Property="Background" Value="{DynamicResource AccentBrush}" />
+            <Setter Property="CornerRadius" Value="1" />
+        </Style>
+        <Style Selector="Border.lab-seat.on StackPanel.screen-lines">
+            <Setter Property="Opacity" Value="0.8" />
+        </Style>
+        <Style Selector="Border.lab-seat.away StackPanel.screen-lines">
+            <Setter Property="Opacity" Value="0" />
+        </Style>
+        <Style Selector="Border.avatar-preview">
+            <Setter Property="CornerRadius" Value="46" />
+            <Setter Property="Background" Value="{DynamicResource SurfaceBackgroundBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}" />
+            <Setter Property="BorderThickness" Value="1.5" />
+        </Style>
+        <Style Selector="Button.avatar-choice">
+            <Setter Property="Padding" Value="5" />
+            <Setter Property="CornerRadius" Value="9" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="Background" Value="{DynamicResource PanelBackgroundBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+            <Setter Property="BorderThickness" Value="1.5" />
+            <Setter Property="RenderTransformOrigin" Value="50%,50%" />
+            <Setter Property="Transitions">
+                <Transitions>
+                    <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.15" Easing="CubicEaseOut" />
+                </Transitions>
+            </Setter>
+        </Style>
+        <Style Selector="Button.avatar-choice:pointerover">
+            <Setter Property="RenderTransform" Value="scale(1.08)" />
+        </Style>
+        <Style Selector="Button.avatar-choice:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource HoverBrush}" />
+        </Style>
+        <Style Selector="Button.avatar-choice.selected /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}" />
+            <Setter Property="Background" Value="{DynamicResource HoverBrush}" />
         </Style>
         <Style Selector="Button.room-card">
             <Setter Property="HorizontalAlignment" Value="Stretch" />
@@ -453,61 +549,145 @@
             </Button>
         </StackPanel>
 
-        <Grid Classes="class-view" Classes.shown="{Binding IsHosting}" Margin="40,30" RowDefinitions="Auto,Auto,*,Auto">
-            <StackPanel HorizontalAlignment="Center">
-                <TextBlock Text="{Binding Room.ClassName}" FontSize="15" HorizontalAlignment="Center"
-                           Foreground="{DynamicResource TextMutedBrush}" />
-                <TextBlock Text="Código de la sala" FontSize="12" HorizontalAlignment="Center" Margin="0,16,0,4"
-                           Foreground="{DynamicResource TextMutedBrush}" />
-                <Border Classes="room-code" HorizontalAlignment="Center">
-                    <TextBlock Text="{Binding Room.Code}" FontSize="52" FontWeight="Bold" LetterSpacing="6"
-                               FontFamily="Cascadia Code,Consolas,DejaVu Sans Mono,monospace"
-                               Foreground="{DynamicResource TextPrimaryBrush}" />
-                </Border>
-                <TextBlock Text="Los estudiantes ven la sala en Unirme a una clase o escriben este código" FontSize="12.5"
-                           HorizontalAlignment="Center" Margin="0,10,0,0" Foreground="{DynamicResource TextMutedBrush}" />
-            </StackPanel>
-            <StackPanel Grid.Row="1" Orientation="Horizontal" Spacing="8" HorizontalAlignment="Center" Margin="0,26,0,12">
-                <Ellipse Classes="live" Width="9" Height="9" Fill="{DynamicResource RunGreenBrush}" VerticalAlignment="Center" />
-                <TextBlock Text="{Binding Room.ConnectedText}" FontSize="13.5" FontWeight="SemiBold"
-                           Foreground="{DynamicResource TextPrimaryBrush}" />
-            </StackPanel>
-            <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto">
-                <ItemsControl ItemsSource="{Binding Room.Seats}" HorizontalAlignment="Center" MaxWidth="900">
-                    <ItemsControl.ItemsPanel>
-                        <ItemsPanelTemplate>
-                            <WrapPanel HorizontalAlignment="Center" ItemSpacing="8" LineSpacing="8" />
-                        </ItemsPanelTemplate>
-                    </ItemsControl.ItemsPanel>
-                    <ItemsControl.ItemTemplate>
-                        <DataTemplate x:DataType="vm:RoomSeat">
-                            <Border Classes="seat-chip" Classes.offline="{Binding !IsConnected}">
-                                <StackPanel Orientation="Horizontal" Spacing="7">
-                                    <TextBlock Text="{Binding Seat}" FontSize="11" VerticalAlignment="Center"
-                                               Foreground="{DynamicResource TextMutedBrush}" />
-                                    <TextBlock Text="{Binding Name}" FontSize="12.5" VerticalAlignment="Center"
-                                               Foreground="{DynamicResource TextPrimaryBrush}" />
-                                </StackPanel>
+        <DockPanel Classes="class-view" Classes.shown="{Binding IsHosting}" Margin="30,18,30,16">
+            <Grid DockPanel.Dock="Bottom" Margin="0,10,0,0">
+                <Button Classes="class-secondary" HorizontalAlignment="Center" Click="OnCloseRoomClick">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <controls:AnimatedIcon Classes="icon-sm" Kind="DoorClosed" />
+                        <TextBlock Text="Cerrar sala" />
+                    </StackPanel>
+                </Button>
+            </Grid>
+            <Viewbox Stretch="Uniform" StretchDirection="DownOnly" VerticalAlignment="Top">
+                <StackPanel Width="780">
+                    <Border Classes="firewall-box" HorizontalAlignment="Center">
+                        <Grid ColumnDefinitions="Auto,Auto,Auto" RowDefinitions="Auto,Auto">
+                            <controls:AnimatedIcon Grid.RowSpan="2" Classes="icon" Kind="BrickWall"
+                                                   Stroke="{DynamicResource AccentBrush}" Margin="0,0,14,0" VerticalAlignment="Center" />
+                            <TextBlock Grid.Column="1" Text="{Binding Room.ClassName}" FontSize="16" FontWeight="Bold"
+                                       Foreground="{DynamicResource TextPrimaryBrush}" />
+                            <StackPanel Grid.Column="1" Grid.Row="1" Orientation="Horizontal" Spacing="7" Margin="0,3,0,0">
+                                <Ellipse Classes="live" Width="8" Height="8" Fill="{DynamicResource RunGreenBrush}"
+                                         VerticalAlignment="Center" />
+                                <TextBlock Text="{Binding Room.ConnectedText}" FontSize="12"
+                                           Foreground="{DynamicResource TextMutedBrush}" />
+                            </StackPanel>
+                            <Border Grid.Column="2" Grid.RowSpan="2" Classes="room-code" Margin="22,0,0,0" Padding="16,6"
+                                    VerticalAlignment="Center" ToolTip.Tip="Código de la sala">
+                                <TextBlock Text="{Binding Room.Code}" FontSize="24" FontWeight="Bold" LetterSpacing="4"
+                                           FontFamily="Cascadia Code,Consolas,DejaVu Sans Mono,monospace"
+                                           Foreground="{DynamicResource TextPrimaryBrush}" />
                             </Border>
-                        </DataTemplate>
-                    </ItemsControl.ItemTemplate>
-                </ItemsControl>
-            </ScrollViewer>
-            <Button Grid.Row="3" Classes="class-secondary" HorizontalAlignment="Center" Margin="0,12,0,0"
-                    Click="OnCloseRoomClick">
-                <StackPanel Orientation="Horizontal" Spacing="8">
-                    <controls:AnimatedIcon Classes="icon-sm" Kind="DoorClosed" />
-                    <TextBlock Text="Cerrar sala" />
+                        </Grid>
+                    </Border>
+                    <Border Width="2" Height="16" HorizontalAlignment="Center" Background="{DynamicResource AccentBrush}"
+                            Opacity="0.5" />
+                    <Border Height="2" Margin="62,0" Background="{DynamicResource AccentBrush}" Opacity="0.35" />
+                    <ItemsControl ItemsSource="{Binding Room.Seats}">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <UniformGrid Columns="6" />
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate x:DataType="vm:LabSeat">
+                                <StackPanel>
+                                    <Border Classes="cable" Classes.on="{Binding IsConnected}" Width="2" Height="10"
+                                            HorizontalAlignment="Center" />
+                                    <Border Classes="lab-seat" Classes.on="{Binding IsOccupied}" Classes.away="{Binding IsAway}">
+                                        <ToolTip.Tip>
+                                            <StackPanel Spacing="3" MinWidth="150">
+                                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                                    <controls:KittenAvatar Width="34" Height="34" Color="{Binding Color}"
+                                                                           Accessory="{Binding Accessory}" />
+                                                    <StackPanel VerticalAlignment="Center">
+                                                        <TextBlock Text="{Binding Label}" FontWeight="SemiBold" />
+                                                        <TextBlock Text="{Binding Number, StringFormat='Puesto {0}'}" FontSize="11.5" />
+                                                    </StackPanel>
+                                                </StackPanel>
+                                                <TextBlock Text="{Binding Address}" FontSize="11.5"
+                                                           FontFamily="Cascadia Code,Consolas,DejaVu Sans Mono,monospace" />
+                                                <TextBlock Text="{Binding StatusText}" FontSize="11.5" />
+                                            </StackPanel>
+                                        </ToolTip.Tip>
+                                        <Grid RowDefinitions="*,Auto,Auto">
+                                            <Grid ColumnDefinitions="*,Auto" Margin="8,6,8,0">
+                                                <controls:KittenAvatar Classes="seat-kitten" Width="38" Height="38"
+                                                                       Color="{Binding Color}" Accessory="{Binding Accessory}"
+                                                                       HorizontalAlignment="Left" VerticalAlignment="Bottom" />
+                                                <Border Grid.Column="1" Classes="monitor" Width="42" Height="28"
+                                                        VerticalAlignment="Center">
+                                                    <StackPanel Classes="screen-lines" Margin="6,6,0,0" Spacing="3">
+                                                        <Border Width="22" Height="2" HorizontalAlignment="Left" />
+                                                        <Border Width="15" Height="2" HorizontalAlignment="Left" />
+                                                        <Border Width="19" Height="2" HorizontalAlignment="Left" />
+                                                    </StackPanel>
+                                                </Border>
+                                            </Grid>
+                                            <TextBlock Grid.Row="1" Text="{Binding Label}" FontSize="11.5" HorizontalAlignment="Center"
+                                                       TextTrimming="CharacterEllipsis" Margin="6,2,6,0"
+                                                       Foreground="{DynamicResource TextPrimaryBrush}" />
+                                            <TextBlock Grid.Row="2" Text="{Binding Address}" FontSize="9.5" HorizontalAlignment="Center"
+                                                       Margin="0,0,0,5" FontFamily="Cascadia Code,Consolas,DejaVu Sans Mono,monospace"
+                                                       Foreground="{DynamicResource TextMutedBrush}" />
+                                        </Grid>
+                                    </Border>
+                                </StackPanel>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
                 </StackPanel>
-            </Button>
-        </Grid>
+            </Viewbox>
+        </DockPanel>
 
         <StackPanel Classes="class-view" Classes.shown="{Binding IsJoining}" HorizontalAlignment="Center"
                     VerticalAlignment="Center" Width="440">
             <TextBlock Text="Unirme a una clase" FontSize="28" FontWeight="Bold" HorizontalAlignment="Center"
                        Foreground="{DynamicResource TextPrimaryBrush}" />
-            <TextBlock Classes="label" Text="Tu nombre" Margin="0,22,0,6" />
-            <TextBox Classes="field" Text="{Binding Join.Name}" MaxLength="24" Watermark="Como te verá el profesor" />
+            <Grid ColumnDefinitions="Auto,*" Margin="0,22,0,0">
+                <Border Classes="avatar-preview" Width="92" Height="92" Margin="0,0,16,0">
+                    <controls:KittenAvatar Width="76" Height="76" Color="{Binding Join.Color}" Accessory="{Binding Join.Accessory}" />
+                </Border>
+                <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                    <TextBlock Classes="label" Text="Tu nombre" Margin="0,0,0,6" />
+                    <TextBox Classes="field" Text="{Binding Join.Name}" MaxLength="24" Watermark="Como te verá el profesor" />
+                </StackPanel>
+            </Grid>
+            <TextBlock Classes="label" Text="Tu gatito" />
+            <ItemsControl ItemsSource="{Binding Join.Colors}">
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <StackPanel Orientation="Horizontal" Spacing="6" />
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate x:DataType="vm:AvatarChoice">
+                        <Button Classes="avatar-choice" Classes.selected="{Binding IsSelected}" ToolTip.Tip="{Binding Label}"
+                                Command="{Binding $parent[ItemsControl].((vm:ClassViewModel)DataContext).Join.PickColorCommand, FallbackValue={x:Null}}"
+                                CommandParameter="{Binding}">
+                            <controls:KittenAvatar Width="34" Height="34" Color="{Binding Color}" />
+                        </Button>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+            <ItemsControl ItemsSource="{Binding Join.Accessories}" Margin="0,6,0,0">
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <StackPanel Orientation="Horizontal" Spacing="6" />
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate x:DataType="vm:AvatarChoice">
+                        <Button Classes="avatar-choice" Classes.selected="{Binding IsSelected}" ToolTip.Tip="{Binding Label}"
+                                Command="{Binding $parent[ItemsControl].((vm:ClassViewModel)DataContext).Join.PickAccessoryCommand, FallbackValue={x:Null}}"
+                                CommandParameter="{Binding}">
+                            <controls:KittenAvatar Width="34" Height="34"
+                                                   Color="{Binding $parent[ItemsControl].((vm:ClassViewModel)DataContext).Join.Color, FallbackValue=Gray}"
+                                                   Accessory="{Binding Accessory}" />
+                        </Button>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
             <TextBlock Classes="label" Text="Salas en esta red" />
             <Border Classes="searching" IsVisible="{Binding !Join.HasRooms}" Padding="12,10" CornerRadius="8"
                     Background="{DynamicResource SurfaceBackgroundBrush}">
@@ -557,6 +737,9 @@
 
         <StackPanel Classes="class-view" Classes.shown="{Binding IsStudent}" HorizontalAlignment="Center"
                     VerticalAlignment="Center" Width="480">
+            <Border Classes="avatar-preview" Width="96" Height="96" HorizontalAlignment="Center" Margin="0,0,0,14">
+                <controls:KittenAvatar Width="80" Height="80" Color="{Binding Join.Color}" Accessory="{Binding Join.Accessory}" />
+            </Border>
             <TextBlock Text="{Binding Join.ClassName}" FontSize="30" FontWeight="Bold" HorizontalAlignment="Center"
                        TextAlignment="Center" TextWrapping="Wrap" Foreground="{DynamicResource TextPrimaryBrush}" />
             <TextBlock Text="{Binding Join.SeatText}" FontSize="13.5" HorizontalAlignment="Center" Margin="0,8,0,0"

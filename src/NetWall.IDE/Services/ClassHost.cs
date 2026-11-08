@@ -17,6 +17,12 @@ public sealed class RoomStudent(string token, string name, int seat)
 
     public string Name { get; set; } = name;
 
+    public PetColor Color { get; set; }
+
+    public int Accessory { get; set; }
+
+    public string Address { get; set; } = string.Empty;
+
     public int Seat { get; } = seat;
 
     public bool IsConnected { get; set; }
@@ -29,6 +35,8 @@ public sealed class RoomStudent(string token, string name, int seat)
 public sealed class ClassHost
 {
     public const int MaxStudents = 60;
+
+    private const int KittenAvatarAccessories = 5;
 
     private static readonly TimeSpan JoinTimeout = TimeSpan.FromSeconds(10);
     private static readonly TimeSpan AnnounceInterval = TimeSpan.FromSeconds(1.5);
@@ -155,6 +163,9 @@ public sealed class ClassHost
                     return;
                 }
 
+                student.Color = Enum.TryParse<PetColor>(join.Color, out var color) ? color : PetColor.Gray;
+                student.Accessory = join.Accessory is >= 0 and < KittenAvatarAccessories ? join.Accessory.Value : 0;
+                student.Address = (connection.Client.RemoteEndPoint as IPEndPoint)?.Address.MapToIPv4().ToString() ?? string.Empty;
                 student.Connection?.Dispose();
                 student.Connection = connection;
                 student.Writer = writer;
