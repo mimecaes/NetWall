@@ -368,23 +368,6 @@
         <Setter Property="IsHitTestVisible" Value="True" />
     </Style>
 
-    <Style Selector="Button.welcome-secondary">
-        <Setter Property="Background" Value="{DynamicResource BackgroundBrush}" />
-        <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
-        <Setter Property="BorderThickness" Value="1" />
-        <Setter Property="CornerRadius" Value="6" />
-        <Setter Property="Padding" Value="14,10" />
-        <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
-    </Style>
-    <Style Selector="Button.welcome-secondary:pointerover /template/ ContentPresenter#PART_ContentPresenter">
-        <Setter Property="Background" Value="{DynamicResource HoverBrush}" />
-        <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}" />
-        <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
-    </Style>
-    <Style Selector="Button.welcome-secondary:pointerover controls|AnimatedIcon">
-        <Setter Property="Stroke" Value="{DynamicResource AccentBrush}" />
-    </Style>
-
     <!-- A run of the active file: a thin bar on the left that turns green or red with the result. -->
     <Style Selector="Border.run-block">
         <Setter Property="BorderThickness" Value="2,0,0,0" />

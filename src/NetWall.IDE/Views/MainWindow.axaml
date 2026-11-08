@@ -569,24 +569,6 @@
                                             <TextBlock Text="Abrir carpeta" FontWeight="SemiBold" Foreground="White" />
                                         </StackPanel>
                                     </Button>
-                                    <Button Classes="welcome-secondary" Click="OnChallengeModeClick">
-                                        <StackPanel Orientation="Horizontal" Spacing="8">
-                                            <controls:AnimatedIcon Classes="icon-sm" Kind="GraduationCap" />
-                                            <TextBlock Text="Modo retos" />
-                                        </StackPanel>
-                                    </Button>
-                                    <Button Classes="welcome-secondary" Click="OnSimulationModeClick">
-                                        <StackPanel Orientation="Horizontal" Spacing="8">
-                                            <controls:AnimatedIcon Classes="icon-sm" Kind="BrickWall" />
-                                            <TextBlock Text="Simulación" />
-                                        </StackPanel>
-                                    </Button>
-                                    <Button Classes="welcome-secondary" Click="OnClassModeClick">
-                                        <StackPanel Orientation="Horizontal" Spacing="8">
-                                            <controls:AnimatedIcon Classes="icon-sm" Kind="Presentation" />
-                                            <TextBlock Text="Modo clase" />
-                                        </StackPanel>
-                                    </Button>
                                 </StackPanel>
                                 <TextBlock Text="o presiona Ctrl+O" Foreground="{DynamicResource TextDisabledBrush}"
                                            FontSize="11" HorizontalAlignment="Center" Margin="0,10,0,34" Classes="welcome-hint" />
