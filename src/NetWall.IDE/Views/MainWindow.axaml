@@ -380,47 +380,48 @@
                             </TreeView.Styles>
                             <TreeView.DataTemplates>
                                 <TreeDataTemplate DataType="models:FileTreeNode" ItemsSource="{Binding Children}">
-                                    <StackPanel Orientation="Horizontal" Spacing="6">
-                                        <ItemsControl ItemsSource="{Binding Level, Converter={x:Static conv:LevelToRangeConverter.Instance}}" Focusable="False">
-                                            <ItemsControl.ItemsPanel>
-                                                <ItemsPanelTemplate>
-                                                    <StackPanel Orientation="Horizontal" />
-                                                </ItemsPanelTemplate>
-                                            </ItemsControl.ItemsPanel>
-                                            <ItemsControl.ItemTemplate>
-                                                <DataTemplate>
-                                                    <Rectangle Width="1" Height="18" Margin="7,0" Fill="{DynamicResource BorderBrush}" />
-                                                </DataTemplate>
-                                            </ItemsControl.ItemTemplate>
-                                        </ItemsControl>
+                                    <Border Classes="tree-row">
+                                        <StackPanel Orientation="Horizontal" Spacing="6">
+                                            <ItemsControl ItemsSource="{Binding Level, Converter={x:Static conv:LevelToRangeConverter.Instance}}" Focusable="False">
+                                                <ItemsControl.ItemsPanel>
+                                                    <ItemsPanelTemplate>
+                                                        <StackPanel Orientation="Horizontal" />
+                                                    </ItemsPanelTemplate>
+                                                </ItemsControl.ItemsPanel>
+                                                <ItemsControl.ItemTemplate>
+                                                    <DataTemplate>
+                                                        <Rectangle Width="1" Height="18" Margin="7,0" Fill="{DynamicResource BorderBrush}" />
+                                                    </DataTemplate>
+                                                </ItemsControl.ItemTemplate>
+                                            </ItemsControl>
 
-                                        <controls:AnimatedIcon Classes="icon-sm tree-icon">
-                                            <controls:AnimatedIcon.Kind>
-                                                <MultiBinding Converter="{x:Static conv:NodeIconConverter.Instance}">
-                                                    <Binding Path="IsFolder" />
-                                                    <Binding Path="IsExpanded" />
-                                                    <Binding Path="Name" />
-                                                </MultiBinding>
-                                            </controls:AnimatedIcon.Kind>
-                                        </controls:AnimatedIcon>
+                                            <controls:AnimatedIcon Classes="icon-sm tree-icon">
+                                                <controls:AnimatedIcon.Kind>
+                                                    <MultiBinding Converter="{x:Static conv:NodeIconConverter.Instance}">
+                                                        <Binding Path="IsFolder" />
+                                                        <Binding Path="IsExpanded" />
+                                                        <Binding Path="Name" />
+                                                    </MultiBinding>
+                                                </controls:AnimatedIcon.Kind>
+                                            </controls:AnimatedIcon>
 
-                                        <Grid ColumnDefinitions="Auto,Auto,Auto" VerticalAlignment="Center">
-                                            <TextBlock Grid.Column="0" Text="{Binding Name}" IsVisible="{Binding !IsEditing}"
-                                                       Classes="tree-name"
-                                                       Foreground="{DynamicResource TextPrimaryBrush}" FontSize="13" VerticalAlignment="Center" />
-                                            <TextBox Grid.Column="0" Text="{Binding EditingName, Mode=TwoWay}" IsVisible="{Binding IsEditing}"
-                                                     FontSize="13" Padding="4,1" MinWidth="90"
-                                                     KeyDown="OnRenameTextBoxKeyDown" LostFocus="OnRenameTextBoxLostFocus" />
-                                            <Ellipse Grid.Column="1" Width="6" Height="6" Margin="6,0,0,0"
-                                                     Fill="{DynamicResource TextPrimaryBrush}" VerticalAlignment="Center"
-                                                     IsVisible="{Binding IsDirty}" />
-                                            <controls:AnimatedIcon Grid.Column="2" Classes="icon-sm" Kind="Star" Margin="6,0,0,0"
-                                                                   Stroke="{DynamicResource AccentBrush}" VerticalAlignment="Center"
-                                                                   IsVisible="{Binding IsMain}"
-                                                                   ToolTip.Tip="Archivo principal" />
-                                        </Grid>
-
-                                        <StackPanel.ContextMenu>
+                                            <Grid ColumnDefinitions="Auto,Auto,Auto" VerticalAlignment="Center">
+                                                <TextBlock Grid.Column="0" Text="{Binding Name}" IsVisible="{Binding !IsEditing}"
+                                                           Classes="tree-name" FontSize="13" VerticalAlignment="Center" />
+                                                <TextBox Grid.Column="0" Text="{Binding EditingName, Mode=TwoWay}" IsVisible="{Binding IsEditing}"
+                                                         Classes="tree-rename"
+                                                         KeyDown="OnRenameTextBoxKeyDown" LostFocus="OnRenameTextBoxLostFocus"
+                                                         PropertyChanged="OnRenameTextBoxPropertyChanged" />
+                                                <Ellipse Grid.Column="1" Width="6" Height="6" Margin="6,0,0,0"
+                                                         Fill="{DynamicResource TextPrimaryBrush}" VerticalAlignment="Center"
+                                                         IsVisible="{Binding IsDirty}" />
+                                                <controls:AnimatedIcon Grid.Column="2" Classes="icon-sm" Kind="Star" Margin="6,0,0,0"
+                                                                       Stroke="{DynamicResource AccentBrush}" VerticalAlignment="Center"
+                                                                       IsVisible="{Binding IsMain}"
+                                                                       ToolTip.Tip="Archivo principal" />
+                                            </Grid>
+                                        </StackPanel>
+                                        <Border.ContextMenu>
                                             <ContextMenu>
                                                 <MenuItem Header="New File" IsVisible="{Binding IsFolder}"
                                                           Command="{Binding #Root.DataContext.NewFileInFolderCommand}"
@@ -436,8 +437,8 @@
                                                           Command="{Binding #Root.DataContext.DeleteNodeCommand}"
                                                           CommandParameter="{Binding}" />
                                             </ContextMenu>
-                                        </StackPanel.ContextMenu>
-                                    </StackPanel>
+                                        </Border.ContextMenu>
+                                    </Border>
                                 </TreeDataTemplate>
                             </TreeView.DataTemplates>
                         </TreeView>

@@ -707,10 +707,60 @@
     <Style Selector="TreeViewItem:selected:focus /template/ Border#PART_LayoutRoot">
         <Setter Property="Background" Value="Transparent" />
     </Style>
-    <Style Selector="TreeViewItem:selected TextBlock.tree-name">
+    <Style Selector="TreeViewItem">
+        <Setter Property="Background" Value="Transparent" />
+    </Style>
+    <Style Selector="TreeViewItem /template/ ContentPresenter#PART_HeaderPresenter">
+        <Setter Property="HorizontalAlignment" Value="Stretch" />
+        <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+    </Style>
+    <Style Selector="TextBlock.tree-name">
+        <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
+    </Style>
+    <Style Selector="Border.tree-row">
+        <Setter Property="Background" Value="{DynamicResource SurfaceBackgroundBrush}" />
+        <Setter Property="BorderBrush" Value="Transparent" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="CornerRadius" Value="6" />
+        <Setter Property="Padding" Value="6,3" />
+        <Setter Property="Margin" Value="0,1,6,1" />
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="Transitions">
+            <Transitions>
+                <BrushTransition Property="Background" Duration="0:0:0.15" />
+                <BrushTransition Property="BorderBrush" Duration="0:0:0.15" />
+            </Transitions>
+        </Setter>
+    </Style>
+    <Style Selector="Border.tree-row:pointerover">
+        <Setter Property="Background" Value="{DynamicResource HoverBrush}" />
+    </Style>
+    <Style Selector="TextBox.tree-rename">
+        <Setter Property="FontSize" Value="13" />
+        <Setter Property="Padding" Value="5,1" />
+        <Setter Property="MinHeight" Value="0" />
+        <Setter Property="MinWidth" Value="110" />
+        <Setter Property="CornerRadius" Value="5" />
+        <Setter Property="Background" Value="{DynamicResource SurfaceBackgroundBrush}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}" />
+        <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
+        <Setter Property="SelectionBrush" Value="{DynamicResource AccentBrush}" />
+        <Setter Property="SelectionForegroundBrush" Value="White" />
+        <Setter Property="CaretBrush" Value="{DynamicResource TextPrimaryBrush}" />
+    </Style>
+    <Style Selector="TextBox.tree-rename:focus /template/ Border#PART_BorderElement, TextBox.tree-rename:pointerover /template/ Border#PART_BorderElement">
+        <Setter Property="Background" Value="{DynamicResource SurfaceBackgroundBrush}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}" />
+        <Setter Property="BorderThickness" Value="1" />
+    </Style>
+    <Style Selector="TreeViewItem:selected > Border.tree-row">
+        <Setter Property="Background" Value="{DynamicResource HoverBrush}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}" />
+    </Style>
+    <Style Selector="TreeViewItem:selected > Border.tree-row TextBlock.tree-name">
         <Setter Property="Foreground" Value="{DynamicResource AccentBrush}" />
     </Style>
-    <Style Selector="TreeViewItem:selected controls|AnimatedIcon.tree-icon">
+    <Style Selector="TreeViewItem:selected > Border.tree-row controls|AnimatedIcon.tree-icon">
         <Setter Property="Stroke" Value="{DynamicResource AccentBrush}" />
     </Style>
 

@@ -50,6 +50,7 @@ public partial class MainWindow : Window
         CodeEditor.TextArea.TextView.BackgroundRenderers.Add(_indentRainbowRenderer);
         CodeEditor.TextArea.TextView.LineTransformers.Add(_syntaxColorizer);
         CodeEditor.TextArea.AddHandler(KeyDownEvent, OnEditorKeyDown, RoutingStrategies.Tunnel);
+        AddHandler(PointerPressedEvent, OnWindowPointerPressed, RoutingStrategies.Tunnel, true);
         TerminalScrollViewer.AddHandler(AnsiTextBlock.LinkClickedEvent, OnTerminalLinkClicked);
         ThemeManager.ThemeApplied += OnThemeApplied;
         Closed += (_, _) => ThemeManager.ThemeApplied -= OnThemeApplied;
@@ -499,7 +500,28 @@ public partial class MainWindow : Window
     {
         if (sender is TextBox { DataContext: FileTreeNode node })
         {
-            ViewModel?.CommitRenameCommand.Execute(node);
+            ViewModel?.CancelRenameCommand.Execute(node);
+        }
+    }
+
+    private void OnRenameTextBoxPropertyChanged(object? sender, AvaloniaPropertyChangedEventArgs e)
+    {
+        if (e.Property == IsVisibleProperty && e.NewValue is true && sender is TextBox box)
+        {
+            Dispatcher.UIThread.Post(() =>
+            {
+                box.Focus();
+                box.SelectAll();
+            }, DispatcherPriority.Input);
+        }
+    }
+
+    private void OnWindowPointerPressed(object? sender, PointerPressedEventArgs e)
+    {
+        if (FocusManager?.GetFocusedElement() is TextBox { DataContext: FileTreeNode { IsEditing: true } node } box
+            && !(e.Source is Visual source && (source == box || box.IsVisualAncestorOf(source))))
+        {
+            ViewModel?.CancelRenameCommand.Execute(node);
         }
     }
 
