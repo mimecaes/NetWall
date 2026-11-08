@@ -23,7 +23,6 @@ public enum ClassStage
 public sealed partial class ClassViewModel(Func<string?> cliPath) : ViewModelBase
 {
     private const int RevealDelay = 70;
-    private const int PredictDelay = 500;
     private const int CheckDelay = 140;
     private const int CurrentVersion = 1;
 
@@ -229,11 +228,6 @@ public sealed partial class ClassViewModel(Func<string?> cliPath) : ViewModelBas
     private void AddExercise(string? type)
     {
         var exercise = new ExerciseEditor(NewId(), type == "free" ? null : type, OnExerciseAction);
-        if (exercise.IsPredict)
-        {
-            exercise.AddTestCommand.Execute("packet");
-        }
-
         Insert(Exercises.Count, exercise);
         Select(exercise);
         MarkDirty();
@@ -256,10 +250,6 @@ public sealed partial class ClassViewModel(Func<string?> cliPath) : ViewModelBas
         exercise.Changed += OnExerciseChanged;
         Exercises.Insert(index, exercise);
         Renumber();
-        if (exercise.IsPredict)
-        {
-            _ = PredictAsync(exercise);
-        }
     }
 
     private void OnExerciseAction(ExerciseEditor exercise, string action)
@@ -315,14 +305,10 @@ public sealed partial class ClassViewModel(Func<string?> cliPath) : ViewModelBas
         OnPropertyChanged(nameof(ExerciseCountText));
     }
 
-    private void OnExerciseChanged(ExerciseEditor exercise, bool predictInput)
+    private void OnExerciseChanged(ExerciseEditor exercise)
     {
         exercise.ClearChecks();
         MarkDirty();
-        if (predictInput)
-        {
-            _ = PredictAsync(exercise);
-        }
     }
 
     private async Task TestSolutionAsync(ExerciseEditor exercise)
@@ -417,69 +403,6 @@ public sealed partial class ClassViewModel(Func<string?> cliPath) : ViewModelBas
         catch (Exception e) when (e is IOException or UnauthorizedAccessException)
         {
             return null;
-        }
-    }
-
-    private async Task PredictAsync(ExerciseEditor exercise)
-    {
-        var version = ++exercise.PredictVersion;
-        exercise.PredictText = "NetWall está calculando la respuesta…";
-        await Task.Delay(PredictDelay);
-        if (version != exercise.PredictVersion)
-        {
-            return;
-        }
-
-        if (exercise.Tests.FirstOrDefault() is not { } test || !Ipv4.IsHost(test.Source.Trim())
-            || !Ipv4.IsHost(test.Destination.Trim()) || test.Port is not (>= 0 and <= 65535))
-        {
-            exercise.PredictText = "Completa el paquete para calcular la respuesta.";
-            return;
-        }
-
-        if (exercise.Starter.Trim().Length == 0)
-        {
-            exercise.PredictText = "Escribe el firewall para calcular la respuesta.";
-            return;
-        }
-
-        if (cliPath() is not { } cli)
-        {
-            exercise.PredictText = "No se encontró el compilador de NetWall.";
-            return;
-        }
-
-        if (await WritePreviewAsync(exercise.Id, exercise.Starter) is not { } file)
-        {
-            exercise.PredictText = "No se pudo preparar el firewall para calcular la respuesta.";
-            return;
-        }
-
-        var result = await SimulationRunner.RunChallengeAsync(cli, file, [test.ToModel()]);
-        if (version != exercise.PredictVersion)
-        {
-            return;
-        }
-
-        if (result is null)
-        {
-            exercise.PredictText = "No se pudo ejecutar NetWall. Revisa que Python esté instalado.";
-        }
-        else if (result.Errors || result.Packets is not [var packet])
-        {
-            var error = result.Diagnostics.FirstOrDefault();
-            exercise.PredictText = error is null
-                ? "El firewall tiene un error."
-                : $"El firewall tiene un error en la línea {error.Line}: {error.Message}.";
-        }
-        else
-        {
-            var loading = _loading;
-            _loading = true;
-            test.Expect = packet.Action;
-            _loading = loading;
-            var reason = packet.Rule is { } rule ? $"la regla {rule}" : "la política por defecto";
-            exercise.PredictText = $"Respuesta correcta: {(packet.IsAllowed ? "pasa" : "se bloquea")}, por {reason}.";
         }
     }
 

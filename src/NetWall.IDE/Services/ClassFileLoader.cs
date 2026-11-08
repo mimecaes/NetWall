@@ -130,7 +130,7 @@ public static partial class ClassFileLoader
             throw new ClassFileException($"{name}: necesita título y enunciado.");
         }
 
-        if (exercise.Type is not (null or "predict"))
+        if (exercise.Type is not null)
         {
             throw new ClassFileException($"{name}: el tipo {exercise.Type} no existe.");
         }
@@ -148,11 +148,6 @@ public static partial class ClassFileLoader
         foreach (var test in exercise.Tests)
         {
             ValidateTest(test, name);
-        }
-
-        if (exercise.Type == "predict" && exercise.Tests is not [{ Kind: "packet" }])
-        {
-            throw new ClassFileException($"{name}: un ejercicio de ¿Pasa o se bloquea? necesita exactamente un paquete.");
         }
     }
 

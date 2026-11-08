@@ -21,9 +21,6 @@ public sealed partial class TestEditor : ObservableObject
 {
     private const string AnyType = "Cualquiera";
 
-    private static readonly HashSet<string> PacketFields =
-        [nameof(Protocol), nameof(Port), nameof(Source), nameof(Destination)];
-
     private readonly Action<TestEditor> _remove;
 
     public TestEditor(string kind, Action<TestEditor> remove)
@@ -44,7 +41,7 @@ public sealed partial class TestEditor : ObservableObject
 
     public bool IsVariable => Kind == "variable";
 
-    public bool HasExpect => (IsPacket && !IsComputed) || IsPolicy;
+    public bool HasExpect => IsPacket || IsPolicy;
 
     public string KindText => Kind switch
     {
@@ -61,10 +58,6 @@ public sealed partial class TestEditor : ObservableObject
         "variable" => LucideIconKind.Variable,
         _ => LucideIconKind.Sparkles,
     };
-
-    [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(HasExpect))]
-    public partial bool IsComputed { get; set; }
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(IsPassed), nameof(IsFailed))]
@@ -138,7 +131,7 @@ public sealed partial class TestEditor : ObservableObject
         _ => "El código no tiene advertencias",
     };
 
-    public event Action<TestEditor, bool>? Changed;
+    public event Action<TestEditor>? Changed;
 
     [RelayCommand]
     private void Remove() => _remove(this);
@@ -147,12 +140,12 @@ public sealed partial class TestEditor : ObservableObject
     {
         base.OnPropertyChanged(e);
         if (e.PropertyName is nameof(AutoLabel) or nameof(ExpectsAllow) or nameof(ExpectsBlock) or nameof(HasExpect)
-            or nameof(IsComputed) or nameof(Check) or nameof(IsPassed) or nameof(IsFailed))
+            or nameof(Check) or nameof(IsPassed) or nameof(IsFailed))
         {
             return;
         }
 
-        Changed?.Invoke(this, IsPacket && PacketFields.Contains(e.PropertyName ?? string.Empty));
+        Changed?.Invoke(this);
     }
 
     public ChallengeTest ToModel() => new(
@@ -198,7 +191,7 @@ public sealed partial class ExerciseEditor : ObservableObject
         Tests.CollectionChanged += (_, _) =>
         {
             OnPropertyChanged(nameof(TestsText));
-            Changed?.Invoke(this, IsPredict);
+            Changed?.Invoke(this);
         };
     }
 
@@ -208,35 +201,24 @@ public sealed partial class ExerciseEditor : ObservableObject
 
     public ObservableCollection<TestEditor> Tests { get; } = [];
 
-    public bool IsPredict => Type == "predict";
-
-    public bool CanAddTests => !IsPredict;
-
-    public bool CanTestSolution => !IsPredict;
-
     public string TypeText => Type switch
     {
-        "predict" => "¿Pasa o se bloquea?",
         _ => "Reto libre",
     };
 
     public LucideIconKind Icon => Type switch
     {
-        "predict" => LucideIconKind.Vote,
         _ => LucideIconKind.Pencil,
     };
 
     public string StarterText => Type switch
     {
-        "predict" => "Firewall que leerán los estudiantes",
         _ => "Código inicial (opcional)",
     };
 
     public string TestsText => Tests.Count == 1 ? "1 prueba" : $"{Tests.Count} pruebas";
 
     public string DisplayTitle => Title.Trim().Length > 0 ? Title.Trim() : "Sin título";
-
-    public int PredictVersion { get; set; }
 
     public int SolutionVersion { get; set; }
 
@@ -277,10 +259,7 @@ public sealed partial class ExerciseEditor : ObservableObject
     [ObservableProperty]
     public partial bool IsDragging { get; set; }
 
-    [ObservableProperty]
-    public partial string PredictText { get; set; } = string.Empty;
-
-    public event Action<ExerciseEditor, bool>? Changed;
+    public event Action<ExerciseEditor>? Changed;
 
     [RelayCommand]
     private void AddTest(string kind) => Tests.Add(Watch(new TestEditor(kind, RemoveTest)));
@@ -318,8 +297,7 @@ public sealed partial class ExerciseEditor : ObservableObject
 
     private TestEditor Watch(TestEditor test)
     {
-        test.IsComputed = IsPredict;
-        test.Changed += (_, packetChanged) => Changed?.Invoke(this, IsPredict && packetChanged);
+        test.Changed += _ => Changed?.Invoke(this);
         return test;
     }
 
@@ -328,13 +306,13 @@ public sealed partial class ExerciseEditor : ObservableObject
         base.OnPropertyChanged(e);
         if (e.PropertyName is nameof(Title) or nameof(Statement) or nameof(Starter) or nameof(Solution))
         {
-            Changed?.Invoke(this, IsPredict && e.PropertyName == nameof(Starter));
+            Changed?.Invoke(this);
         }
     }
 
     public ClassExercise ToModel() => new(Id, Title.Trim(), Statement.Trim(),
         Starter.Trim().Length > 0 ? Starter : null, Type, [.. Tests.Select(test => test.ToModel())],
-        !IsPredict && Solution.Trim().Length > 0 ? Solution : null);
+        Solution.Trim().Length > 0 ? Solution : null);
 
     public static ExerciseEditor FromModel(ClassExercise exercise, string id, Action<ExerciseEditor, string> action)
     {

@@ -3,13 +3,10 @@ using System.IO;
 using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Controls;
-using Avalonia.Controls.Primitives;
-using Avalonia.LogicalTree;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Platform.Storage;
 using Lucide.Avalonia;
-using NetWall.IDE.Models;
 using NetWall.IDE.Services;
 using NetWall.IDE.ViewModels;
 
@@ -82,21 +79,6 @@ public partial class ClassPanel : UserControl
     }
 
     private void OnCloseRoomClick(object? sender, RoutedEventArgs e) => ViewModel?.CloseRoom();
-
-    private void OnVoteChosen(object? sender, RoutedEventArgs e)
-    {
-        if (sender is not Control { DataContext: ClassExercise exercise } control)
-        {
-            return;
-        }
-
-        if (control.FindLogicalAncestorOfType<Popup>() is { } popup)
-        {
-            popup.IsOpen = false;
-        }
-
-        ViewModel?.Room.StartVoteCommand.Execute(exercise);
-    }
 
     private void OnJoinClassClick(object? sender, RoutedEventArgs e) => ViewModel?.StartJoining();
 

@@ -31,10 +31,6 @@ public sealed class RoomStudent(string token, string name, int seat)
 
     public bool HasLeft { get; set; }
 
-    public int Score { get; set; }
-
-    public int VotePoints { get; set; }
-
     public SemaphoreSlim WriteLock { get; } = new(1, 1);
 
     public int Seat { get; } = seat;
@@ -44,25 +40,6 @@ public sealed class RoomStudent(string token, string name, int seat)
     public StreamWriter? Writer { get; set; }
 
     public TcpClient? Connection { get; set; }
-}
-
-public sealed record VoteSummary(string Correct, int Allow, int Block, string? Rule, List<RoomStudent> Podium);
-
-public sealed class VoteState(ClassExercise exercise, string correct, int seconds, Task<string?> rule)
-{
-    public ClassExercise Exercise { get; } = exercise;
-
-    public string Correct { get; } = correct;
-
-    public int Seconds { get; } = seconds;
-
-    public Task<string?> Rule { get; } = rule;
-
-    public DateTime Started { get; } = DateTime.UtcNow;
-
-    public Dictionary<string, (string Choice, double Elapsed)> Answers { get; } = [];
-
-    public bool IsOpen { get; set; } = true;
 }
 
 public sealed partial class ClassHost
@@ -76,9 +53,7 @@ public sealed partial class ClassHost
     private static readonly TimeSpan AnnounceInterval = TimeSpan.FromSeconds(1.5);
 
     private readonly ClassFile _file;
-    private readonly ClassFile _answers;
     private readonly Func<string?> _cliPath;
-    private VoteState? _vote;
     private readonly SemaphoreSlim _reviews = new(2, 2);
     private readonly Dictionary<string, RoomStudent> _students = [];
     private readonly CancellationTokenSource _stop = new();
@@ -88,24 +63,14 @@ public sealed partial class ClassHost
     public ClassHost(ClassFile file, Func<string?> cliPath)
     {
         _cliPath = cliPath;
-        _answers = file;
-        _file = file with
-        {
-            Exercises = [.. file.Exercises.Select(exercise => exercise with
-            {
-                Solution = null,
-                Tests = exercise.Type == "predict" ? [.. exercise.Tests.Select(test => test with { Expect = null })] : exercise.Tests,
-            })],
-        };
+        _file = file with { Exercises = [.. file.Exercises.Select(exercise => exercise with { Solution = null })] };
     }
 
     public string Code { get; private set; } = string.Empty;
 
     public event Action<RoomStudent>? StudentChanged;
 
-    public event Action<RoomStudent>? Voted;
-
-    public int ExerciseCount => _file.Exercises.Count(exercise => exercise.Type != "predict");
+    public int ExerciseCount => _file.Exercises.Count;
 
     public void Start()
     {
@@ -230,10 +195,6 @@ public sealed partial class ClassHost
                     {
                         _ = ReviewAsync(student, message, token);
                     }
-                    else if (message.Type == "answer")
-                    {
-                        Answer(student, message);
-                    }
                     else if (message.Type == "leave")
                     {
                         lock (_students)
@@ -274,7 +235,7 @@ public sealed partial class ClassHost
             return;
         }
 
-        var exercise = _file.Exercises.FirstOrDefault(item => item.Id == message.Exercise && item.Type != "predict");
+        var exercise = _file.Exercises.FirstOrDefault(item => item.Id == message.Exercise);
         var source = message.Source ?? string.Empty;
         var problem = exercise is null ? "Ese ejercicio no existe en esta clase."
             : source.Length > ClassProtocol.MaxSourceChars ? "Tu código es demasiado largo."
@@ -339,122 +300,6 @@ public sealed partial class ClassHost
         finally
         {
             student.IsReviewing = false;
-        }
-    }
-
-    public void StartVote(string exerciseId, int seconds)
-    {
-        if (_answers.Exercises.FirstOrDefault(item => item.Id == exerciseId && item.Type == "predict") is not { } exercise
-            || exercise.Tests is not [{ Expect: { } correct } packet])
-        {
-            return;
-        }
-
-        _vote = new VoteState(exercise, correct, seconds, FindRuleAsync(exercise, packet));
-        Broadcast(student => new ClassMessage("vote", Exercise: exercise.Id, Seconds: seconds));
-    }
-
-    public async Task<VoteSummary?> RevealAsync()
-    {
-        if (_vote is not { } vote)
-        {
-            return null;
-        }
-
-        List<RoomStudent> students;
-        lock (vote)
-        {
-            vote.IsOpen = false;
-        }
-
-        lock (_students)
-        {
-            students = [.. _students.Values];
-        }
-
-        foreach (var student in students)
-        {
-            student.VotePoints = vote.Answers.TryGetValue(student.Token, out var answer) && answer.Choice == vote.Correct
-                ? 500 + (int)Math.Round(500 * Math.Max(0, 1 - answer.Elapsed / vote.Seconds))
-                : 0;
-            student.Score += student.VotePoints;
-        }
-
-        var ranking = students.Where(student => student.Score > 0).OrderByDescending(student => student.Score).ToList();
-        var rule = await vote.Rule;
-        foreach (var student in students)
-        {
-            var rank = ranking.IndexOf(student) + 1;
-            await SendAsync(student, new ClassMessage("reveal", Exercise: vote.Exercise.Id, Choice: vote.Correct, Reason: rule,
-                Passed: vote.Answers.TryGetValue(student.Token, out var answer) && answer.Choice == vote.Correct,
-                Points: student.VotePoints, Total: student.Score, Rank: rank > 0 ? rank : null), _stop.Token);
-        }
-
-        return new VoteSummary(vote.Correct, vote.Answers.Values.Count(answer => answer.Choice == "permitir"),
-            vote.Answers.Values.Count(answer => answer.Choice == "bloquear"), rule, [.. ranking.Take(3)]);
-    }
-
-    public void EndVote()
-    {
-        _vote = null;
-        Broadcast(_ => new ClassMessage("voteEnd"));
-    }
-
-    private void Answer(RoomStudent student, ClassMessage message)
-    {
-        if (_vote is not { } vote || message.Exercise != vote.Exercise.Id || message.Choice is not ("permitir" or "bloquear"))
-        {
-            return;
-        }
-
-        lock (vote)
-        {
-            var elapsed = (DateTime.UtcNow - vote.Started).TotalSeconds;
-            if (!vote.IsOpen || elapsed > vote.Seconds + 1 || !vote.Answers.TryAdd(student.Token, (message.Choice, elapsed)))
-            {
-                return;
-            }
-        }
-
-        Voted?.Invoke(student);
-    }
-
-    private async Task<string?> FindRuleAsync(ClassExercise exercise, ChallengeTest packet)
-    {
-        if (_cliPath() is not { } cli || exercise.Starter is not { } starter)
-        {
-            return null;
-        }
-
-        try
-        {
-            var folder = Path.Combine(Path.GetTempPath(), "NetWall", "class-room");
-            Directory.CreateDirectory(folder);
-            var file = Path.Combine(folder, $"vote-{exercise.Id}.nw");
-            await File.WriteAllTextAsync(file, starter);
-            using var timeout = new CancellationTokenSource(ReviewTimeout);
-            var result = await SimulationRunner.RunChallengeAsync(cli, file, [packet], timeout.Token);
-            return result?.Packets is [var simulated]
-                ? simulated.Rule is { } rule ? $"Decidió la regla {rule}." : "Ninguna regla coincidió: decidió la política por defecto."
-                : null;
-        }
-        catch (Exception e) when (e is IOException or UnauthorizedAccessException or OperationCanceledException)
-        {
-            return null;
-        }
-    }
-
-    private void Broadcast(Func<RoomStudent, ClassMessage> message)
-    {
-        List<RoomStudent> students;
-        lock (_students)
-        {
-            students = [.. _students.Values.Where(student => student.IsConnected)];
-        }
-
-        foreach (var student in students)
-        {
-            _ = SendAsync(student, message(student), _stop.Token);
         }
     }
 
