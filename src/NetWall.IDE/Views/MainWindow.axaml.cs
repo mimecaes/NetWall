@@ -469,10 +469,11 @@ public partial class MainWindow : Window
 
     private Task<bool> OnRequestDeleteConfirmation(FileTreeNode node)
     {
-        var message = node.IsFolder
-            ? $"Delete the folder '{node.Name}' and everything inside it? This cannot be undone."
-            : $"Delete '{node.Name}'? This cannot be undone.";
-        return ConfirmDialog.AskAsync(this, message);
+        return node.IsFolder
+            ? ConfirmDialog.AskAsync(this, "¿Eliminar carpeta?", "Se eliminará ", node.Name,
+                " y todo lo que contiene. Esta acción no se puede deshacer.")
+            : ConfirmDialog.AskAsync(this, "¿Eliminar archivo?", "Se eliminará ", node.Name,
+                ". Esta acción no se puede deshacer.");
     }
 
     private void OnRenameTextBoxKeyDown(object? sender, KeyEventArgs e)
