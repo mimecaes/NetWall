@@ -341,6 +341,25 @@ public sealed partial class RoomHostViewModel : ObservableObject
         }
 
         var seat = Seats[student.Seat - 1];
+        if (student.HasLeft)
+        {
+            if (seat.Token == student.Token)
+            {
+                seat.Token = null;
+                seat.IsOccupied = false;
+                seat.IsConnected = false;
+                seat.Name = string.Empty;
+                seat.Address = string.Empty;
+                seat.HasAnswered = false;
+                seat.HasVoted = false;
+                seat.ProgressText = string.Empty;
+            }
+
+            ConnectedCount = Seats.Count(item => item.IsConnected);
+            UpdateAnswered();
+            return;
+        }
+
         seat.Token = student.Token;
         seat.Name = student.Name;
         seat.Color = student.Color;

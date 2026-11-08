@@ -29,6 +29,8 @@ public sealed class RoomStudent(string token, string name, int seat)
 
     public bool IsReviewing { get; set; }
 
+    public bool HasLeft { get; set; }
+
     public int Score { get; set; }
 
     public int VotePoints { get; set; }
@@ -231,6 +233,16 @@ public sealed partial class ClassHost
                     else if (message.Type == "answer")
                     {
                         Answer(student, message);
+                    }
+                    else if (message.Type == "leave")
+                    {
+                        lock (_students)
+                        {
+                            _students.Remove(student.Token);
+                        }
+
+                        student.HasLeft = true;
+                        break;
                     }
                 }
             }

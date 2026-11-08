@@ -44,7 +44,13 @@ public sealed class ClassClient(IPEndPoint room, string name, PetColor color, in
         return reply;
     }
 
-    public void Leave() => _stop.Cancel();
+    public void Leave() => _ = LeaveAsync();
+
+    private async Task LeaveAsync()
+    {
+        await SendAsync(new ClassMessage("leave"));
+        _stop.Cancel();
+    }
 
     public async Task<bool> SendAsync(ClassMessage message)
     {
