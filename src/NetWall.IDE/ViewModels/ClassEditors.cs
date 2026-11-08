@@ -217,21 +217,18 @@ public sealed partial class ExerciseEditor : ObservableObject
     public string TypeText => Type switch
     {
         "predict" => "¿Pasa o se bloquea?",
-        "fix" => "Arregla el firewall",
         _ => "Reto libre",
     };
 
     public LucideIconKind Icon => Type switch
     {
         "predict" => LucideIconKind.Vote,
-        "fix" => LucideIconKind.Wrench,
         _ => LucideIconKind.Pencil,
     };
 
     public string StarterText => Type switch
     {
         "predict" => "Firewall que leerán los estudiantes",
-        "fix" => "Firewall con errores",
         _ => "Código inicial (opcional)",
     };
 

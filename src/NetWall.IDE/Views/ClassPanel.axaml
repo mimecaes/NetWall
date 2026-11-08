@@ -1287,8 +1287,6 @@
                                 <MenuItem Header="Reto libre" Command="{Binding AddExerciseCommand}" CommandParameter="free" />
                                 <MenuItem Header="¿Pasa o se bloquea?" Command="{Binding AddExerciseCommand}"
                                           CommandParameter="predict" />
-                                <MenuItem Header="Arregla el firewall" Command="{Binding AddExerciseCommand}"
-                                          CommandParameter="fix" />
                             </MenuFlyout>
                         </Button.Flyout>
                     </Button>

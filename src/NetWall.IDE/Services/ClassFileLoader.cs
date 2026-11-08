@@ -130,7 +130,7 @@ public static partial class ClassFileLoader
             throw new ClassFileException($"{name}: necesita título y enunciado.");
         }
 
-        if (exercise.Type is not (null or "fix" or "predict"))
+        if (exercise.Type is not (null or "predict"))
         {
             throw new ClassFileException($"{name}: el tipo {exercise.Type} no existe.");
         }

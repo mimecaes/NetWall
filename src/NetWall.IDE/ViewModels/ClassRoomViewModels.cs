@@ -396,14 +396,12 @@ public sealed partial class StudentExercise : ObservableObject
     public string TypeText => Exercise.Type switch
     {
         "predict" => "¿Pasa o se bloquea? · en votación",
-        "fix" => "Arregla el firewall",
         _ => "Reto libre",
     };
 
     public Lucide.Avalonia.LucideIconKind Icon => Exercise.Type switch
     {
         "predict" => Lucide.Avalonia.LucideIconKind.Vote,
-        "fix" => Lucide.Avalonia.LucideIconKind.Wrench,
         _ => Lucide.Avalonia.LucideIconKind.Pencil,
     };
 
