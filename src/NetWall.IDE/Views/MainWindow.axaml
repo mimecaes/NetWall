@@ -357,22 +357,40 @@
                         </Button>
                     </Grid>
 
-                    <Border DockPanel.Dock="Top" Padding="12,4,12,8" IsVisible="{Binding IsFolderOpen}">
-                        <StackPanel Orientation="Horizontal" Spacing="6">
-                            <controls:AnimatedIcon Classes="icon-sm" Kind="Folder" />
-                            <TextBlock Text="{Binding RootName}" FontWeight="Bold" Foreground="{DynamicResource TextPrimaryBrush}" FontSize="12" />
-                        </StackPanel>
+                    <Border DockPanel.Dock="Top" Classes="extension-search-border" Margin="10,0,10,8" Padding="8,0"
+                            IsVisible="{Binding IsFolderOpen}">
+                        <Grid ColumnDefinitions="Auto,*">
+                            <controls:AnimatedIcon Grid.Column="0" Classes="icon-sm" Kind="Search"
+                                                   Margin="0,0,6,0" VerticalAlignment="Center" />
+                            <TextBox Grid.Column="1" Classes="extension-search-input"
+                                     Watermark="Filter files..."
+                                     Text="{Binding FileFilter, Mode=TwoWay}"
+                                     BorderThickness="0" Background="Transparent"
+                                     Foreground="{DynamicResource TextPrimaryBrush}"
+                                     FontSize="12" MinHeight="26" VerticalContentAlignment="Center" />
+                        </Grid>
                     </Border>
 
-                    <Border DockPanel.Dock="Top" Padding="12,0,12,8" IsVisible="{Binding IsFolderOpen}">
-                        <TextBox Text="{Binding FileFilter, Mode=TwoWay}" Watermark="Filter files..." FontSize="12" Padding="6,4" />
-                    </Border>
+                    <ToggleButton Name="RootToggle" DockPanel.Dock="Top" Classes="tree-root" IsChecked="True"
+                                  IsVisible="{Binding IsFolderOpen}">
+                        <StackPanel Orientation="Horizontal" Spacing="4">
+                            <LayoutTransformControl Classes="tree-chevron" Classes.open="{Binding #RootToggle.IsChecked}">
+                                <controls:AnimatedIcon Classes="icon-sm" Kind="ChevronRight" />
+                            </LayoutTransformControl>
+                            <TextBlock Text="{Binding RootName}" Classes="tree-root-name" />
+                        </StackPanel>
+                    </ToggleButton>
 
                     <Grid>
                         <TreeView Background="Transparent"
                                   ItemsSource="{Binding RootNodes}"
-                                  SelectedItem="{Binding SelectedTreeNode, Mode=TwoWay}"
-                                  IsVisible="{Binding ShowTree}">
+                                  SelectedItem="{Binding SelectedTreeNode, Mode=TwoWay}">
+                            <TreeView.IsVisible>
+                                <MultiBinding Converter="{x:Static BoolConverters.And}">
+                                    <Binding Path="ShowTree" />
+                                    <Binding ElementName="RootToggle" Path="IsChecked" />
+                                </MultiBinding>
+                            </TreeView.IsVisible>
                             <TreeView.Styles>
                                 <Style Selector="TreeViewItem">
                                     <Setter Property="IsExpanded" Value="{Binding IsExpanded, Mode=TwoWay}" />
@@ -380,9 +398,9 @@
                             </TreeView.Styles>
                             <TreeView.DataTemplates>
                                 <TreeDataTemplate DataType="models:FileTreeNode" ItemsSource="{Binding Children}">
-                                    <Border Classes="tree-row">
-                                        <StackPanel Orientation="Horizontal" Spacing="6">
-                                            <ItemsControl ItemsSource="{Binding Level, Converter={x:Static conv:LevelToRangeConverter.Instance}}" Focusable="False">
+                                    <Border Classes="tree-row" Tapped="OnTreeRowTapped">
+                                        <Grid ColumnDefinitions="Auto,16,Auto,*,Auto,Auto">
+                                            <ItemsControl Grid.Column="0" ItemsSource="{Binding Level, Converter={x:Static conv:LevelToRangeConverter.Instance}}" Focusable="False">
                                                 <ItemsControl.ItemsPanel>
                                                     <ItemsPanelTemplate>
                                                         <StackPanel Orientation="Horizontal" />
@@ -390,12 +408,19 @@
                                                 </ItemsControl.ItemsPanel>
                                                 <ItemsControl.ItemTemplate>
                                                     <DataTemplate>
-                                                        <Rectangle Width="1" Height="18" Margin="7,0" Fill="{DynamicResource BorderBrush}" />
+                                                        <Rectangle Classes="tree-guide" />
                                                     </DataTemplate>
                                                 </ItemsControl.ItemTemplate>
                                             </ItemsControl>
 
-                                            <controls:AnimatedIcon Classes="icon-sm tree-icon">
+                                            <LayoutTransformControl Grid.Column="1" Classes="tree-chevron"
+                                                    Classes.open="{Binding IsExpanded}" IsVisible="{Binding IsFolder}">
+                                                <controls:AnimatedIcon Classes="icon-sm" Kind="ChevronRight" />
+                                            </LayoutTransformControl>
+
+                                            <controls:AnimatedIcon Grid.Column="2" Classes="icon-sm tree-icon"
+                                                                   Classes.folder="{Binding IsFolder}"
+                                                                   Tag="{Binding Name, Converter={x:Static conv:NodeKindConverter.Instance}}">
                                                 <controls:AnimatedIcon.Kind>
                                                     <MultiBinding Converter="{x:Static conv:NodeIconConverter.Instance}">
                                                         <Binding Path="IsFolder" />
@@ -405,22 +430,17 @@
                                                 </controls:AnimatedIcon.Kind>
                                             </controls:AnimatedIcon>
 
-                                            <Grid ColumnDefinitions="Auto,Auto,Auto" VerticalAlignment="Center">
-                                                <TextBlock Grid.Column="0" Text="{Binding Name}" IsVisible="{Binding !IsEditing}"
-                                                           Classes="tree-name" FontSize="13" VerticalAlignment="Center" />
-                                                <TextBox Grid.Column="0" Text="{Binding EditingName, Mode=TwoWay}" IsVisible="{Binding IsEditing}"
-                                                         Classes="tree-rename"
-                                                         KeyDown="OnRenameTextBoxKeyDown" LostFocus="OnRenameTextBoxLostFocus"
-                                                         PropertyChanged="OnRenameTextBoxPropertyChanged" />
-                                                <Ellipse Grid.Column="1" Width="6" Height="6" Margin="6,0,0,0"
-                                                         Fill="{DynamicResource TextPrimaryBrush}" VerticalAlignment="Center"
-                                                         IsVisible="{Binding IsDirty}" />
-                                                <controls:AnimatedIcon Grid.Column="2" Classes="icon-sm" Kind="Star" Margin="6,0,0,0"
-                                                                       Stroke="{DynamicResource AccentBrush}" VerticalAlignment="Center"
-                                                                       IsVisible="{Binding IsMain}"
-                                                                       ToolTip.Tip="Archivo principal" />
-                                            </Grid>
-                                        </StackPanel>
+                                            <TextBlock Grid.Column="3" Text="{Binding Name}" IsVisible="{Binding !IsEditing}"
+                                                       Classes="tree-name" />
+                                            <TextBox Grid.Column="3" Text="{Binding EditingName, Mode=TwoWay}" IsVisible="{Binding IsEditing}"
+                                                     Classes="tree-rename" HorizontalAlignment="Left"
+                                                     KeyDown="OnRenameTextBoxKeyDown" LostFocus="OnRenameTextBoxLostFocus"
+                                                     PropertyChanged="OnRenameTextBoxPropertyChanged" />
+                                            <Ellipse Grid.Column="4" Classes="tree-dirty" IsVisible="{Binding IsDirty}" />
+                                            <controls:AnimatedIcon Grid.Column="5" Classes="icon-sm tree-main" Kind="Star"
+                                                                   IsVisible="{Binding IsMain}"
+                                                                   ToolTip.Tip="Archivo principal" />
+                                        </Grid>
                                         <Border.ContextMenu>
                                             <ContextMenu>
                                                 <MenuItem Header="New File" IsVisible="{Binding IsFolder}"

@@ -477,6 +477,14 @@ public partial class MainWindow : Window
                 ". Esta acción no se puede deshacer.");
     }
 
+    private void OnTreeRowTapped(object? sender, TappedEventArgs e)
+    {
+        if (sender is Control { DataContext: FileTreeNode { IsFolder: true, IsEditing: false } node })
+        {
+            node.IsExpanded = !node.IsExpanded;
+        }
+    }
+
     private void OnRenameTextBoxKeyDown(object? sender, KeyEventArgs e)
     {
         if (sender is not TextBox { DataContext: FileTreeNode node })

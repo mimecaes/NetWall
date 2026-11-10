@@ -23,7 +23,6 @@ public partial class SimulationPanel : UserControl
 
     private SimulationViewModel? _viewModel;
     private CancellationTokenSource _cancel = new();
-    private bool _looping;
     private bool _running;
     private int _runId;
     private BuilderDevice? _editing;
@@ -349,7 +348,6 @@ public partial class SimulationPanel : UserControl
     private async void OnReplayed()
     {
         Stop();
-        _looping = true;
         await RunAsync();
     }
 
@@ -380,6 +378,14 @@ public partial class SimulationPanel : UserControl
         }
     }
 
+    private void OnLogFilterChanged(object? sender, RoutedEventArgs e)
+    {
+        if (sender is RadioButton { IsChecked: true, Tag: LogFilter filter } && _viewModel is { } viewModel)
+        {
+            viewModel.Filter = filter;
+        }
+    }
+
     private void OnAllRulesClick(object? sender, RoutedEventArgs e) => _viewModel?.SetAllRules(true);
 
     private void OnNoRulesClick(object? sender, RoutedEventArgs e) => _viewModel?.SetAllRules(false);
@@ -395,7 +401,6 @@ public partial class SimulationPanel : UserControl
         if (_running)
         {
             Canvas.Paused = !Canvas.Paused;
-            _looping = true;
             UpdatePlayIcon();
             return;
         }
@@ -404,20 +409,6 @@ public partial class SimulationPanel : UserControl
         {
             Stop();
             _viewModel.Reset();
-        }
-
-        _looping = true;
-        await RunAsync();
-    }
-
-    private async void OnStepClick(object? sender, RoutedEventArgs e)
-    {
-        _looping = false;
-        if (_running)
-        {
-            Canvas.Paused = false;
-            UpdatePlayIcon();
-            return;
         }
 
         await RunAsync();
@@ -441,7 +432,6 @@ public partial class SimulationPanel : UserControl
         _cancel = new CancellationTokenSource();
         _runId++;
         _running = false;
-        _looping = false;
         Canvas.Paused = false;
         UpdatePlayIcon();
         Canvas.Clear();
@@ -465,7 +455,7 @@ public partial class SimulationPanel : UserControl
                 await Task.Delay(15, token);
             }
 
-            while (await StepAsync() && _looping && _viewModel.NextPacket is not null)
+            while (await StepAsync() && _viewModel.NextPacket is not null)
             {
                 await Canvas.WaitAsync(400 / Speed, token);
             }
