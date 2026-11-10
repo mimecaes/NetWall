@@ -415,6 +415,10 @@ public partial class MainViewModel : ViewModelBase
 
     public event Action<EditorTabViewModel>? RequestSaveAs;
 
+    public event Func<EditorTabViewModel, Task<string?>>? RequestSaveAsPath;
+
+    public event Func<IReadOnlyList<EditorTabViewModel>, Task<UnsavedChoice>>? RequestUnsavedChoice;
+
     public event Action? RequestOpenFolder;
 
     public event Action? RequestCatGallery;
@@ -650,7 +654,7 @@ public partial class MainViewModel : ViewModelBase
 
         foreach (var tab in tabsToClose)
         {
-            CloseTab(tab);
+            RemoveTab(tab);
         }
     }
 
@@ -940,7 +944,53 @@ public partial class MainViewModel : ViewModelBase
     }
 
     [RelayCommand]
-    private void CloseTab(EditorTabViewModel? tab)
+    private async Task CloseTabAsync(EditorTabViewModel? tab)
+    {
+        if (tab is not null && await ConfirmDiscardAsync([tab]))
+        {
+            RemoveTab(tab);
+        }
+    }
+
+    public async Task<bool> ConfirmDiscardAsync(IReadOnlyList<EditorTabViewModel> tabs)
+    {
+        var dirty = tabs.Where(t => t.IsDirty).ToList();
+        if (dirty.Count == 0 || RequestUnsavedChoice is null)
+        {
+            return true;
+        }
+
+        return await RequestUnsavedChoice(dirty) switch
+        {
+            UnsavedChoice.Discard => true,
+            UnsavedChoice.Save => await SaveTabsAsync(dirty),
+            _ => false,
+        };
+    }
+
+    private async Task<bool> SaveTabsAsync(IReadOnlyList<EditorTabViewModel> tabs)
+    {
+        var allSaved = true;
+        foreach (var tab in tabs)
+        {
+            var path = tab.FilePath;
+            if (string.IsNullOrEmpty(path))
+            {
+                path = RequestSaveAsPath is null ? null : await RequestSaveAsPath(tab);
+            }
+
+            if (string.IsNullOrEmpty(path) || !WriteTab(tab, path))
+            {
+                allSaved = false;
+                break;
+            }
+        }
+
+        UpdateMainFileMarks();
+        return allSaved;
+    }
+
+    public void RemoveTab(EditorTabViewModel? tab)
     {
         if (tab is null)
         {
