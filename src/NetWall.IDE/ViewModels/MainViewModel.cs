@@ -202,6 +202,7 @@ public partial class MainViewModel : ViewModelBase
 
     private string? _simulationFile;
     private int _mainFileSearch;
+    private readonly HashSet<string> _filesBeingOpened = new(StringComparer.OrdinalIgnoreCase);
     private int _simulationRun;
 
     [ObservableProperty]
@@ -375,7 +376,7 @@ public partial class MainViewModel : ViewModelBase
     {
         if (value is { IsFolder: false })
         {
-            OpenNode(value);
+            _ = OpenNodeAsync(value);
         }
     }
 
@@ -421,6 +422,8 @@ public partial class MainViewModel : ViewModelBase
     public event Action? RequestCodeAssistant;
 
     public event Func<FileTreeNode, Task<bool>>? RequestDeleteConfirmation;
+
+    public event Func<FileTreeNode, FileOpenRisk, long, Task<bool>>? RequestRiskyOpenConfirmation;
 
     private bool CanCreateNewFile() => IsFolderOpen;
 
@@ -854,37 +857,70 @@ public partial class MainViewModel : ViewModelBase
         UpdateMainFileMarks();
     }
 
-    public void OpenNode(FileTreeNode? node)
+    public async Task OpenNodeAsync(FileTreeNode? node)
     {
         if (node is null || node.IsFolder)
         {
             return;
         }
 
-        var existing = OpenTabs.FirstOrDefault(t =>
-            string.Equals(t.FilePath, node.FullPath, StringComparison.OrdinalIgnoreCase));
-        if (existing is not null)
+        if (FindOpenTab(node.FullPath) is { } existing)
         {
             SelectTab(existing);
             return;
         }
 
-        string text;
-        try
+        if (!_filesBeingOpened.Add(node.FullPath))
         {
-            text = File.ReadAllText(node.FullPath);
-        }
-        catch (Exception ex)
-        {
-            AppendTerminalLine($"Failed to open '{node.FullPath}': {ex.Message}", TerminalLineKind.Error);
             return;
         }
 
-        var tab = new EditorTabViewModel { Title = node.Name, FilePath = node.FullPath };
-        tab.LoadContent(text);
-        OpenTabs.Add(tab);
-        SelectTab(tab);
+        try
+        {
+            string text;
+            try
+            {
+                var (risk, size) = await Task.Run(() => (FileOpenCheck.Inspect(node.FullPath, out var length), length));
+                if (risk != FileOpenRisk.None && !await ConfirmRiskyOpenAsync(node, risk, size))
+                {
+                    if (SelectedTreeNode == node)
+                    {
+                        SelectedTreeNode = null;
+                    }
+
+                    return;
+                }
+
+                text = await Task.Run(() => File.ReadAllText(node.FullPath));
+            }
+            catch (Exception ex)
+            {
+                AppendTerminalLine($"Failed to open '{node.FullPath}': {ex.Message}", TerminalLineKind.Error);
+                return;
+            }
+
+            if (FindOpenTab(node.FullPath) is { } openedMeanwhile)
+            {
+                SelectTab(openedMeanwhile);
+                return;
+            }
+
+            var tab = new EditorTabViewModel { Title = node.Name, FilePath = node.FullPath };
+            tab.LoadContent(text);
+            OpenTabs.Add(tab);
+            SelectTab(tab);
+        }
+        finally
+        {
+            _filesBeingOpened.Remove(node.FullPath);
+        }
     }
+
+    private EditorTabViewModel? FindOpenTab(string path) =>
+        OpenTabs.FirstOrDefault(t => string.Equals(t.FilePath, path, StringComparison.OrdinalIgnoreCase));
+
+    private async Task<bool> ConfirmRiskyOpenAsync(FileTreeNode node, FileOpenRisk risk, long size) =>
+        RequestRiskyOpenConfirmation is null || await RequestRiskyOpenConfirmation(node, risk, size);
 
     [RelayCommand]
     private void SelectTab(EditorTabViewModel? tab)
@@ -1226,7 +1262,7 @@ public partial class MainViewModel : ViewModelBase
     }
 
     /// <summary>Opens a file (e.g. from a diagnostic link in the terminal) and reveals a line.</summary>
-    public void OpenFileAtLine(string path, int line)
+    public async Task OpenFileAtLineAsync(string path, int line)
     {
         if (!File.Exists(path))
         {
@@ -1235,7 +1271,7 @@ public partial class MainViewModel : ViewModelBase
         }
 
         var node = FindNode(RootNodes, path) ?? new FileTreeNode { FullPath = path, Name = Path.GetFileName(path) };
-        OpenNode(node);
+        await OpenNodeAsync(node);
         if (SelectedTab is { } tab && string.Equals(tab.FilePath, path, StringComparison.OrdinalIgnoreCase))
         {
             RequestRevealLine?.Invoke(line);

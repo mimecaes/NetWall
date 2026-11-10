@@ -230,6 +230,7 @@ public partial class MainWindow : Window
             vm.RequestCodeAssistant += OnRequestCodeAssistant;
             vm.RequestSaveAs += OnRequestSaveAs;
             vm.RequestDeleteConfirmation += OnRequestDeleteConfirmation;
+            vm.RequestRiskyOpenConfirmation += OnRequestRiskyOpenConfirmation;
             vm.PropertyChanged += OnViewModelPropertyChanged;
             vm.TerminalUpdated += OnTerminalUpdated;
             vm.RequestRevealLine += OnRequestRevealLine;
@@ -323,7 +324,10 @@ public partial class MainWindow : Window
         // Diagnostic links look like file:///C:/project/firewall.nw#L12.
         var fragment = e.Uri.Fragment.TrimStart('#').TrimStart('L');
         var line = int.TryParse(fragment, out var parsed) ? parsed : 1;
-        ViewModel?.OpenFileAtLine(e.Uri.LocalPath, line);
+        if (ViewModel is { } vm)
+        {
+            _ = vm.OpenFileAtLineAsync(e.Uri.LocalPath, line);
+        }
     }
 
     private void OnRequestRevealLine(int line)
@@ -435,6 +439,14 @@ public partial class MainWindow : Window
             ? $"Delete the folder '{node.Name}' and everything inside it? This cannot be undone."
             : $"Delete '{node.Name}'? This cannot be undone.";
         return ConfirmDialog.AskAsync(this, message);
+    }
+
+    private Task<bool> OnRequestRiskyOpenConfirmation(FileTreeNode node, FileOpenRisk risk, long size)
+    {
+        var message = risk == FileOpenRisk.Binary
+            ? $"'{node.Name}' looks like a binary file and may not display correctly. Open it anyway?"
+            : $"'{node.Name}' is {FileOpenCheck.FormatSize(size)}. Large files can make the editor slow or unresponsive. Open it anyway?";
+        return ConfirmDialog.AskAsync(this, message, "Open anyway");
     }
 
     private void OnRenameTextBoxKeyDown(object? sender, KeyEventArgs e)
