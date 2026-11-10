@@ -94,7 +94,7 @@ public sealed class TerminalSession
         }
         catch (Exception ex)
         {
-            return new TerminalResult($"Failed to start command: {ex.Message}", -1);
+            return new TerminalResult($"No se pudo iniciar el comando: {ex.Message}", -1);
         }
 
         process.BeginOutputReadLine();

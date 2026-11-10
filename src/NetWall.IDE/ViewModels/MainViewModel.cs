@@ -329,7 +329,7 @@ public partial class MainViewModel : ViewModelBase
     }
 
     public ObservableCollection<TerminalEntry> TerminalEntries { get; } =
-        [new TerminalLine(TerminalLineKind.Info, "NetWall.IDE terminal ready.")];
+        [new TerminalLine(TerminalLineKind.Info, "Terminal de NetWall.IDE lista.")];
 
     /// <summary>Raised whenever terminal content is added, so the view can scroll to the end.</summary>
     public event Action? TerminalUpdated;
@@ -489,7 +489,7 @@ public partial class MainViewModel : ViewModelBase
         }
         catch (Exception ex)
         {
-            AppendTerminalLine($"Failed to create folder '{fullPath}': {ex.Message}", TerminalLineKind.Error);
+            AppendTerminalLine($"No se pudo crear la carpeta '{fullPath}': {ex.Message}", TerminalLineKind.Error);
             return;
         }
 
@@ -550,7 +550,7 @@ public partial class MainViewModel : ViewModelBase
         }
         catch (Exception ex)
         {
-            AppendTerminalLine($"Failed to rename '{node.FullPath}': {ex.Message}", TerminalLineKind.Error);
+            AppendTerminalLine($"No se pudo renombrar '{node.FullPath}': {ex.Message}", TerminalLineKind.Error);
             return;
         }
 
@@ -638,7 +638,7 @@ public partial class MainViewModel : ViewModelBase
         }
         catch (Exception ex)
         {
-            AppendTerminalLine($"Failed to delete '{node.FullPath}': {ex.Message}", TerminalLineKind.Error);
+            AppendTerminalLine($"No se pudo eliminar '{node.FullPath}': {ex.Message}", TerminalLineKind.Error);
             return;
         }
 
@@ -775,7 +775,7 @@ public partial class MainViewModel : ViewModelBase
         }
         catch (Exception ex)
         {
-            AppendTerminalLine($"Failed to create '{fullPath}': {ex.Message}", TerminalLineKind.Error);
+            AppendTerminalLine($"No se pudo crear el archivo '{fullPath}': {ex.Message}", TerminalLineKind.Error);
             return false;
         }
     }
@@ -899,7 +899,7 @@ public partial class MainViewModel : ViewModelBase
             }
             catch (Exception ex)
             {
-                AppendTerminalLine($"Failed to open '{node.FullPath}': {ex.Message}", TerminalLineKind.Error);
+                AppendTerminalLine($"No se pudo abrir '{node.FullPath}': {ex.Message}", TerminalLineKind.Error);
                 return;
             }
 
@@ -1041,12 +1041,12 @@ public partial class MainViewModel : ViewModelBase
             tab.IsDirty = false;
             tab.FilePath = path;
             tab.Title = Path.GetFileName(path);
-            AppendTerminalLine($"Saved '{path}'.");
+            AppendTerminalLine($"Se guardó '{path}'.");
             return true;
         }
         catch (Exception ex)
         {
-            AppendTerminalLine($"Failed to save '{path}': {ex.Message}", TerminalLineKind.Error);
+            AppendTerminalLine($"No se pudo guardar '{path}': {ex.Message}", TerminalLineKind.Error);
             return false;
         }
     }
@@ -1316,7 +1316,7 @@ public partial class MainViewModel : ViewModelBase
     {
         if (!File.Exists(path))
         {
-            AppendTerminalLine($"Failed to open '{path}': file not found", TerminalLineKind.Error);
+            AppendTerminalLine($"No se pudo abrir '{path}': el archivo no existe", TerminalLineKind.Error);
             return;
         }
 

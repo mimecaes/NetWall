@@ -413,7 +413,7 @@ public partial class MainWindow : Window
     {
         var folders = await StorageProvider.OpenFolderPickerAsync(new FolderPickerOpenOptions
         {
-            Title = "Open Folder",
+            Title = "Abrir carpeta",
             AllowMultiple = false,
         });
 
@@ -474,7 +474,7 @@ public partial class MainWindow : Window
     {
         var file = await StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
         {
-            Title = "Save File",
+            Title = "Guardar archivo",
             SuggestedFileName = tab.Title,
         });
 
