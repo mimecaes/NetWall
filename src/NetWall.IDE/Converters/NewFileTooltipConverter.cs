@@ -8,7 +8,7 @@ public sealed class NewFileTooltipConverter : IValueConverter
 {
     public static readonly NewFileTooltipConverter Instance = new();
 
-    private const string DisabledMessage = "Open a folder first to create a file";
+    private const string DisabledMessage = "Abre una carpeta primero para crear un archivo";
 
     public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
         => value is true ? parameter as string ?? string.Empty : DisabledMessage;
