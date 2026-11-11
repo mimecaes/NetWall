@@ -9,6 +9,7 @@ namespace NetWall.IDE.Controls;
 public sealed class RuledStack : Panel
 {
     public const double Gap = 26;
+    private const double Snap = 1;
 
     public static readonly StyledProperty<bool> FromBottomProperty =
         AvaloniaProperty.Register<RuledStack, bool>(nameof(FromBottom));
@@ -54,7 +55,7 @@ public sealed class RuledStack : Panel
             return new Size(width, bottom - Math.Floor((bottom - content) / Gap) * Gap);
         }
 
-        _lead = Math.Ceiling(_top / Gap - 0.01) * Gap - _top;
+        _lead = Math.Max(0, Math.Ceiling((_top - Snap) / Gap) * Gap - _top);
         return new Size(width, _lead + content);
     }
 
