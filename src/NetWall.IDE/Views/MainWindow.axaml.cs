@@ -23,6 +23,8 @@ namespace NetWall.IDE.Views;
 public partial class MainWindow : Window
 {
     private bool _suppressEditorTextChanged;
+    private bool _closeConfirmed;
+    private bool _closePromptOpen;
     private readonly IndentGuideRenderer _indentGuideRenderer = new();
     private readonly IndentRainbowRenderer _indentRainbowRenderer = new();
     private readonly NetWallSyntaxColorizer _syntaxColorizer = new();
@@ -249,6 +251,11 @@ public partial class MainWindow : Window
             return;
         }
 
+        if (ViewModel is not { } vm || !await vm.ConfirmDiscardAsync([tab]))
+        {
+            return;
+        }
+
         var tabBorder = button.FindAncestorOfType<Border>();
         if (tabBorder is not null)
         {
@@ -256,7 +263,41 @@ public partial class MainWindow : Window
             await Task.Delay(200);
         }
 
-        ViewModel?.CloseTabCommand.Execute(tab);
+        vm.RemoveTab(tab);
+    }
+
+    protected override void OnClosing(WindowClosingEventArgs e)
+    {
+        base.OnClosing(e);
+        if (_closeConfirmed || ViewModel is not { DirtyTabCount: > 0 })
+        {
+            return;
+        }
+
+        e.Cancel = true;
+        _ = ConfirmCloseAsync();
+    }
+
+    private async Task ConfirmCloseAsync()
+    {
+        if (_closePromptOpen || ViewModel is not { } vm)
+        {
+            return;
+        }
+
+        _closePromptOpen = true;
+        try
+        {
+            if (await vm.ConfirmDiscardAsync(vm.OpenTabs.ToList()))
+            {
+                _closeConfirmed = true;
+                Close();
+            }
+        }
+        finally
+        {
+            _closePromptOpen = false;
+        }
     }
 
     private MainViewModel? ViewModel => DataContext as MainViewModel;
@@ -268,6 +309,8 @@ public partial class MainWindow : Window
             vm.RequestOpenFolder += OnRequestOpenFolder;
             vm.RequestCodeAssistant += OnRequestCodeAssistant;
             vm.RequestSaveAs += OnRequestSaveAs;
+            vm.RequestSaveAsPath += PickSavePathAsync;
+            vm.RequestUnsavedChoice += OnRequestUnsavedChoice;
             vm.RequestDeleteConfirmation += OnRequestDeleteConfirmation;
             vm.RequestRiskyOpenConfirmation += OnRequestRiskyOpenConfirmation;
             vm.PropertyChanged += OnViewModelPropertyChanged;
@@ -409,7 +452,7 @@ public partial class MainWindow : Window
     {
         var folders = await StorageProvider.OpenFolderPickerAsync(new FolderPickerOpenOptions
         {
-            Title = "Open Folder",
+            Title = "Abrir carpeta",
             AllowMultiple = false,
         });
 
@@ -460,25 +503,42 @@ public partial class MainWindow : Window
 
     private async void OnRequestSaveAs(EditorTabViewModel tab)
     {
-        var file = await StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
-        {
-            Title = "Save File",
-            SuggestedFileName = tab.Title,
-        });
-
-        if (file?.TryGetLocalPath() is { } path)
+        if (await PickSavePathAsync(tab) is { } path)
         {
             ViewModel?.SaveTab(tab, path);
         }
     }
 
+    private async Task<string?> PickSavePathAsync(EditorTabViewModel tab)
+    {
+        var file = await StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
+        {
+            Title = "Guardar archivo",
+            SuggestedFileName = tab.Title,
+        });
+
+        return file?.TryGetLocalPath();
+    }
+
+    private Task<UnsavedChoice> OnRequestUnsavedChoice(IReadOnlyList<EditorTabViewModel> tabs)
+    {
+        if (tabs.Count == 1)
+        {
+            return ConfirmDialog.AskUnsavedAsync(this, $"¿Guardar los cambios de '{tabs[0].Title}'?",
+                "Si no los guardas, se perderán.");
+        }
+
+        var names = string.Join(", ", tabs.Select(t => $"'{t.Title}'"));
+        return ConfirmDialog.AskUnsavedAsync(this, $"¿Guardar los cambios de {tabs.Count} archivos?",
+            $"Tienen cambios sin guardar: {names}. Si no los guardas, se perderán.");
+    }
+
     private Task<bool> OnRequestDeleteConfirmation(FileTreeNode node)
     {
-        return node.IsFolder
-            ? ConfirmDialog.AskAsync(this, "¿Eliminar carpeta?", "Se eliminará ", node.Name,
-                " y todo lo que contiene. Esta acción no se puede deshacer.")
-            : ConfirmDialog.AskAsync(this, "¿Eliminar archivo?", "Se eliminará ", node.Name,
-                ". Esta acción no se puede deshacer.");
+        var (title, message) = node.IsFolder
+            ? ($"¿Eliminar la carpeta '{node.Name}'?", "Se eliminará con todo lo que contiene. Esta acción no se puede deshacer.")
+            : ($"¿Eliminar '{node.Name}'?", "Esta acción no se puede deshacer.");
+        return ConfirmDialog.AskAsync(this, title, message, "Eliminar", DialogTone.Danger);
     }
 
     private void OnTreeRowTapped(object? sender, TappedEventArgs e)
@@ -491,10 +551,11 @@ public partial class MainWindow : Window
 
     private Task<bool> OnRequestRiskyOpenConfirmation(FileTreeNode node, FileOpenRisk risk, long size)
     {
-        var message = risk == FileOpenRisk.Binary
-            ? $"'{node.Name}' looks like a binary file and may not display correctly. Open it anyway?"
-            : $"'{node.Name}' is {FileOpenCheck.FormatSize(size)}. Large files can make the editor slow or unresponsive. Open it anyway?";
-        return ConfirmDialog.AskAsync(this, message, "Open anyway");
+        var (title, message) = risk == FileOpenRisk.Binary
+            ? ($"'{node.Name}' parece un archivo binario", "Es posible que no se vea bien en el editor. ¿Quieres abrirlo de todas formas?")
+            : ($"'{node.Name}' pesa {FileOpenCheck.FormatSize(size)}",
+                "Los archivos grandes pueden volver lento el editor o dejarlo sin responder un momento. ¿Quieres abrirlo de todas formas?");
+        return ConfirmDialog.AskAsync(this, title, message, "Abrir de todas formas", DialogTone.Warning);
     }
 
     private void OnRenameTextBoxKeyDown(object? sender, KeyEventArgs e)

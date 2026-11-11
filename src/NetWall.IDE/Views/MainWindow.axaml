@@ -79,13 +79,13 @@
 
                 <StackPanel Grid.Column="0" Classes="traffic-lights" Orientation="Horizontal" Spacing="8"
                             Margin="12,0,0,0" VerticalAlignment="Center">
-                    <Button Classes="traffic-light traffic-close" Click="OnCloseClick" ToolTip.Tip="Close">
+                    <Button Classes="traffic-light traffic-close" Click="OnCloseClick" ToolTip.Tip="Cerrar">
                         <Path Classes="traffic-glyph" Data="M2.5,2.5 L7.5,7.5 M7.5,2.5 L2.5,7.5" />
                     </Button>
-                    <Button Classes="traffic-light traffic-minimize" Click="OnMinimizeClick" ToolTip.Tip="Minimize">
+                    <Button Classes="traffic-light traffic-minimize" Click="OnMinimizeClick" ToolTip.Tip="Minimizar">
                         <Path Classes="traffic-glyph" Data="M2.5,5 L7.5,5" />
                     </Button>
-                    <Button Classes="traffic-light traffic-maximize" Click="OnMaximizeClick" ToolTip.Tip="Maximize">
+                    <Button Classes="traffic-light traffic-maximize" Click="OnMaximizeClick" ToolTip.Tip="Maximizar">
                         <Path Classes="traffic-glyph" Data="M2.5,6.2 L2.5,7.5 L3.8,7.5 M7.5,3.8 L7.5,2.5 L6.2,2.5" />
                     </Button>
                 </StackPanel>
@@ -111,26 +111,26 @@
                     <StackPanel Orientation="Horizontal" Spacing="2">
                         <Button Classes="icon toolbar-icon" Command="{Binding NewFileCommand}">
                             <ToolTip.Tip>
-                                <TextBlock Text="{Binding IsFolderOpen, Converter={x:Static conv:NewFileTooltipConverter.Instance}, ConverterParameter='New File (Ctrl+N)'}" />
+                                <TextBlock Text="{Binding IsFolderOpen, Converter={x:Static conv:NewFileTooltipConverter.Instance}, ConverterParameter='Nuevo archivo (Ctrl+N)'}" />
                             </ToolTip.Tip>
                             <controls:AnimatedIcon Classes="icon" Kind="FilePlus" />
                         </Button>
                         <Button Classes="icon toolbar-icon" Command="{Binding OpenFolderCommand}">
                             <ToolTip.Tip>
-                                <TextBlock Text="Open Folder (Ctrl+O)" />
+                                <TextBlock Text="Abrir carpeta (Ctrl+O)" />
                             </ToolTip.Tip>
                             <controls:AnimatedIcon Classes="icon" Kind="FolderOpen" />
                         </Button>
                         <Button Classes="icon toolbar-icon" Command="{Binding SaveCommand}">
                             <ToolTip.Tip>
-                                <TextBlock Text="Save (Ctrl+S)" />
+                                <TextBlock Text="Guardar (Ctrl+S)" />
                             </ToolTip.Tip>
                             <controls:AnimatedIcon Classes="icon" Kind="Save" />
                         </Button>
                         <Button Classes="icon toolbar-icon" Command="{Binding SaveAllCommand}"
                                 IsEnabled="{Binding ShowSaveAllBadge}">
                             <ToolTip.Tip>
-                                <TextBlock Text="Save All (Ctrl+Shift+S)" />
+                                <TextBlock Text="Guardar todo (Ctrl+Shift+S)" />
                             </ToolTip.Tip>
                             <Panel>
                                 <controls:AnimatedIcon Classes="icon" Kind="SaveAll" />
@@ -168,7 +168,7 @@
                 <Border Classes="toolbar-pill">
                     <Button Classes="icon toolbar-icon" Command="{Binding OpenCodeAssistantCommand}">
                         <ToolTip.Tip>
-                            <TextBlock Text="Code Assistant (Ctrl+Shift+A)" />
+                            <TextBlock Text="Asistente de código (Ctrl+Shift+A)" />
                         </ToolTip.Tip>
                         <controls:AnimatedIcon Classes="icon" Kind="WandSparkles" />
                     </Button>
@@ -178,13 +178,13 @@
                     <StackPanel Orientation="Horizontal" Spacing="2">
                         <Button Classes="icon toolbar-icon" Command="{Binding ToggleSidebarCommand}">
                             <ToolTip.Tip>
-                                <TextBlock Text="Toggle Sidebar (Ctrl+B)" />
+                                <TextBlock Text="Mostrar u ocultar la barra lateral (Ctrl+B)" />
                             </ToolTip.Tip>
                             <controls:AnimatedIcon Classes="icon" Kind="PanelLeft" />
                         </Button>
                         <Button Classes="icon toolbar-icon" Command="{Binding ToggleTerminalCommand}">
                             <ToolTip.Tip>
-                                <TextBlock Text="Toggle Terminal" />
+                                <TextBlock Text="Mostrar u ocultar la terminal" />
                             </ToolTip.Tip>
                             <controls:AnimatedIcon Classes="icon" Kind="Terminal" />
                         </Button>
@@ -219,7 +219,7 @@
                     <Border Classes="toolbar-pill">
                         <Button Classes="icon toolbar-icon">
                             <ToolTip.Tip>
-                                <TextBlock Text="Settings" />
+                                <TextBlock Text="Configuración" />
                             </ToolTip.Tip>
                             <controls:AnimatedIcon Classes="icon" Kind="Settings" />
                             <Button.Flyout>
@@ -321,7 +321,7 @@
                 </StackPanel>
                 <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="14" Margin="10,0" VerticalAlignment="Center">
                     <TextBlock Classes="status-text" Text="{Binding SelectedTab.Language, FallbackValue=''}" />
-                    <TextBlock Classes="status-text" Text="{Binding SelectedTab.Line, StringFormat='Ln {0}', FallbackValue=''}" />
+                    <TextBlock Classes="status-text" Text="{Binding SelectedTab.Line, StringFormat='Lín {0}', FallbackValue=''}" />
                     <TextBlock Classes="status-text" Text="{Binding SelectedTab.Column, StringFormat='Col {0}', FallbackValue=''}" />
                     <TextBlock Classes="status-text" Text="UTF-8" />
                 </StackPanel>
@@ -343,16 +343,16 @@
                     IsVisible="{Binding IsSidebarVisible}">
                 <DockPanel>
                     <Grid DockPanel.Dock="Top" ColumnDefinitions="*,Auto,Auto,Auto" Margin="12,10,8,6">
-                        <TextBlock Grid.Column="0" Classes="sidebar-header" Text="EXPLORER" VerticalAlignment="Center" />
+                        <TextBlock Grid.Column="0" Classes="sidebar-header" Text="EXPLORADOR" VerticalAlignment="Center" />
                         <Button Grid.Column="1" Classes="icon" Width="22" Height="22" Command="{Binding NewFileCommand}"
-                                ToolTip.Tip="{Binding IsFolderOpen, Converter={x:Static conv:NewFileTooltipConverter.Instance}, ConverterParameter='New File'}">
+                                ToolTip.Tip="{Binding IsFolderOpen, Converter={x:Static conv:NewFileTooltipConverter.Instance}, ConverterParameter='Nuevo archivo'}">
                             <controls:AnimatedIcon Classes="icon-sm" Kind="FilePlus" />
                         </Button>
-                        <Button Grid.Column="2" Classes="icon" Width="22" Height="22" Command="{Binding OpenFolderCommand}" ToolTip.Tip="Open Folder">
+                        <Button Grid.Column="2" Classes="icon" Width="22" Height="22" Command="{Binding OpenFolderCommand}" ToolTip.Tip="Abrir carpeta">
                             <controls:AnimatedIcon Classes="icon-sm" Kind="FolderOpen" />
                         </Button>
                         <Button Grid.Column="3" Classes="icon" Width="22" Height="22" Command="{Binding CollapseAllCommand}"
-                                ToolTip.Tip="Collapse All" IsVisible="{Binding IsFolderOpen}">
+                                ToolTip.Tip="Contraer todo" IsVisible="{Binding IsFolderOpen}">
                             <controls:AnimatedIcon Classes="icon-sm" Kind="ChevronsDownUp" />
                         </Button>
                     </Grid>
@@ -363,7 +363,7 @@
                             <controls:AnimatedIcon Grid.Column="0" Classes="icon-sm" Kind="Search"
                                                    Margin="0,0,6,0" VerticalAlignment="Center" />
                             <TextBox Grid.Column="1" Classes="extension-search-input"
-                                     Watermark="Filter files..."
+                                     Watermark="Filtrar archivos..."
                                      Text="{Binding FileFilter, Mode=TwoWay}"
                                      BorderThickness="0" Background="Transparent"
                                      Foreground="{DynamicResource TextPrimaryBrush}"
@@ -443,17 +443,17 @@
                                         </Grid>
                                         <Border.ContextMenu>
                                             <ContextMenu>
-                                                <MenuItem Header="New File" IsVisible="{Binding IsFolder}"
+                                                <MenuItem Header="Nuevo archivo" IsVisible="{Binding IsFolder}"
                                                           Command="{Binding #Root.DataContext.NewFileInFolderCommand}"
                                                           CommandParameter="{Binding}" />
-                                                <MenuItem Header="New Folder" IsVisible="{Binding IsFolder}"
+                                                <MenuItem Header="Nueva carpeta" IsVisible="{Binding IsFolder}"
                                                           Command="{Binding #Root.DataContext.NewFolderInFolderCommand}"
                                                           CommandParameter="{Binding}" />
                                                 <Separator IsVisible="{Binding IsFolder}" />
-                                                <MenuItem Header="Rename"
+                                                <MenuItem Header="Renombrar"
                                                           Command="{Binding #Root.DataContext.BeginRenameCommand}"
                                                           CommandParameter="{Binding}" />
-                                                <MenuItem Header="Delete"
+                                                <MenuItem Header="Eliminar"
                                                           Command="{Binding #Root.DataContext.DeleteNodeCommand}"
                                                           CommandParameter="{Binding}" />
                                             </ContextMenu>
@@ -492,7 +492,7 @@
                                     </ItemsControl.ItemTemplate>
                                 </ItemsControl>
 
-                                <TextBlock Text="No matching files" Foreground="{DynamicResource TextMutedBrush}"
+                                <TextBlock Text="Ningún archivo coincide" Foreground="{DynamicResource TextMutedBrush}"
                                            HorizontalAlignment="Center" Margin="0,20,0,0"
                                            IsVisible="{Binding !HasSearchResults}" />
                             </StackPanel>
@@ -546,7 +546,7 @@
                                                 </StackPanel>
                                             </Button>
                                             <Button Classes="tab-close" Click="OnTabCloseClick"
-                                                    ToolTip.Tip="Close"
+                                                    ToolTip.Tip="Cerrar"
                                                     Tag="{Binding}">
                                                 <controls:AnimatedIcon Classes="icon-sm" Kind="X" Width="10" Height="10" />
                                             </Button>
@@ -674,21 +674,21 @@
                               Background="{DynamicResource SurfaceBackgroundBrush}" Height="30">
                             <TextBlock Grid.Column="0" Classes="sidebar-header" Text="TERMINAL"
                                        VerticalAlignment="Center" Margin="12,0" />
-                            <Button Grid.Column="1" Classes="icon" Width="24" Height="24" ToolTip.Tip="Cat color">
+                            <Button Grid.Column="1" Classes="icon" Width="24" Height="24" ToolTip.Tip="Color del gato">
                                 <controls:AnimatedIcon Classes="icon-sm" Kind="Cat" />
                                 <Button.Flyout>
                                     <MenuFlyout Placement="BottomEdgeAlignedRight">
-                                        <MenuItem Header="Gray" Tag="Gray" Click="OnPetColorMenuItemClick">
+                                        <MenuItem Header="Gris" Tag="Gray" Click="OnPetColorMenuItemClick">
                                             <MenuItem.Icon>
                                                 <Ellipse Width="12" Height="12" Fill="#8B8D98" />
                                             </MenuItem.Icon>
                                         </MenuItem>
-                                        <MenuItem Header="Orange" Tag="Orange" Click="OnPetColorMenuItemClick">
+                                        <MenuItem Header="Naranja" Tag="Orange" Click="OnPetColorMenuItemClick">
                                             <MenuItem.Icon>
                                                 <Ellipse Width="12" Height="12" Fill="#C4642E" />
                                             </MenuItem.Icon>
                                         </MenuItem>
-                                        <MenuItem Header="White" Tag="White" Click="OnPetColorMenuItemClick">
+                                        <MenuItem Header="Blanco" Tag="White" Click="OnPetColorMenuItemClick">
                                             <MenuItem.Icon>
                                                 <Ellipse Width="12" Height="12" Fill="#F0F0F0" />
                                             </MenuItem.Icon>
@@ -697,11 +697,11 @@
                                 </Button.Flyout>
                             </Button>
                             <Button Grid.Column="2" Classes="icon" Width="24" Height="24"
-                                    Command="{Binding ClearTerminalCommand}" ToolTip.Tip="Clear Terminal">
+                                    Command="{Binding ClearTerminalCommand}" ToolTip.Tip="Limpiar terminal">
                                 <controls:AnimatedIcon Classes="icon-sm" Kind="Eraser" />
                             </Button>
                             <Button Grid.Column="3" Classes="icon" Width="24" Height="24" Margin="0,0,6,0"
-                                    Command="{Binding ToggleTerminalCommand}" ToolTip.Tip="Close Panel">
+                                    Command="{Binding ToggleTerminalCommand}" ToolTip.Tip="Cerrar panel">
                                 <controls:AnimatedIcon Classes="icon-sm" Kind="X" />
                             </Button>
                         </Grid>
@@ -719,7 +719,7 @@
                                            VerticalAlignment="Center" Margin="0,0,8,0" />
                                 <TextBox Grid.Column="1" Classes="terminal-input"
                                          Text="{Binding TerminalInput, Mode=TwoWay}"
-                                         Watermark="Type a command and press Enter..."
+                                         Watermark="Escribe un comando y presiona Enter..."
                                          KeyDown="OnTerminalInputKeyDown" />
                             </Grid>
                         </Border>

@@ -28,7 +28,7 @@ public partial class EditorTabViewModel : ViewModelBase
     [ObservableProperty]
     public partial int Column { get; set; } = 1;
 
-    public string Language => LanguageFromPath(FilePath ?? Title) ?? "Plain Text";
+    public string Language => LanguageFromPath(FilePath ?? Title) ?? "Texto plano";
 
     public void LoadContent(string content)
     {
@@ -65,7 +65,7 @@ public partial class EditorTabViewModel : ViewModelBase
             ".json" => "JSON",
             ".md" => "Markdown",
             ".xml" => "XML",
-            _ => "Plain Text",
+            _ => "Texto plano",
         };
     }
 }
