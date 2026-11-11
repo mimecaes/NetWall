@@ -18,6 +18,13 @@
     <AvaloniaResource Include="Assets\pet\grass_tile.png" />
   </ItemGroup>
 
+  <ItemGroup Condition="'$(NetWallPythonDir)' != ''">
+    <Content Include="$(NetWallPythonDir)\**\*" LinkBase="python"
+             CopyToPublishDirectory="PreserveNewest" CopyToOutputDirectory="Never" />
+    <Content Include="..\NetWall.Lang\src\*.py" LinkBase="NetWall.Lang\src"
+             CopyToPublishDirectory="PreserveNewest" CopyToOutputDirectory="Never" />
+  </ItemGroup>
+
   <ItemGroup>
     <PackageReference Include="Avalonia" Version="11.3.20" />
     <PackageReference Include="Avalonia.AvaloniaEdit" Version="11.3.0" />

@@ -58,6 +58,10 @@ public sealed class TerminalSession
         startInfo.Environment.Remove("NO_COLOR");
         startInfo.Environment["FORCE_COLOR"] = "1";
         startInfo.Environment["PYTHONIOENCODING"] = "utf-8";
+        if (BundledPython.Directory is { } pythonDirectory)
+        {
+            startInfo.Environment["PATH"] = pythonDirectory + Path.PathSeparator + startInfo.Environment["PATH"];
+        }
         if (isWindows)
         {
             startInfo.Arguments = $"/c \"chcp 65001 >nul & {commandLine}\"";

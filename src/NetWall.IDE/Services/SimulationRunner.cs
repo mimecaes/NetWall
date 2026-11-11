@@ -56,7 +56,7 @@ public static class SimulationRunner
         CancellationToken token = default)
         where T : class
     {
-        var startInfo = new ProcessStartInfo("python")
+        var startInfo = new ProcessStartInfo(BundledPython.Executable)
         {
             ArgumentList = { cliPath, filePath, mode },
             RedirectStandardOutput = true,
