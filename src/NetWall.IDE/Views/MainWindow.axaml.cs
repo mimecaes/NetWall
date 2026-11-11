@@ -33,6 +33,8 @@ public partial class MainWindow : Window
     private bool _exitingSimulation;
     private bool _enteringChallenge;
     private bool _exitingChallenge;
+    private bool _enteringClass;
+    private bool _exitingClass;
     private IReadOnlyList<HelpyField> _fields = [];
     private int _helpyVersion;
     private bool _celebrating;
@@ -48,9 +50,11 @@ public partial class MainWindow : Window
         CodeEditor.TextArea.TextView.BackgroundRenderers.Add(_indentRainbowRenderer);
         CodeEditor.TextArea.TextView.LineTransformers.Add(_syntaxColorizer);
         CodeEditor.TextArea.AddHandler(KeyDownEvent, OnEditorKeyDown, RoutingStrategies.Tunnel);
+        AddHandler(PointerPressedEvent, OnWindowPointerPressed, RoutingStrategies.Tunnel, true);
         TerminalScrollViewer.AddHandler(AnsiTextBlock.LinkClickedEvent, OnTerminalLinkClicked);
         ThemeManager.ThemeApplied += OnThemeApplied;
         Closed += (_, _) => ThemeManager.ThemeApplied -= OnThemeApplied;
+        Closed += (_, _) => ViewModel?.Classroom.LeaveAll();
         SizeChanged += OnWindowSizeChanged;
         KeyDown += OnWindowKeyDown;
         SnippetHelpy.Paused = true;
@@ -145,6 +149,36 @@ public partial class MainWindow : Window
         _enteringChallenge = false;
     }
 
+    private async void OnClassModeClick(object? sender, RoutedEventArgs e)
+    {
+        if (_enteringClass || ViewModel is not { } viewModel)
+        {
+            return;
+        }
+
+        _enteringClass = true;
+        await ClassCurtain.PlayAsync(() => viewModel.IsClassMode = true);
+        _enteringClass = false;
+    }
+
+    private void OnExitClassClick(object? sender, RoutedEventArgs e) => _ = ExitClassAsync();
+
+    private async Task ExitClassAsync()
+    {
+        if (_enteringClass || _exitingClass || ViewModel is not { IsClassMode: true } viewModel)
+        {
+            return;
+        }
+
+        _exitingClass = true;
+        await ClassCurtain.PlayExitAsync(() =>
+        {
+            viewModel.Classroom.LeaveAll();
+            viewModel.IsClassMode = false;
+        });
+        _exitingClass = false;
+    }
+
     private void OnExitChallengeClick(object? sender, RoutedEventArgs e) => _ = ExitChallengeAsync();
 
     private async Task ExitChallengeAsync()
@@ -169,6 +203,11 @@ public partial class MainWindow : Window
         else if (e.Key == Key.Escape && ViewModel is { IsChallengeMode: true })
         {
             _ = ExitChallengeAsync();
+            e.Handled = true;
+        }
+        else if (e.Key == Key.Escape && ViewModel is { IsClassMode: true })
+        {
+            _ = ExitClassAsync();
             e.Handled = true;
         }
     }
@@ -435,10 +474,19 @@ public partial class MainWindow : Window
 
     private Task<bool> OnRequestDeleteConfirmation(FileTreeNode node)
     {
-        var message = node.IsFolder
-            ? $"Delete the folder '{node.Name}' and everything inside it? This cannot be undone."
-            : $"Delete '{node.Name}'? This cannot be undone.";
-        return ConfirmDialog.AskAsync(this, message);
+        return node.IsFolder
+            ? ConfirmDialog.AskAsync(this, "¿Eliminar carpeta?", "Se eliminará ", node.Name,
+                " y todo lo que contiene. Esta acción no se puede deshacer.")
+            : ConfirmDialog.AskAsync(this, "¿Eliminar archivo?", "Se eliminará ", node.Name,
+                ". Esta acción no se puede deshacer.");
+    }
+
+    private void OnTreeRowTapped(object? sender, TappedEventArgs e)
+    {
+        if (sender is Control { DataContext: FileTreeNode { IsFolder: true, IsEditing: false } node })
+        {
+            node.IsExpanded = !node.IsExpanded;
+        }
     }
 
     private Task<bool> OnRequestRiskyOpenConfirmation(FileTreeNode node, FileOpenRisk risk, long size)
@@ -472,7 +520,28 @@ public partial class MainWindow : Window
     {
         if (sender is TextBox { DataContext: FileTreeNode node })
         {
-            ViewModel?.CommitRenameCommand.Execute(node);
+            ViewModel?.CancelRenameCommand.Execute(node);
+        }
+    }
+
+    private void OnRenameTextBoxPropertyChanged(object? sender, AvaloniaPropertyChangedEventArgs e)
+    {
+        if (e.Property == IsVisibleProperty && e.NewValue is true && sender is TextBox box)
+        {
+            Dispatcher.UIThread.Post(() =>
+            {
+                box.Focus();
+                box.SelectAll();
+            }, DispatcherPriority.Input);
+        }
+    }
+
+    private void OnWindowPointerPressed(object? sender, PointerPressedEventArgs e)
+    {
+        if (FocusManager?.GetFocusedElement() is TextBox { DataContext: FileTreeNode { IsEditing: true } node } box
+            && !(e.Source is Visual source && (source == box || box.IsVisualAncestorOf(source))))
+        {
+            ViewModel?.CancelRenameCommand.Execute(node);
         }
     }
 

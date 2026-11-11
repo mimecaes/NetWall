@@ -107,6 +107,47 @@
             <Setter Property="HorizontalContentAlignment" Value="Center" />
             <Setter Property="VerticalContentAlignment" Value="Center" />
         </Style>
+        <Style Selector="RadioButton.sim-filter">
+            <Setter Property="Background" Value="{DynamicResource SurfaceBackgroundBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+            <Setter Property="Foreground" Value="{DynamicResource TextMutedBrush}" />
+            <Setter Property="FontSize" Value="11" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="Template">
+                <ControlTemplate>
+                    <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="1" CornerRadius="10" Padding="9,2">
+                        <ContentPresenter Content="{TemplateBinding Content}"
+                                          Foreground="{TemplateBinding Foreground}"
+                                          FontSize="{TemplateBinding FontSize}" />
+                    </Border>
+                </ControlTemplate>
+            </Setter>
+            <Setter Property="Transitions">
+                <Transitions>
+                    <BrushTransition Property="Background" Duration="0:0:0.15" />
+                    <BrushTransition Property="BorderBrush" Duration="0:0:0.15" />
+                    <BrushTransition Property="Foreground" Duration="0:0:0.15" />
+                </Transitions>
+            </Setter>
+        </Style>
+        <Style Selector="RadioButton.sim-filter:pointerover">
+            <Setter Property="Background" Value="{DynamicResource HoverBrush}" />
+            <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
+        </Style>
+        <Style Selector="RadioButton.sim-filter:checked">
+            <Setter Property="Background" Value="{DynamicResource ActiveBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}" />
+            <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
+        </Style>
+        <Style Selector="RadioButton.sim-filter.allowed:checked">
+            <Setter Property="BorderBrush" Value="{DynamicResource RunGreenBrush}" />
+            <Setter Property="Foreground" Value="{DynamicResource RunGreenBrush}" />
+        </Style>
+        <Style Selector="RadioButton.sim-filter.blocked:checked">
+            <Setter Property="BorderBrush" Value="{DynamicResource StopRedBrush}" />
+            <Setter Property="Foreground" Value="{DynamicResource StopRedBrush}" />
+        </Style>
         <Style Selector="Border.sim-chip">
             <Setter Property="Background" Value="{DynamicResource SurfaceBackgroundBrush}" />
             <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
@@ -608,7 +649,7 @@
                 <RowDefinition Height="2*" MinHeight="130" />
             </Grid.RowDefinitions>
 
-            <Grid Grid.Row="0" ColumnDefinitions="Auto,Auto,*,Auto,Auto,Auto,Auto,Auto" Margin="12,6,10,6">
+            <Grid Grid.Row="0" ColumnDefinitions="Auto,Auto,*,Auto,Auto,Auto,Auto" Margin="12,6,10,6">
                 <TextBlock Grid.Column="0" Classes="sim-mono" Foreground="{DynamicResource TextMutedBrush}"
                            VerticalAlignment="Center" Text="{Binding FileName}" />
                 <StackPanel Grid.Column="1" Orientation="Horizontal" Margin="6,0,0,0" IsVisible="{Binding !HasMessage}">
@@ -633,15 +674,11 @@
                         Click="OnPlayClick">
                     <controls:AnimatedIcon Name="PlayIcon" Classes="icon-sm" Kind="Play" />
                 </Button>
-                <Button Grid.Column="5" Classes="icon sim-control" ToolTip.Tip="Siguiente paquete" Click="OnStepClick"
-                        IsVisible="{Binding !IsBuilder}">
-                    <controls:AnimatedIcon Classes="icon-sm" Kind="SkipForward" />
-                </Button>
-                <Button Grid.Column="6" Classes="icon sim-control" ToolTip.Tip="{Binding ResetTip}"
+                <Button Grid.Column="5" Classes="icon sim-control" ToolTip.Tip="{Binding ResetTip}"
                         Click="OnResetClick">
                     <controls:AnimatedIcon Classes="icon-sm" Kind="RotateCcw" />
                 </Button>
-                <Button Grid.Column="7" Name="SpeedButton" Classes="sim-speed" Margin="8,0,0,0" Content="x1"
+                <Button Grid.Column="6" Name="SpeedButton" Classes="sim-speed" Margin="8,0,0,0" Content="x1"
                         ToolTip.Tip="Velocidad" Click="OnSpeedClick" />
             </Grid>
 
@@ -658,9 +695,19 @@
                 <Border Grid.Column="0" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,1,0,0"
                         Padding="12,8,6,8">
                     <DockPanel>
-                        <TextBlock DockPanel.Dock="Top" Classes="sim-label" Text="Registro" />
+                        <Grid DockPanel.Dock="Top" ColumnDefinitions="*,Auto" Margin="0,0,8,6">
+                            <TextBlock Classes="sim-label" Margin="0" VerticalAlignment="Center" Text="Registro" />
+                            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="4">
+                                <RadioButton Classes="sim-filter" GroupName="LogFilter" Content="Todos" IsChecked="True"
+                                             Tag="{x:Static vm:LogFilter.All}" IsCheckedChanged="OnLogFilterChanged" />
+                                <RadioButton Classes="sim-filter allowed" GroupName="LogFilter" Content="Permitidos"
+                                             Tag="{x:Static vm:LogFilter.Allowed}" IsCheckedChanged="OnLogFilterChanged" />
+                                <RadioButton Classes="sim-filter blocked" GroupName="LogFilter" Content="Bloqueados"
+                                             Tag="{x:Static vm:LogFilter.Blocked}" IsCheckedChanged="OnLogFilterChanged" />
+                            </StackPanel>
+                        </Grid>
                         <ScrollViewer Name="LogScroll">
-                            <ItemsControl ItemsSource="{Binding Entries}">
+                            <ItemsControl ItemsSource="{Binding VisibleEntries}">
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate x:DataType="vm:SimulationEntry">
                                         <Border Classes="sim-entry" Classes.selected="{Binding IsSelected}"

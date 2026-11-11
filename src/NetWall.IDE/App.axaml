@@ -19,6 +19,9 @@
                 <ResourceInclude Source="avares://NetWall.IDE/Themes/Aurora.axaml" />
                 <ResourceInclude Source="avares://NetWall.IDE/Themes/ChallengePalette.axaml" />
             </ResourceDictionary.MergedDictionaries>
+            <StaticResource x:Key="ComboBoxDropDownBackground" ResourceKey="PanelBackgroundBrush" />
+            <StaticResource x:Key="ComboBoxDropDownBorderBrush" ResourceKey="BorderBrush" />
+            <CornerRadius x:Key="OverlayCornerRadius">10</CornerRadius>
         </ResourceDictionary>
     </Application.Resources>
 

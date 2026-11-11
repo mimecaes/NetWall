@@ -13,6 +13,13 @@ using NetWall.IDE.Services;
 
 namespace NetWall.IDE.ViewModels;
 
+public enum LogFilter
+{
+    All,
+    Allowed,
+    Blocked,
+}
+
 public enum RuleStepState
 {
     Pending,
@@ -104,11 +111,33 @@ public partial class SimulationViewModel : ViewModelBase
     private bool _updatingCatalog;
     private int _nextDeviceId;
 
+    public SimulationViewModel()
+    {
+        Entries.CollectionChanged += (_, _) =>
+        {
+            if (Filter != LogFilter.All)
+            {
+                OnPropertyChanged(nameof(VisibleEntries));
+            }
+        };
+    }
+
     public SimulationResult? Result { get; private set; }
 
     public IReadOnlyList<SimulatedPacket> Packets => Result?.Packets ?? [];
 
     public ObservableCollection<SimulationEntry> Entries { get; } = [];
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(VisibleEntries))]
+    public partial LogFilter Filter { get; set; }
+
+    public IEnumerable<SimulationEntry> VisibleEntries => Filter switch
+    {
+        LogFilter.Allowed => Entries.Where(entry => entry.IsAllowed),
+        LogFilter.Blocked => Entries.Where(entry => !entry.IsAllowed),
+        _ => Entries,
+    };
 
     public ObservableCollection<RuleStep> Steps { get; } = [];
 
@@ -294,7 +323,7 @@ public partial class SimulationViewModel : ViewModelBase
             if (!IsRerun)
             {
                 return $"¡Hola! Tengo {Packets.Count} {(Packets.Count == 1 ? "paquete listo" : "paquetes listos")}. "
-                       + "Pulsa ▶ para empezar o ⏭ para verlos uno por uno.";
+                       + "Pulsa ▶ para empezar.";
             }
 
             var active = ActiveRules.Count();

@@ -27,6 +27,7 @@ public sealed class NodeIconConverter : IMultiValueConverter
         return Path.GetExtension(name).ToLowerInvariant() switch
         {
             ".json" => LucideIconKind.FileBraces,
+            ".nwclase" => LucideIconKind.GraduationCap,
             ".md" or ".txt" => LucideIconKind.FileText,
             ".nw" or ".cs" or ".xaml" or ".axaml" or ".xml"
                 or ".yml" or ".yaml" or ".py" or ".js" or ".ts" or ".html" or ".css" => LucideIconKind.FileCode,
