@@ -1,0 +1,796 @@
+using System;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.Linq;
+using System.Threading.Tasks;
+using Avalonia;
+using Avalonia.Controls;
+using Avalonia.Input;
+using Avalonia.Interactivity;
+using Avalonia.Platform.Storage;
+using Avalonia.Threading;
+using Avalonia.VisualTree;
+using AvaloniaEdit.Document;
+using NetWall.IDE.Controls;
+using NetWall.IDE.Models;
+using NetWall.IDE.Services;
+using NetWall.IDE.Themes;
+using NetWall.IDE.ViewModels;
+using NetWall.IDE.Views.Dialogs;
+
+namespace NetWall.IDE.Views;
+
+public partial class MainWindow : Window
+{
+    private bool _suppressEditorTextChanged;
+    private bool _closeConfirmed;
+    private bool _closePromptOpen;
+    private readonly IndentGuideRenderer _indentGuideRenderer = new();
+    private readonly IndentRainbowRenderer _indentRainbowRenderer = new();
+    private readonly NetWallSyntaxColorizer _syntaxColorizer = new();
+    private DispatcherTimer? _indentFadeTimer;
+    private double? _gripStartY;
+    private double _gripStartHeight;
+    private bool _enteringSimulation;
+    private bool _exitingSimulation;
+    private bool _enteringChallenge;
+    private bool _exitingChallenge;
+    private bool _enteringClass;
+    private bool _exitingClass;
+    private IReadOnlyList<HelpyField> _fields = [];
+    private int _helpyVersion;
+    private bool _celebrating;
+    private GridLength _sidebarWidth = new(260);
+
+    public MainWindow()
+    {
+        InitializeComponent();
+        DataContextChanged += OnDataContextChanged;
+        CodeEditor.TextChanged += OnEditorTextChanged;
+        CodeEditor.TextArea.Caret.PositionChanged += OnEditorCaretPositionChanged;
+        CodeEditor.TextArea.TextView.BackgroundRenderers.Add(_indentGuideRenderer);
+        CodeEditor.TextArea.TextView.BackgroundRenderers.Add(_indentRainbowRenderer);
+        CodeEditor.TextArea.TextView.LineTransformers.Add(_syntaxColorizer);
+        CodeEditor.TextArea.AddHandler(KeyDownEvent, OnEditorKeyDown, RoutingStrategies.Tunnel);
+        AddHandler(PointerPressedEvent, OnWindowPointerPressed, RoutingStrategies.Tunnel, true);
+        TerminalScrollViewer.AddHandler(AnsiTextBlock.LinkClickedEvent, OnTerminalLinkClicked);
+        ThemeManager.ThemeApplied += OnThemeApplied;
+        Closed += (_, _) => ThemeManager.ThemeApplied -= OnThemeApplied;
+        Closed += (_, _) => ViewModel?.Classroom.LeaveAll();
+        SizeChanged += OnWindowSizeChanged;
+        KeyDown += OnWindowKeyDown;
+        SnippetHelpy.Paused = true;
+    }
+
+    private void OnPanelGripPressed(object? sender, PointerPressedEventArgs e)
+    {
+        if (ViewModel is null || !e.GetCurrentPoint(PanelGrip).Properties.IsLeftButtonPressed)
+        {
+            return;
+        }
+
+        _gripStartY = e.GetPosition(this).Y;
+        _gripStartHeight = ViewModel.PanelHeight;
+        e.Pointer.Capture(PanelGrip);
+        PanelGrip.Classes.Add("dragging");
+        e.Handled = true;
+    }
+
+    private void OnPanelGripMoved(object? sender, PointerEventArgs e)
+    {
+        if (_gripStartY is { } start && ViewModel is { } viewModel)
+        {
+            viewModel.ResizePanel(_gripStartHeight + start - e.GetPosition(this).Y);
+        }
+    }
+
+    private void OnPanelGripReleased(object? sender, PointerReleasedEventArgs e)
+    {
+        _gripStartY = null;
+        e.Pointer.Capture(null);
+        PanelGrip.Classes.Remove("dragging");
+    }
+
+    private void OnPanelGripDoubleTapped(object? sender, TappedEventArgs e) => ViewModel?.ResetPanelHeight();
+
+    private async void OnSimulationModeClick(object? sender, RoutedEventArgs e)
+    {
+        if (_enteringSimulation || ViewModel is not { } viewModel)
+        {
+            return;
+        }
+
+        _enteringSimulation = true;
+        await EnterSimulationAsync(viewModel);
+        _enteringSimulation = false;
+    }
+
+    private async Task EnterSimulationAsync(MainViewModel viewModel)
+    {
+        var problem = await viewModel.PrepareSimulationAsync();
+        var choice = await SimulationModeDialog.ShowAsync(this, Pet.Color, problem, viewModel.IsFolderOpen);
+        if (choice == SimulationChoice.OpenFolder)
+        {
+            viewModel.OpenFolderCommand.Execute(null);
+            return;
+        }
+
+        if (choice == SimulationChoice.None)
+        {
+            return;
+        }
+
+        SimulationView.SetHelpyColor(Pet.Color);
+        var simulation = viewModel.RunProgramSimulationAsync();
+        await Intro.PlayAsync(simulation, Pet.Color, () => viewModel.IsSimulationMode = true,
+            () =>
+            {
+                if (choice == SimulationChoice.Program)
+                {
+                    viewModel.ShowProgramSimulation(simulation.Result);
+                }
+                else
+                {
+                    viewModel.ShowNetworkBuilder(simulation.Result);
+                }
+            });
+    }
+
+    private void OnExitSimulationClick(object? sender, RoutedEventArgs e) => _ = ExitSimulationAsync();
+
+    private async void OnChallengeModeClick(object? sender, RoutedEventArgs e)
+    {
+        if (_enteringChallenge || ViewModel is not { } viewModel)
+        {
+            return;
+        }
+
+        _enteringChallenge = true;
+        ChallengeView.SetHelpyColor(Pet.Color);
+        await ChallengeCurtain.PlayAsync(Pet.Color, viewModel.EnterChallengeMode);
+        _enteringChallenge = false;
+    }
+
+    private async void OnClassModeClick(object? sender, RoutedEventArgs e)
+    {
+        if (_enteringClass || ViewModel is not { } viewModel)
+        {
+            return;
+        }
+
+        _enteringClass = true;
+        await ClassCurtain.PlayAsync(() => viewModel.IsClassMode = true);
+        _enteringClass = false;
+    }
+
+    private void OnExitClassClick(object? sender, RoutedEventArgs e) => _ = ExitClassAsync();
+
+    private async Task ExitClassAsync()
+    {
+        if (_enteringClass || _exitingClass || ViewModel is not { IsClassMode: true } viewModel)
+        {
+            return;
+        }
+
+        _exitingClass = true;
+        await ClassCurtain.PlayExitAsync(() =>
+        {
+            viewModel.Classroom.LeaveAll();
+            viewModel.IsClassMode = false;
+        });
+        _exitingClass = false;
+    }
+
+    private void OnExitChallengeClick(object? sender, RoutedEventArgs e) => _ = ExitChallengeAsync();
+
+    private async Task ExitChallengeAsync()
+    {
+        if (_enteringChallenge || _exitingChallenge || ViewModel is not { IsChallengeMode: true } viewModel)
+        {
+            return;
+        }
+
+        _exitingChallenge = true;
+        await ChallengeCurtain.PlayExitAsync(Pet.Color, viewModel.ExitChallengeMode);
+        _exitingChallenge = false;
+    }
+
+    private void OnWindowKeyDown(object? sender, KeyEventArgs e)
+    {
+        if (e.Key == Key.Escape && ViewModel is { IsSimulationMode: true })
+        {
+            _ = ExitSimulationAsync();
+            e.Handled = true;
+        }
+        else if (e.Key == Key.Escape && ViewModel is { IsChallengeMode: true })
+        {
+            _ = ExitChallengeAsync();
+            e.Handled = true;
+        }
+        else if (e.Key == Key.Escape && ViewModel is { IsClassMode: true })
+        {
+            _ = ExitClassAsync();
+            e.Handled = true;
+        }
+    }
+
+    private async Task ExitSimulationAsync()
+    {
+        if (_enteringSimulation || _exitingSimulation || ViewModel is not { IsSimulationMode: true } viewModel)
+        {
+            return;
+        }
+
+        _exitingSimulation = true;
+        await Intro.PlayExitAsync(Pet.Color, viewModel.ExitSimulationMode);
+        _exitingSimulation = false;
+    }
+
+    protected override void OnPropertyChanged(AvaloniaPropertyChangedEventArgs change)
+    {
+        base.OnPropertyChanged(change);
+        if ((change.Property == WindowStateProperty || change.Property == OffScreenMarginProperty)
+            && Content is Control content)
+        {
+            content.Margin = WindowState == WindowState.Maximized ? OffScreenMargin : default;
+        }
+    }
+
+    private void OnWindowSizeChanged(object? sender, SizeChangedEventArgs e)
+    {
+        if (ViewModel is { } viewModel)
+        {
+            viewModel.AvailableHeight = e.NewSize.Height;
+        }
+    }
+
+    private async void OnTabCloseClick(object? sender, RoutedEventArgs e)
+    {
+        if (sender is not Button button || button.Tag is not EditorTabViewModel tab)
+        {
+            return;
+        }
+
+        if (ViewModel is not { } vm || !await vm.ConfirmDiscardAsync([tab]))
+        {
+            return;
+        }
+
+        var tabBorder = button.FindAncestorOfType<Border>();
+        if (tabBorder is not null)
+        {
+            tabBorder.Classes.Add("closing");
+            await Task.Delay(200);
+        }
+
+        vm.RemoveTab(tab);
+    }
+
+    protected override void OnClosing(WindowClosingEventArgs e)
+    {
+        base.OnClosing(e);
+        if (_closeConfirmed || ViewModel is not { DirtyTabCount: > 0 })
+        {
+            return;
+        }
+
+        e.Cancel = true;
+        _ = ConfirmCloseAsync();
+    }
+
+    private async Task ConfirmCloseAsync()
+    {
+        if (_closePromptOpen || ViewModel is not { } vm)
+        {
+            return;
+        }
+
+        _closePromptOpen = true;
+        try
+        {
+            if (await vm.ConfirmDiscardAsync(vm.OpenTabs.ToList()))
+            {
+                _closeConfirmed = true;
+                Close();
+            }
+        }
+        finally
+        {
+            _closePromptOpen = false;
+        }
+    }
+
+    private MainViewModel? ViewModel => DataContext as MainViewModel;
+
+    private void OnDataContextChanged(object? sender, EventArgs e)
+    {
+        if (ViewModel is { } vm)
+        {
+            vm.RequestOpenFolder += OnRequestOpenFolder;
+            vm.RequestCodeAssistant += OnRequestCodeAssistant;
+            vm.RequestSaveAs += OnRequestSaveAs;
+            vm.RequestSaveAsPath += PickSavePathAsync;
+            vm.RequestUnsavedChoice += OnRequestUnsavedChoice;
+            vm.RequestDeleteConfirmation += OnRequestDeleteConfirmation;
+            vm.RequestRiskyOpenConfirmation += OnRequestRiskyOpenConfirmation;
+            vm.PropertyChanged += OnViewModelPropertyChanged;
+            vm.TerminalUpdated += OnTerminalUpdated;
+            vm.RequestRevealLine += OnRequestRevealLine;
+            vm.ExtensionToggled += OnExtensionToggled;
+            vm.RequestCatGallery += () => _ = CatGallery.ShowAsync();
+            _indentRainbowRenderer.Opacity = vm.IsIndentRainbowEnabled ? 1.0 : 0.0;
+            UpdateSidebarColumn();
+        }
+    }
+
+    private void UpdateSidebarColumn()
+    {
+        var column = WorkbenchGrid.ColumnDefinitions[0];
+        if (ViewModel?.IsSidebarVisible == false)
+        {
+            if (column.Width.Value > 0)
+            {
+                _sidebarWidth = column.Width;
+            }
+
+            column.MinWidth = 0;
+            column.Width = new GridLength(0);
+            return;
+        }
+
+        column.MinWidth = 160;
+        column.Width = _sidebarWidth;
+    }
+
+    private void OnExtensionToggled(ExtensionInfo extension)
+    {
+        if (extension.Id == "indent-rainbow")
+        {
+            AnimateIndentRainbowOpacity(extension.IsEnabled);
+        }
+    }
+
+    private void AnimateIndentRainbowOpacity(bool enabled)
+    {
+        _indentFadeTimer?.Stop();
+
+        var start = _indentRainbowRenderer.Opacity;
+        var target = enabled ? 1.0 : 0.0;
+        var startedAt = DateTime.UtcNow;
+        var duration = TimeSpan.FromMilliseconds(300);
+
+        _indentFadeTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(16) };
+        _indentFadeTimer.Tick += (_, _) =>
+        {
+            var progress = Math.Min(1.0, (DateTime.UtcNow - startedAt).TotalMilliseconds / duration.TotalMilliseconds);
+            _indentRainbowRenderer.Opacity = start + (target - start) * progress;
+            CodeEditor.TextArea.TextView.InvalidateVisual();
+
+            if (progress >= 1.0)
+            {
+                _indentFadeTimer?.Stop();
+            }
+        };
+        _indentFadeTimer.Start();
+    }
+
+    private void OnViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(MainViewModel.SelectedTab))
+        {
+            _suppressEditorTextChanged = true;
+            _syntaxColorizer.IsEnabled = ViewModel?.SelectedTab?.Language == "NetWall";
+            CodeEditor.Text = ViewModel?.SelectedTab?.Content ?? string.Empty;
+            _suppressEditorTextChanged = false;
+        }
+        else if (e.PropertyName == nameof(MainViewModel.IsHelpModeEnabled))
+        {
+            UpdateHelpy();
+        }
+        else if (e.PropertyName == nameof(MainViewModel.IsSidebarVisible))
+        {
+            UpdateSidebarColumn();
+        }
+    }
+
+    private void OnTerminalUpdated() =>
+        Dispatcher.UIThread.Post(TerminalScrollViewer.ScrollToEnd, DispatcherPriority.Background);
+
+    private void OnTerminalLinkClicked(object? sender, TerminalLinkEventArgs e)
+    {
+        if (!e.Uri.IsFile)
+        {
+            return;
+        }
+
+        // Diagnostic links look like file:///C:/project/firewall.nw#L12.
+        var fragment = e.Uri.Fragment.TrimStart('#').TrimStart('L');
+        var line = int.TryParse(fragment, out var parsed) ? parsed : 1;
+        if (ViewModel is { } vm)
+        {
+            _ = vm.OpenFileAtLineAsync(e.Uri.LocalPath, line);
+        }
+    }
+
+    private void OnRequestRevealLine(int line)
+    {
+        var lineNumber = Math.Clamp(line, 1, Math.Max(1, CodeEditor.Document.LineCount));
+        CodeEditor.TextArea.Caret.Location = new AvaloniaEdit.Document.TextLocation(lineNumber, 1);
+        CodeEditor.ScrollToLine(lineNumber);
+        CodeEditor.TextArea.Focus();
+    }
+
+    private void OnEditorTextChanged(object? sender, EventArgs e)
+    {
+        if (_suppressEditorTextChanged)
+        {
+            return;
+        }
+
+        Pet.NotifyTyping();
+
+        if (ViewModel?.SelectedTab is { } tab)
+        {
+            tab.Content = CodeEditor.Text;
+        }
+    }
+
+    private void OnEditorCaretPositionChanged(object? sender, EventArgs e)
+    {
+        Pet.NotifyActivity();
+
+        if (ViewModel?.SelectedTab is { } tab)
+        {
+            tab.Line = CodeEditor.TextArea.Caret.Line;
+            tab.Column = CodeEditor.TextArea.Caret.Column;
+        }
+
+        UpdateHelpy();
+    }
+
+    private async void OnRequestOpenFolder()
+    {
+        var folders = await StorageProvider.OpenFolderPickerAsync(new FolderPickerOpenOptions
+        {
+            Title = "Abrir carpeta",
+            AllowMultiple = false,
+        });
+
+        if (folders.FirstOrDefault()?.TryGetLocalPath() is { } path)
+        {
+            ViewModel?.LoadFolder(path);
+        }
+    }
+
+    private async void OnRequestCodeAssistant()
+    {
+        var projectRoot = ViewModel is { IsFolderOpen: true } viewModel ? viewModel.RootPath : null;
+        var code = await CodeAssistantDialog.ShowAsync(this, Pet.Color, ViewModel?.SelectedTab?.FilePath, projectRoot,
+            CodeEditor.Text);
+        if (code is not null)
+        {
+            InsertAtCaret(code);
+        }
+    }
+
+    private void InsertAtCaret(string code)
+    {
+        var document = CodeEditor.Document;
+        var caret = CodeEditor.TextArea.Caret;
+        var line = document.GetLineByNumber(caret.Line);
+        var newLine = TextUtilities.GetNewLineFromDocument(document, caret.Line);
+        var indent = document.GetText(TextUtilities.GetLeadingWhitespace(document, line));
+        var beforeCaret = document.GetText(line.Offset, CodeEditor.CaretOffset - line.Offset);
+        var afterCaret = document.GetText(CodeEditor.CaretOffset, line.EndOffset - CodeEditor.CaretOffset);
+
+        var text = string.Join(newLine + indent, code.TrimEnd('\n').Split('\n'));
+        if (!string.IsNullOrWhiteSpace(afterCaret))
+        {
+            text += newLine;
+        }
+        if (!string.IsNullOrWhiteSpace(beforeCaret))
+        {
+            text = newLine + indent + text;
+        }
+        else if (beforeCaret.Length < indent.Length)
+        {
+            text = indent[beforeCaret.Length..] + text;
+        }
+
+        document.Insert(CodeEditor.CaretOffset, text);
+        CodeEditor.TextArea.Focus();
+    }
+
+    private async void OnRequestSaveAs(EditorTabViewModel tab)
+    {
+        if (await PickSavePathAsync(tab) is { } path)
+        {
+            ViewModel?.SaveTab(tab, path);
+        }
+    }
+
+    private async Task<string?> PickSavePathAsync(EditorTabViewModel tab)
+    {
+        var file = await StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
+        {
+            Title = "Guardar archivo",
+            SuggestedFileName = tab.Title,
+        });
+
+        return file?.TryGetLocalPath();
+    }
+
+    private Task<UnsavedChoice> OnRequestUnsavedChoice(IReadOnlyList<EditorTabViewModel> tabs)
+    {
+        if (tabs.Count == 1)
+        {
+            return ConfirmDialog.AskUnsavedAsync(this, $"¿Guardar los cambios de '{tabs[0].Title}'?",
+                "Si no los guardas, se perderán.");
+        }
+
+        var names = string.Join(", ", tabs.Select(t => $"'{t.Title}'"));
+        return ConfirmDialog.AskUnsavedAsync(this, $"¿Guardar los cambios de {tabs.Count} archivos?",
+            $"Tienen cambios sin guardar: {names}. Si no los guardas, se perderán.");
+    }
+
+    private Task<bool> OnRequestDeleteConfirmation(FileTreeNode node)
+    {
+        var (title, message) = node.IsFolder
+            ? ($"¿Eliminar la carpeta '{node.Name}'?", "Se eliminará con todo lo que contiene. Esta acción no se puede deshacer.")
+            : ($"¿Eliminar '{node.Name}'?", "Esta acción no se puede deshacer.");
+        return ConfirmDialog.AskAsync(this, title, message, "Eliminar", DialogTone.Danger);
+    }
+
+    private void OnTreeRowTapped(object? sender, TappedEventArgs e)
+    {
+        if (sender is Control { DataContext: FileTreeNode { IsFolder: true, IsEditing: false } node })
+        {
+            node.IsExpanded = !node.IsExpanded;
+        }
+    }
+
+    private Task<bool> OnRequestRiskyOpenConfirmation(FileTreeNode node, FileOpenRisk risk, long size)
+    {
+        var (title, message) = risk == FileOpenRisk.Binary
+            ? ($"'{node.Name}' parece un archivo binario", "Es posible que no se vea bien en el editor. ¿Quieres abrirlo de todas formas?")
+            : ($"'{node.Name}' pesa {FileOpenCheck.FormatSize(size)}",
+                "Los archivos grandes pueden volver lento el editor o dejarlo sin responder un momento. ¿Quieres abrirlo de todas formas?");
+        return ConfirmDialog.AskAsync(this, title, message, "Abrir de todas formas", DialogTone.Warning);
+    }
+
+    private void OnRenameTextBoxKeyDown(object? sender, KeyEventArgs e)
+    {
+        if (sender is not TextBox { DataContext: FileTreeNode node })
+        {
+            return;
+        }
+
+        if (e.Key == Key.Enter)
+        {
+            ViewModel?.CommitRenameCommand.Execute(node);
+            e.Handled = true;
+        }
+        else if (e.Key == Key.Escape)
+        {
+            ViewModel?.CancelRenameCommand.Execute(node);
+            e.Handled = true;
+        }
+    }
+
+    private void OnRenameTextBoxLostFocus(object? sender, RoutedEventArgs e)
+    {
+        if (sender is TextBox { DataContext: FileTreeNode node })
+        {
+            ViewModel?.CancelRenameCommand.Execute(node);
+        }
+    }
+
+    private void OnRenameTextBoxPropertyChanged(object? sender, AvaloniaPropertyChangedEventArgs e)
+    {
+        if (e.Property == IsVisibleProperty && e.NewValue is true && sender is TextBox box)
+        {
+            Dispatcher.UIThread.Post(() =>
+            {
+                box.Focus();
+                box.SelectAll();
+            }, DispatcherPriority.Input);
+        }
+    }
+
+    private void OnWindowPointerPressed(object? sender, PointerPressedEventArgs e)
+    {
+        if (FocusManager?.GetFocusedElement() is TextBox { DataContext: FileTreeNode { IsEditing: true } node } box
+            && !(e.Source is Visual source && (source == box || box.IsVisualAncestorOf(source))))
+        {
+            ViewModel?.CancelRenameCommand.Execute(node);
+        }
+    }
+
+    private void OnTerminalInputKeyDown(object? sender, KeyEventArgs e)
+    {
+        Pet.NotifyActivity();
+
+        if (e.Key == Key.Enter)
+        {
+            ViewModel?.RunTerminalLineCommand.Execute(null);
+            e.Handled = true;
+        }
+    }
+
+    private void OnThemeApplied(object? sender, EventArgs e) => CodeEditor.TextArea.TextView.Redraw();
+
+    private void OnEditorKeyDown(object? sender, KeyEventArgs e)
+    {
+        if (e.Key != Key.Tab || e.KeyModifiers != KeyModifiers.None || ViewModel is not { IsHelpModeEnabled: true }
+            || !CodeEditor.TextArea.StackedInputHandlers.IsEmpty)
+        {
+            return;
+        }
+
+        var document = CodeEditor.Document;
+        var caret = CodeEditor.CaretOffset;
+        var line = document.GetLineByOffset(caret);
+        var word = document.GetText(line.Offset, caret - line.Offset).TrimStart();
+        if (HelpySnippets.Find(word) is not { } snippet)
+        {
+            return;
+        }
+
+        using (document.RunUpdate())
+        {
+            document.Remove(caret - word.Length, word.Length);
+            snippet.Insert(CodeEditor.TextArea);
+        }
+
+        _fields = snippet.Elements.OfType<HelpyField>().ToList();
+        if (_fields.FirstOrDefault()?.Context is { } context)
+        {
+            context.Deactivated += OnSnippetDeactivated;
+        }
+
+        e.Handled = true;
+        UpdateHelpy();
+    }
+
+    private async void OnSnippetDeactivated(object? sender, AvaloniaEdit.Snippets.SnippetEventArgs e)
+    {
+        _fields = [];
+        if (e.Reason != AvaloniaEdit.Snippets.DeactivateReason.ReturnPressed)
+        {
+            UpdateHelpy();
+            return;
+        }
+
+        ShowHelpy("¡Listo! Si quieres otra, escribe la palabra y presiona Tab.", HelpyMood.Happy);
+        var version = _helpyVersion;
+        _celebrating = true;
+        await Task.Delay(2200);
+        _celebrating = false;
+        if (version == _helpyVersion)
+        {
+            UpdateHelpy();
+        }
+    }
+
+    private void UpdateHelpy()
+    {
+        if (ViewModel is not { IsHelpModeEnabled: true })
+        {
+            HideHelpy();
+            return;
+        }
+
+        var caret = CodeEditor.CaretOffset;
+        if (_fields.Count > 0)
+        {
+            if (_fields.FirstOrDefault(field => field.Contains(caret)) is { } field)
+            {
+                ShowHelpy(field.Tip, HelpyMood.Talking);
+            }
+
+            return;
+        }
+
+        var line = CodeEditor.Document.GetLineByOffset(caret);
+        var word = CodeEditor.Document.GetText(line.Offset, caret - line.Offset).TrimStart();
+        if (HelpySnippets.HintFor(word) is { } hint)
+        {
+            ShowHelpy(hint, HelpyMood.Idle);
+        }
+        else if (!_celebrating)
+        {
+            HideHelpy();
+        }
+    }
+
+    private void ShowHelpy(string text, HelpyMood mood)
+    {
+        _helpyVersion++;
+        SnippetHelpy.Paused = false;
+        SnippetTip.Text = text;
+        SnippetHelpy.Mood = mood;
+        SnippetHelper.Classes.Set("shown", true);
+    }
+
+    private void HideHelpy()
+    {
+        SnippetHelper.Classes.Set("shown", false);
+        SnippetHelpy.Mood = HelpyMood.Idle;
+        SnippetHelpy.Paused = true;
+    }
+
+    private void OnThemeDotClick(object? sender, RoutedEventArgs e)
+    {
+        if (sender is Button { Tag: string tagValue } && Enum.TryParse<AppTheme>(tagValue, out var theme))
+        {
+            ThemeManager.Apply(theme);
+            MarkActiveTheme();
+        }
+    }
+
+    private void MarkActiveTheme()
+    {
+        NebulaDot.Classes.Set("active", ThemeManager.Current == AppTheme.Nebula);
+        DraculaDot.Classes.Set("active", ThemeManager.Current == AppTheme.Dracula);
+        AuroraDot.Classes.Set("active", ThemeManager.Current == AppTheme.Aurora);
+    }
+
+    private void OnSettingsOpened(object? sender, EventArgs e)
+    {
+        SettingsMain.IsVisible = true;
+        SettingsExtensions.IsVisible = false;
+        MarkActiveTheme();
+    }
+
+    private void OnShowExtensionsClick(object? sender, RoutedEventArgs e)
+    {
+        SettingsMain.IsVisible = false;
+        SettingsExtensions.IsVisible = true;
+    }
+
+    private void OnHideExtensionsClick(object? sender, RoutedEventArgs e)
+    {
+        SettingsExtensions.IsVisible = false;
+        SettingsMain.IsVisible = true;
+    }
+
+    private void OnPetColorMenuItemClick(object? sender, RoutedEventArgs e)
+    {
+        if (sender is MenuItem { Tag: string tagValue } && Enum.TryParse<PetColor>(tagValue, out var color))
+        {
+            Pet.SetColor(color);
+            SimulationView.SetHelpyColor(color);
+            ChallengeView.SetHelpyColor(color);
+            SnippetHelpy.SetColor(color);
+            SettingsHelpy.SetColor(color);
+            CatGallery.SetHelpyColor(color);
+        }
+    }
+
+    private void OnTitleBarPointerPressed(object? sender, PointerPressedEventArgs e)
+    {
+        if (e.Source is Visual source && source.FindAncestorOfType<Button>(includeSelf: true) is not null)
+        {
+            return;
+        }
+
+        if (e.GetCurrentPoint(this).Properties.IsLeftButtonPressed)
+        {
+            BeginMoveDrag(e);
+        }
+    }
+
+    private void OnTitleBarDoubleTapped(object? sender, TappedEventArgs e)
+    {
+        WindowState = WindowState == WindowState.Maximized ? WindowState.Normal : WindowState.Maximized;
+    }
+
+    private void OnCloseClick(object? sender, RoutedEventArgs e) => Close();
+
+    private void OnMinimizeClick(object? sender, RoutedEventArgs e) => WindowState = WindowState.Minimized;
+
+    private void OnMaximizeClick(object? sender, RoutedEventArgs e)
+    {
+        WindowState = WindowState == WindowState.Maximized ? WindowState.Normal : WindowState.Maximized;
+    }
+}

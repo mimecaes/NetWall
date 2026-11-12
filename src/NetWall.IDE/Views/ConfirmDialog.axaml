@@ -1,0 +1,125 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:controls="using:NetWall.IDE.Controls"
+        x:Class="NetWall.IDE.Views.ConfirmDialog"
+        Title="Confirmar"
+        Width="440"
+        SizeToContent="Height"
+        CanResize="False"
+        ShowInTaskbar="False"
+        SystemDecorations="None"
+        Background="Transparent"
+        TransparencyLevelHint="Transparent"
+        WindowStartupLocation="CenterOwner">
+
+    <Window.Styles>
+        <Style Selector="Border#Card">
+            <Setter Property="Opacity" Value="0" />
+            <Setter Property="RenderTransform" Value="scale(0.92) translateY(12px)" />
+            <Setter Property="Transitions">
+                <Transitions>
+                    <DoubleTransition Property="Opacity" Duration="0:0:0.25" />
+                    <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.35" Easing="BackEaseOut" />
+                </Transitions>
+            </Setter>
+        </Style>
+        <Style Selector="Border#Card.shown">
+            <Setter Property="Opacity" Value="1" />
+            <Setter Property="RenderTransform" Value="scale(1) translateY(0px)" />
+        </Style>
+        <Style Selector="Border#Card.closing">
+            <Setter Property="Opacity" Value="0" />
+            <Setter Property="RenderTransform" Value="scale(0.94) translateY(8px)" />
+        </Style>
+
+        <Style Selector="Panel#IconPanel">
+            <Setter Property="Width" Value="42" />
+            <Setter Property="Height" Value="42" />
+        </Style>
+        <Style Selector="Panel#IconPanel Border">
+            <Setter Property="CornerRadius" Value="12" />
+            <Setter Property="Opacity" Value="0.18" />
+        </Style>
+        <Style Selector="Panel#IconPanel controls|AnimatedIcon">
+            <Setter Property="Width" Value="22" />
+            <Setter Property="Height" Value="22" />
+            <Setter Property="Stretch" Value="Uniform" />
+            <Setter Property="StrokeThickness" Value="2" />
+        </Style>
+        <Style Selector="Border#Card.danger Panel#IconPanel Border">
+            <Setter Property="Background" Value="{DynamicResource StopRedBrush}" />
+        </Style>
+        <Style Selector="Border#Card.danger Panel#IconPanel controls|AnimatedIcon">
+            <Setter Property="Stroke" Value="{DynamicResource StopRedBrush}" />
+        </Style>
+        <Style Selector="Border#Card.warning Panel#IconPanel Border">
+            <Setter Property="Background" Value="{DynamicResource Ansi3Brush}" />
+        </Style>
+        <Style Selector="Border#Card.warning Panel#IconPanel controls|AnimatedIcon">
+            <Setter Property="Stroke" Value="{DynamicResource Ansi3Brush}" />
+        </Style>
+
+        <Style Selector="TextBlock#TitleText">
+            <Setter Property="FontSize" Value="15" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="TextWrapping" Value="Wrap" />
+            <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
+        </Style>
+        <Style Selector="TextBlock#MessageText">
+            <Setter Property="FontSize" Value="13" />
+            <Setter Property="TextWrapping" Value="Wrap" />
+            <Setter Property="Foreground" Value="{DynamicResource TextMutedBrush}" />
+        </Style>
+
+        <Style Selector="Button.dialog-button">
+            <Setter Property="Padding" Value="16,7" />
+            <Setter Property="CornerRadius" Value="8" />
+            <Setter Property="Background" Value="{DynamicResource SurfaceBackgroundBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
+        </Style>
+        <Style Selector="Button.dialog-button.primary">
+            <Setter Property="Background" Value="{DynamicResource AccentBrush}" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Foreground" Value="White" />
+        </Style>
+        <Style Selector="Button.dialog-button.primary:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource Accent2Brush}" />
+            <Setter Property="Foreground" Value="White" />
+        </Style>
+        <Style Selector="Button.dialog-button.danger">
+            <Setter Property="Background" Value="{DynamicResource StopRedBrush}" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Foreground" Value="White" />
+        </Style>
+        <Style Selector="Button.dialog-button.danger:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource StopRedBrush}" />
+            <Setter Property="Foreground" Value="White" />
+            <Setter Property="Opacity" Value="0.88" />
+        </Style>
+    </Window.Styles>
+
+    <Border Name="Card" Margin="20" CornerRadius="16" Padding="20,18"
+            Background="{DynamicResource PanelBackgroundBrush}"
+            BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1"
+            BoxShadow="0 12 32 0 #70000000">
+        <StackPanel Spacing="18">
+            <Grid Name="Header" ColumnDefinitions="Auto,*" Background="Transparent">
+                <Panel Name="IconPanel" VerticalAlignment="Top">
+                    <Border />
+                    <controls:AnimatedIcon Name="ToneIcon" />
+                </Panel>
+                <StackPanel Grid.Column="1" Margin="14,0,0,0" Spacing="6" VerticalAlignment="Center">
+                    <TextBlock Name="TitleText" />
+                    <TextBlock Name="MessageText" />
+                </StackPanel>
+            </Grid>
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8">
+                <Button Name="CancelButton" Classes="dialog-button" Content="Cancelar" Click="OnCancelClick" />
+                <Button Name="SecondaryButton" Classes="dialog-button" IsVisible="False" Click="OnSecondaryClick" />
+                <Button Name="ConfirmButton" Classes="dialog-button" Click="OnConfirmClick" />
+            </StackPanel>
+        </StackPanel>
+    </Border>
+</Window>

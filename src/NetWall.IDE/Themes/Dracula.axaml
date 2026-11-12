@@ -1,0 +1,65 @@
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <Color x:Key="Dracula.Background">#282A36</Color>
+    <Color x:Key="Dracula.PanelBackground">#2E3040</Color>
+    <Color x:Key="Dracula.SurfaceBackground">#333546</Color>
+    <Color x:Key="Dracula.Accent">#FF79C6</Color>
+    <Color x:Key="Dracula.Accent2">#50FA7B</Color>
+    <Color x:Key="Dracula.TextPrimary">#F8F8F2</Color>
+    <Color x:Key="Dracula.TextMuted">#73F8F8F2</Color>
+    <Color x:Key="Dracula.TextDisabled">#47F8F8F2</Color>
+    <Color x:Key="Dracula.Border">#4DBD93F9</Color>
+    <Color x:Key="Dracula.Hover">#1FFF79C6</Color>
+    <Color x:Key="Dracula.Active">#33FF79C6</Color>
+    <Color x:Key="Dracula.RunGreen">#50FA7B</Color>
+    <Color x:Key="Dracula.StopRed">#FF5555</Color>
+    <Color x:Key="Dracula.TabActiveBackground">#282A36</Color>
+    <Color x:Key="Dracula.TabInactiveBackground">#2E3040</Color>
+    <Color x:Key="Dracula.TerminalBackground">#282A36</Color>
+
+    <Color x:Key="Dracula.Navigation">#BD93F9</Color>
+    <Color x:Key="Dracula.Warning">#FFB86C</Color>
+    <Color x:Key="Dracula.Highlight">#F1FA8C</Color>
+
+    <Color x:Key="Dracula.TopBarStop0">#333546</Color>
+    <Color x:Key="Dracula.TopBarStop1">#333546</Color>
+    <Color x:Key="Dracula.TopBarStop2">#333546</Color>
+
+    <Color x:Key="Dracula.EditorBackground">#333546</Color>
+    <Color x:Key="Dracula.ChallengePaper">#303245</Color>
+    <Color x:Key="Dracula.ChallengeLine">#24BD93F9</Color>
+
+    <!-- Syntax highlighting: exact colors of the official Dracula theme for VS Code. -->
+    <Color x:Key="Dracula.Syntax.Keyword">#FF79C6</Color>
+    <Color x:Key="Dracula.Syntax.Field">#8BE9FD</Color>
+    <Color x:Key="Dracula.Syntax.Type">#8BE9FD</Color>
+    <Color x:Key="Dracula.Syntax.Constant">#BD93F9</Color>
+    <Color x:Key="Dracula.Syntax.Function">#50FA7B</Color>
+    <Color x:Key="Dracula.Syntax.Identifier">#F8F8F2</Color>
+    <Color x:Key="Dracula.Syntax.String">#F1FA8C</Color>
+    <Color x:Key="Dracula.Syntax.Number">#BD93F9</Color>
+    <Color x:Key="Dracula.Syntax.Comment">#6272A4</Color>
+    <Color x:Key="Dracula.Syntax.Operator">#FF79C6</Color>
+    <Color x:Key="Dracula.Syntax.Punctuation">#F8F8F2</Color>
+    <Color x:Key="Dracula.Syntax.Error">#FF5555</Color>
+
+    <!-- Terminal colors: the official Dracula terminal palette. 0-7 normal, 8-15 bright (black, red, green, yellow, blue, magenta, cyan, white). -->
+    <Color x:Key="Dracula.Ansi0">#21222C</Color>
+    <Color x:Key="Dracula.Ansi1">#FF5555</Color>
+    <Color x:Key="Dracula.Ansi2">#50FA7B</Color>
+    <Color x:Key="Dracula.Ansi3">#F1FA8C</Color>
+    <Color x:Key="Dracula.Ansi4">#BD93F9</Color>
+    <Color x:Key="Dracula.Ansi5">#FF79C6</Color>
+    <Color x:Key="Dracula.Ansi6">#8BE9FD</Color>
+    <Color x:Key="Dracula.Ansi7">#F8F8F2</Color>
+    <Color x:Key="Dracula.Ansi8">#6272A4</Color>
+    <Color x:Key="Dracula.Ansi9">#FF6E6E</Color>
+    <Color x:Key="Dracula.Ansi10">#69FF94</Color>
+    <Color x:Key="Dracula.Ansi11">#FFFFA5</Color>
+    <Color x:Key="Dracula.Ansi12">#D6ACFF</Color>
+    <Color x:Key="Dracula.Ansi13">#FF92DF</Color>
+    <Color x:Key="Dracula.Ansi14">#A4FFFF</Color>
+    <Color x:Key="Dracula.Ansi15">#FFFFFF</Color>
+
+</ResourceDictionary>

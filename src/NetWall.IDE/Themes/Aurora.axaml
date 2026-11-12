@@ -1,0 +1,67 @@
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!-- "Aurora" palette. See Nebula.axaml for why keys are prefixed. -->
+
+    <Color x:Key="Aurora.Background">#12101C</Color>
+    <Color x:Key="Aurora.PanelBackground">#17142A</Color>
+    <Color x:Key="Aurora.SurfaceBackground">#1B1830</Color>
+    <Color x:Key="Aurora.Accent">#E4548F</Color>
+    <Color x:Key="Aurora.Accent2">#E8B85C</Color>
+    <Color x:Key="Aurora.TextPrimary">#EBFFFFFF</Color>
+    <Color x:Key="Aurora.TextMuted">#66FFFFFF</Color>
+    <Color x:Key="Aurora.TextDisabled">#38FFFFFF</Color>
+    <Color x:Key="Aurora.Border">#4DE4548F</Color>
+    <Color x:Key="Aurora.Hover">#1FE4548F</Color>
+    <Color x:Key="Aurora.Active">#33E4548F</Color>
+    <Color x:Key="Aurora.RunGreen">#2FBF9E</Color>
+    <Color x:Key="Aurora.StopRed">#EF5A6F</Color>
+    <Color x:Key="Aurora.TabActiveBackground">#12101C</Color>
+    <Color x:Key="Aurora.TabInactiveBackground">#17142A</Color>
+    <Color x:Key="Aurora.TerminalBackground">#12101C</Color>
+
+    <!-- Tertiary teal esmeralda, used in the top bar gradient and success indicators. -->
+    <Color x:Key="Aurora.Tertiary">#2FBF9E</Color>
+
+    <!-- Magenta -> teal -> gold, three stops. -->
+    <Color x:Key="Aurora.TopBarStop0">#33E4548F</Color>
+    <Color x:Key="Aurora.TopBarStop1">#242FBF9E</Color>
+    <Color x:Key="Aurora.TopBarStop2">#24E8B85C</Color>
+
+    <Color x:Key="Aurora.EditorBackground">#1B1830</Color>
+    <Color x:Key="Aurora.ChallengePaper">#1A1730</Color>
+    <Color x:Key="Aurora.ChallengeLine">#1FE4548F</Color>
+
+    <!-- Syntax highlighting: magenta, teal and gold from the Aurora palette plus derived tones. -->
+    <Color x:Key="Aurora.Syntax.Keyword">#E4548F</Color>
+    <Color x:Key="Aurora.Syntax.Field">#F4A3C4</Color>
+    <Color x:Key="Aurora.Syntax.Type">#E8B85C</Color>
+    <Color x:Key="Aurora.Syntax.Constant">#F29E7A</Color>
+    <Color x:Key="Aurora.Syntax.Function">#B69CF2</Color>
+    <Color x:Key="Aurora.Syntax.Identifier">#EBEAF5</Color>
+    <Color x:Key="Aurora.Syntax.String">#2FBF9E</Color>
+    <Color x:Key="Aurora.Syntax.Number">#F29E7A</Color>
+    <Color x:Key="Aurora.Syntax.Comment">#6E6890</Color>
+    <Color x:Key="Aurora.Syntax.Operator">#E4548F</Color>
+    <Color x:Key="Aurora.Syntax.Punctuation">#A9A3C4</Color>
+    <Color x:Key="Aurora.Syntax.Error">#EF5A6F</Color>
+
+    <!-- Terminal colors derived from the Aurora palette. 0-7 normal, 8-15 bright (black, red, green, yellow, blue, magenta, cyan, white). -->
+    <Color x:Key="Aurora.Ansi0">#2A2540</Color>
+    <Color x:Key="Aurora.Ansi1">#EF5A6F</Color>
+    <Color x:Key="Aurora.Ansi2">#2FBF9E</Color>
+    <Color x:Key="Aurora.Ansi3">#E8B85C</Color>
+    <Color x:Key="Aurora.Ansi4">#8C9CF2</Color>
+    <Color x:Key="Aurora.Ansi5">#E4548F</Color>
+    <Color x:Key="Aurora.Ansi6">#5CCFD6</Color>
+    <Color x:Key="Aurora.Ansi7">#C9C5DC</Color>
+    <Color x:Key="Aurora.Ansi8">#6E6890</Color>
+    <Color x:Key="Aurora.Ansi9">#F7899A</Color>
+    <Color x:Key="Aurora.Ansi10">#6FDCC0</Color>
+    <Color x:Key="Aurora.Ansi11">#F2D08F</Color>
+    <Color x:Key="Aurora.Ansi12">#B69CF2</Color>
+    <Color x:Key="Aurora.Ansi13">#F4A3C4</Color>
+    <Color x:Key="Aurora.Ansi14">#93E3E8</Color>
+    <Color x:Key="Aurora.Ansi15">#F3F1FA</Color>
+
+</ResourceDictionary>

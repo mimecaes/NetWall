@@ -1,0 +1,62 @@
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+
+    <Color x:Key="Nebula.Background">#0B0B10</Color>
+    <Color x:Key="Nebula.PanelBackground">#131319</Color>
+    <Color x:Key="Nebula.SurfaceBackground">#0E0E14</Color>
+    <Color x:Key="Nebula.Accent">#7F77DD</Color>
+    <Color x:Key="Nebula.Accent2">#5DCAA5</Color>
+    <Color x:Key="Nebula.TextPrimary">#E0FFFFFF</Color>
+    <Color x:Key="Nebula.TextMuted">#66FFFFFF</Color>
+    <Color x:Key="Nebula.TextDisabled">#38FFFFFF</Color>
+    <Color x:Key="Nebula.Border">#407F77DD</Color>
+    <Color x:Key="Nebula.Hover">#1F7F77DD</Color>
+    <Color x:Key="Nebula.Active">#337F77DD</Color>
+    <Color x:Key="Nebula.RunGreen">#5DCAA5</Color>
+    <Color x:Key="Nebula.StopRed">#E5484D</Color>
+    <Color x:Key="Nebula.TabActiveBackground">#0B0B10</Color>
+    <Color x:Key="Nebula.TabInactiveBackground">#131319</Color>
+    <Color x:Key="Nebula.TerminalBackground">#0B0B10</Color>
+
+    <Color x:Key="Nebula.TopBarStop0">#387F77DD</Color>
+    <Color x:Key="Nebula.TopBarStop1">#1C7F77DD</Color>
+    <Color x:Key="Nebula.TopBarStop2">#007F77DD</Color>
+
+    <Color x:Key="Nebula.EditorBackground">#111121</Color>
+    <Color x:Key="Nebula.ChallengePaper">#15151D</Color>
+    <Color x:Key="Nebula.ChallengeLine">#1A7F77DD</Color>
+
+    <!-- Syntax highlighting: Catppuccin Mocha. -->
+    <Color x:Key="Nebula.Syntax.Keyword">#CBA6F7</Color>
+    <Color x:Key="Nebula.Syntax.Field">#B4BEFE</Color>
+    <Color x:Key="Nebula.Syntax.Type">#F9E2AF</Color>
+    <Color x:Key="Nebula.Syntax.Constant">#FAB387</Color>
+    <Color x:Key="Nebula.Syntax.Function">#89B4FA</Color>
+    <Color x:Key="Nebula.Syntax.Identifier">#CDD6F4</Color>
+    <Color x:Key="Nebula.Syntax.String">#A6E3A1</Color>
+    <Color x:Key="Nebula.Syntax.Number">#FAB387</Color>
+    <Color x:Key="Nebula.Syntax.Comment">#9399B2</Color>
+    <Color x:Key="Nebula.Syntax.Operator">#89DCEB</Color>
+    <Color x:Key="Nebula.Syntax.Punctuation">#9399B2</Color>
+    <Color x:Key="Nebula.Syntax.Error">#F38BA8</Color>
+
+    <!-- Terminal colors: the official Catppuccin Mocha terminal palette. 0-7 normal, 8-15 bright (black, red, green, yellow, blue, magenta, cyan, white). -->
+    <Color x:Key="Nebula.Ansi0">#45475A</Color>
+    <Color x:Key="Nebula.Ansi1">#F38BA8</Color>
+    <Color x:Key="Nebula.Ansi2">#A6E3A1</Color>
+    <Color x:Key="Nebula.Ansi3">#F9E2AF</Color>
+    <Color x:Key="Nebula.Ansi4">#89B4FA</Color>
+    <Color x:Key="Nebula.Ansi5">#F5C2E7</Color>
+    <Color x:Key="Nebula.Ansi6">#94E2D5</Color>
+    <Color x:Key="Nebula.Ansi7">#BAC2DE</Color>
+    <Color x:Key="Nebula.Ansi8">#585B70</Color>
+    <Color x:Key="Nebula.Ansi9">#F38BA8</Color>
+    <Color x:Key="Nebula.Ansi10">#A6E3A1</Color>
+    <Color x:Key="Nebula.Ansi11">#F9E2AF</Color>
+    <Color x:Key="Nebula.Ansi12">#89B4FA</Color>
+    <Color x:Key="Nebula.Ansi13">#F5C2E7</Color>
+    <Color x:Key="Nebula.Ansi14">#94E2D5</Color>
+    <Color x:Key="Nebula.Ansi15">#A6ADC8</Color>
+
+</ResourceDictionary>

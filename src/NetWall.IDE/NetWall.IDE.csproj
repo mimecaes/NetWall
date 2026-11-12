@@ -1,0 +1,41 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <ApplicationIcon>Assets/netwall.ico</ApplicationIcon>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Assets/pet/ holds the downloaded sprite-sheet source pack (.aseprite project files,
+         a labeled reference sheet, the original filenames); only the three clean-named
+         cat-*.png color variants are actually used by PetWidget, so only those are bundled. -->
+    <AvaloniaResource Include="Assets\**" Exclude="Assets\pet\**" />
+    <AvaloniaResource Include="Assets\pet\cat-gray.png" />
+    <AvaloniaResource Include="Assets\pet\cat-orange.png" />
+    <AvaloniaResource Include="Assets\pet\cat-white.png" />
+    <AvaloniaResource Include="Assets\pet\grass_tile.png" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(NetWallPythonDir)' != ''">
+    <Content Include="$(NetWallPythonDir)\**\*" LinkBase="python"
+             CopyToPublishDirectory="PreserveNewest" CopyToOutputDirectory="Never" />
+    <Content Include="..\NetWall.Lang\src\*.py" LinkBase="NetWall.Lang\src"
+             CopyToPublishDirectory="PreserveNewest" CopyToOutputDirectory="Never" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Avalonia" Version="11.3.20" />
+    <PackageReference Include="Avalonia.AvaloniaEdit" Version="11.3.0" />
+    <PackageReference Include="Avalonia.Desktop" Version="11.3.20" />
+    <PackageReference Include="Avalonia.Themes.Fluent" Version="11.3.20" />
+    <PackageReference Include="Avalonia.Fonts.Inter" Version="11.3.20" />
+    <PackageReference Include="AvaloniaUI.DiagnosticsSupport" Version="2.2.3">
+      <IncludeAssets Condition="'$(Configuration)' != 'Debug'">None</IncludeAssets>
+      <PrivateAssets Condition="'$(Configuration)' != 'Debug'">All</PrivateAssets>
+    </PackageReference>
+    <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />
+    <PackageReference Include="Lucide.Avalonia" Version="0.2.19" />
+  </ItemGroup>
+</Project>

@@ -1,0 +1,86 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:controls="using:NetWall.IDE.Controls"
+             x:Class="NetWall.IDE.Views.CatGalleryPanel"
+             IsVisible="False" Focusable="True">
+
+    <UserControl.Styles>
+        <Style Selector="Border.polaroid">
+            <Setter Property="Background" Value="#FBF6E9" />
+            <Setter Property="Padding" Value="10,10,10,6" />
+            <Setter Property="CornerRadius" Value="3" />
+            <Setter Property="BoxShadow" Value="0 14 30 0 #66000000" />
+            <Setter Property="Opacity" Value="0" />
+            <Setter Property="Transitions">
+                <Transitions>
+                    <DoubleTransition Property="Opacity" Duration="0:0:0.35" />
+                    <ThicknessTransition Property="Margin" Duration="0:0:0.5" Easing="BackEaseOut" />
+                </Transitions>
+            </Setter>
+        </Style>
+        <Style Selector="Border.polaroid.shown">
+            <Setter Property="Opacity" Value="1" />
+        </Style>
+        <Style Selector="Border.polaroid TextBlock">
+            <Setter Property="FontFamily" Value="avares://NetWall.IDE/Assets/Fonts#Caveat" />
+            <Setter Property="FontSize" Value="30" />
+            <Setter Property="FontWeight" Value="Bold" />
+            <Setter Property="Foreground" Value="#3B2F63" />
+            <Setter Property="HorizontalAlignment" Value="Center" />
+            <Setter Property="Margin" Value="0,4,0,0" />
+        </Style>
+        <Style Selector="Border.backdrop">
+            <Setter Property="Background" Value="#EB0B0A12" />
+            <Setter Property="Opacity" Value="0" />
+            <Setter Property="Transitions">
+                <Transitions>
+                    <DoubleTransition Property="Opacity" Duration="0:0:0.25" />
+                </Transitions>
+            </Setter>
+        </Style>
+        <Style Selector="Border.backdrop.shown">
+            <Setter Property="Opacity" Value="1" />
+        </Style>
+    </UserControl.Styles>
+
+    <Panel>
+        <Border Name="Backdrop" Classes="backdrop" PointerPressed="OnBackdropPressed" />
+
+        <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" IsHitTestVisible="False">
+            <TextBlock Text="Los creadores de NetWall" FontFamily="avares://NetWall.IDE/Assets/Fonts#Caveat"
+                       FontSize="44" FontWeight="Bold" Foreground="#FBF6E9" HorizontalAlignment="Center" Padding="12,0" />
+            <TextBlock Text="Maca, Milka y Simba inspiraron este proyecto" FontSize="13" Foreground="#B9B3D6"
+                       HorizontalAlignment="Center" Margin="0,2,0,30" />
+
+            <StackPanel Orientation="Horizontal" Spacing="34" HorizontalAlignment="Center">
+                <Border Name="Maca" Classes="polaroid" RenderTransform="rotate(-5deg)">
+                    <StackPanel>
+                        <Image Source="avares://NetWall.IDE/Assets/Cats/maca.jpg" Width="210" Height="280"
+                               RenderOptions.BitmapInterpolationMode="HighQuality" />
+                        <TextBlock Text="Maca" />
+                    </StackPanel>
+                </Border>
+                <Border Name="Milka" Classes="polaroid" RenderTransform="rotate(2deg)">
+                    <StackPanel>
+                        <Image Source="avares://NetWall.IDE/Assets/Cats/milka.jpg" Width="210" Height="280"
+                               RenderOptions.BitmapInterpolationMode="HighQuality" />
+                        <TextBlock Text="Milka" />
+                    </StackPanel>
+                </Border>
+                <Border Name="Simba" Classes="polaroid" RenderTransform="rotate(-2deg)">
+                    <StackPanel>
+                        <Image Source="avares://NetWall.IDE/Assets/Cats/simba.jpg" Width="210" Height="280"
+                               RenderOptions.BitmapInterpolationMode="HighQuality" />
+                        <TextBlock Text="Simba" />
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+
+            <TextBlock Text="Esc para cerrar" FontSize="11" Foreground="#7D7799" HorizontalAlignment="Center"
+                       Margin="0,30,0,0" />
+        </StackPanel>
+
+        <controls:HelpySprite Name="Helpy" Mood="Happy" Width="96" Height="96" Margin="0,0,40,24"
+                              HorizontalAlignment="Right" VerticalAlignment="Bottom" IsHitTestVisible="False" />
+    </Panel>
+</UserControl>

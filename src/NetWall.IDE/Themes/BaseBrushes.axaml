@@ -1,0 +1,263 @@
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+
+    <SolidColorBrush x:Key="BackgroundBrush" Color="#0B0B10">
+        <SolidColorBrush.Transitions>
+            <Transitions>
+                <ColorTransition Property="Color" Duration="0:0:0.3" Easing="{StaticResource Motion.EaseInOut}" />
+            </Transitions>
+        </SolidColorBrush.Transitions>
+    </SolidColorBrush>
+    <SolidColorBrush x:Key="PanelBackgroundBrush" Color="#131319">
+        <SolidColorBrush.Transitions>
+            <Transitions>
+                <ColorTransition Property="Color" Duration="0:0:0.3" Easing="{StaticResource Motion.EaseInOut}" />
+            </Transitions>
+        </SolidColorBrush.Transitions>
+    </SolidColorBrush>
+    <SolidColorBrush x:Key="SurfaceBackgroundBrush" Color="#0E0E14">
+        <SolidColorBrush.Transitions>
+            <Transitions>
+                <ColorTransition Property="Color" Duration="0:0:0.3" Easing="{StaticResource Motion.EaseInOut}" />
+            </Transitions>
+        </SolidColorBrush.Transitions>
+    </SolidColorBrush>
+    <SolidColorBrush x:Key="AccentBrush" Color="#7F77DD">
+        <SolidColorBrush.Transitions>
+            <Transitions>
+                <ColorTransition Property="Color" Duration="0:0:0.3" Easing="{StaticResource Motion.EaseInOut}" />
+            </Transitions>
+        </SolidColorBrush.Transitions>
+    </SolidColorBrush>
+    <SolidColorBrush x:Key="Accent2Brush" Color="#5DCAA5">
+        <SolidColorBrush.Transitions>
+            <Transitions>
+                <ColorTransition Property="Color" Duration="0:0:0.3" Easing="{StaticResource Motion.EaseInOut}" />
+            </Transitions>
+        </SolidColorBrush.Transitions>
+    </SolidColorBrush>
+    <SolidColorBrush x:Key="TextPrimaryBrush" Color="#E0FFFFFF">
+        <SolidColorBrush.Transitions>
+            <Transitions>
+                <ColorTransition Property="Color" Duration="0:0:0.3" Easing="{StaticResource Motion.EaseInOut}" />
+            </Transitions>
+        </SolidColorBrush.Transitions>
+    </SolidColorBrush>
+    <SolidColorBrush x:Key="TextMutedBrush" Color="#66FFFFFF">
+        <SolidColorBrush.Transitions>
+            <Transitions>
+                <ColorTransition Property="Color" Duration="0:0:0.3" Easing="{StaticResource Motion.EaseInOut}" />
+            </Transitions>
+        </SolidColorBrush.Transitions>
+    </SolidColorBrush>
+    <SolidColorBrush x:Key="TextDisabledBrush" Color="#38FFFFFF">
+        <SolidColorBrush.Transitions>
+            <Transitions>
+                <ColorTransition Property="Color" Duration="0:0:0.3" Easing="{StaticResource Motion.EaseInOut}" />
+            </Transitions>
+        </SolidColorBrush.Transitions>
+    </SolidColorBrush>
+    <SolidColorBrush x:Key="BorderBrush" Color="#407F77DD">
+        <SolidColorBrush.Transitions>
+            <Transitions>
+                <ColorTransition Property="Color" Duration="0:0:0.3" Easing="{StaticResource Motion.EaseInOut}" />
+            </Transitions>
+        </SolidColorBrush.Transitions>
+    </SolidColorBrush>
+    <SolidColorBrush x:Key="HoverBrush" Color="#1F7F77DD">
+        <SolidColorBrush.Transitions>
+            <Transitions>
+                <ColorTransition Property="Color" Duration="0:0:0.3" Easing="{StaticResource Motion.EaseInOut}" />
+            </Transitions>
+        </SolidColorBrush.Transitions>
+    </SolidColorBrush>
+    <SolidColorBrush x:Key="ActiveBrush" Color="#337F77DD">
+        <SolidColorBrush.Transitions>
+            <Transitions>
+                <ColorTransition Property="Color" Duration="0:0:0.3" Easing="{StaticResource Motion.EaseInOut}" />
+            </Transitions>
+        </SolidColorBrush.Transitions>
+    </SolidColorBrush>
+    <SolidColorBrush x:Key="RunGreenBrush" Color="#5DCAA5">
+        <SolidColorBrush.Transitions>
+            <Transitions>
+                <ColorTransition Property="Color" Duration="0:0:0.3" Easing="{StaticResource Motion.EaseInOut}" />
+            </Transitions>
+        </SolidColorBrush.Transitions>
+    </SolidColorBrush>
+    <SolidColorBrush x:Key="StopRedBrush" Color="#E5484D">
+        <SolidColorBrush.Transitions>
+            <Transitions>
+                <ColorTransition Property="Color" Duration="0:0:0.3" Easing="{StaticResource Motion.EaseInOut}" />
+            </Transitions>
+        </SolidColorBrush.Transitions>
+    </SolidColorBrush>
+    <SolidColorBrush x:Key="TabActiveBackgroundBrush" Color="#0B0B10">
+        <SolidColorBrush.Transitions>
+            <Transitions>
+                <ColorTransition Property="Color" Duration="0:0:0.3" Easing="{StaticResource Motion.EaseInOut}" />
+            </Transitions>
+        </SolidColorBrush.Transitions>
+    </SolidColorBrush>
+    <SolidColorBrush x:Key="TabInactiveBackgroundBrush" Color="#131319">
+        <SolidColorBrush.Transitions>
+            <Transitions>
+                <ColorTransition Property="Color" Duration="0:0:0.3" Easing="{StaticResource Motion.EaseInOut}" />
+            </Transitions>
+        </SolidColorBrush.Transitions>
+    </SolidColorBrush>
+    <SolidColorBrush x:Key="TerminalBackgroundBrush" Color="#0B0B10">
+        <SolidColorBrush.Transitions>
+            <Transitions>
+                <ColorTransition Property="Color" Duration="0:0:0.3" Easing="{StaticResource Motion.EaseInOut}" />
+            </Transitions>
+        </SolidColorBrush.Transitions>
+    </SolidColorBrush>
+
+    <LinearGradientBrush x:Key="TopBarBackgroundBrush" StartPoint="0%,0%" EndPoint="100%,0%">
+        <GradientStops>
+            <GradientStop Offset="0" Color="#387F77DD" />
+            <GradientStop Offset="0.5" Color="#1C7F77DD" />
+            <GradientStop Offset="1" Color="#007F77DD" />
+        </GradientStops>
+    </LinearGradientBrush>
+
+    <SolidColorBrush x:Key="EditorBackgroundBrush" Color="#0E0E14">
+        <SolidColorBrush.Transitions>
+            <Transitions>
+                <ColorTransition Property="Color" Duration="0:0:0.3" Easing="{StaticResource Motion.EaseInOut}" />
+            </Transitions>
+        </SolidColorBrush.Transitions>
+    </SolidColorBrush>
+
+    <SolidColorBrush x:Key="ChallengePaperBrush" Color="#15151D">
+        <SolidColorBrush.Transitions>
+            <Transitions>
+                <ColorTransition Property="Color" Duration="0:0:0.3" Easing="{StaticResource Motion.EaseInOut}" />
+            </Transitions>
+        </SolidColorBrush.Transitions>
+    </SolidColorBrush>
+    <SolidColorBrush x:Key="ChallengeLineBrush" Color="#1A7F77DD">
+        <SolidColorBrush.Transitions>
+            <Transitions>
+                <ColorTransition Property="Color" Duration="0:0:0.3" Easing="{StaticResource Motion.EaseInOut}" />
+            </Transitions>
+        </SolidColorBrush.Transitions>
+    </SolidColorBrush>
+
+    <!-- 16-color terminal palette used by the output panel; ThemeManager fills it per theme. -->
+    <SolidColorBrush x:Key="Ansi0Brush" Color="#45475A">
+        <SolidColorBrush.Transitions>
+            <Transitions>
+                <ColorTransition Property="Color" Duration="0:0:0.3" Easing="{StaticResource Motion.EaseInOut}" />
+            </Transitions>
+        </SolidColorBrush.Transitions>
+    </SolidColorBrush>
+    <SolidColorBrush x:Key="Ansi1Brush" Color="#F38BA8">
+        <SolidColorBrush.Transitions>
+            <Transitions>
+                <ColorTransition Property="Color" Duration="0:0:0.3" Easing="{StaticResource Motion.EaseInOut}" />
+            </Transitions>
+        </SolidColorBrush.Transitions>
+    </SolidColorBrush>
+    <SolidColorBrush x:Key="Ansi2Brush" Color="#A6E3A1">
+        <SolidColorBrush.Transitions>
+            <Transitions>
+                <ColorTransition Property="Color" Duration="0:0:0.3" Easing="{StaticResource Motion.EaseInOut}" />
+            </Transitions>
+        </SolidColorBrush.Transitions>
+    </SolidColorBrush>
+    <SolidColorBrush x:Key="Ansi3Brush" Color="#F9E2AF">
+        <SolidColorBrush.Transitions>
+            <Transitions>
+                <ColorTransition Property="Color" Duration="0:0:0.3" Easing="{StaticResource Motion.EaseInOut}" />
+            </Transitions>
+        </SolidColorBrush.Transitions>
+    </SolidColorBrush>
+    <SolidColorBrush x:Key="Ansi4Brush" Color="#89B4FA">
+        <SolidColorBrush.Transitions>
+            <Transitions>
+                <ColorTransition Property="Color" Duration="0:0:0.3" Easing="{StaticResource Motion.EaseInOut}" />
+            </Transitions>
+        </SolidColorBrush.Transitions>
+    </SolidColorBrush>
+    <SolidColorBrush x:Key="Ansi5Brush" Color="#F5C2E7">
+        <SolidColorBrush.Transitions>
+            <Transitions>
+                <ColorTransition Property="Color" Duration="0:0:0.3" Easing="{StaticResource Motion.EaseInOut}" />
+            </Transitions>
+        </SolidColorBrush.Transitions>
+    </SolidColorBrush>
+    <SolidColorBrush x:Key="Ansi6Brush" Color="#94E2D5">
+        <SolidColorBrush.Transitions>
+            <Transitions>
+                <ColorTransition Property="Color" Duration="0:0:0.3" Easing="{StaticResource Motion.EaseInOut}" />
+            </Transitions>
+        </SolidColorBrush.Transitions>
+    </SolidColorBrush>
+    <SolidColorBrush x:Key="Ansi7Brush" Color="#BAC2DE">
+        <SolidColorBrush.Transitions>
+            <Transitions>
+                <ColorTransition Property="Color" Duration="0:0:0.3" Easing="{StaticResource Motion.EaseInOut}" />
+            </Transitions>
+        </SolidColorBrush.Transitions>
+    </SolidColorBrush>
+    <SolidColorBrush x:Key="Ansi8Brush" Color="#585B70">
+        <SolidColorBrush.Transitions>
+            <Transitions>
+                <ColorTransition Property="Color" Duration="0:0:0.3" Easing="{StaticResource Motion.EaseInOut}" />
+            </Transitions>
+        </SolidColorBrush.Transitions>
+    </SolidColorBrush>
+    <SolidColorBrush x:Key="Ansi9Brush" Color="#F38BA8">
+        <SolidColorBrush.Transitions>
+            <Transitions>
+                <ColorTransition Property="Color" Duration="0:0:0.3" Easing="{StaticResource Motion.EaseInOut}" />
+            </Transitions>
+        </SolidColorBrush.Transitions>
+    </SolidColorBrush>
+    <SolidColorBrush x:Key="Ansi10Brush" Color="#A6E3A1">
+        <SolidColorBrush.Transitions>
+            <Transitions>
+                <ColorTransition Property="Color" Duration="0:0:0.3" Easing="{StaticResource Motion.EaseInOut}" />
+            </Transitions>
+        </SolidColorBrush.Transitions>
+    </SolidColorBrush>
+    <SolidColorBrush x:Key="Ansi11Brush" Color="#F9E2AF">
+        <SolidColorBrush.Transitions>
+            <Transitions>
+                <ColorTransition Property="Color" Duration="0:0:0.3" Easing="{StaticResource Motion.EaseInOut}" />
+            </Transitions>
+        </SolidColorBrush.Transitions>
+    </SolidColorBrush>
+    <SolidColorBrush x:Key="Ansi12Brush" Color="#89B4FA">
+        <SolidColorBrush.Transitions>
+            <Transitions>
+                <ColorTransition Property="Color" Duration="0:0:0.3" Easing="{StaticResource Motion.EaseInOut}" />
+            </Transitions>
+        </SolidColorBrush.Transitions>
+    </SolidColorBrush>
+    <SolidColorBrush x:Key="Ansi13Brush" Color="#F5C2E7">
+        <SolidColorBrush.Transitions>
+            <Transitions>
+                <ColorTransition Property="Color" Duration="0:0:0.3" Easing="{StaticResource Motion.EaseInOut}" />
+            </Transitions>
+        </SolidColorBrush.Transitions>
+    </SolidColorBrush>
+    <SolidColorBrush x:Key="Ansi14Brush" Color="#94E2D5">
+        <SolidColorBrush.Transitions>
+            <Transitions>
+                <ColorTransition Property="Color" Duration="0:0:0.3" Easing="{StaticResource Motion.EaseInOut}" />
+            </Transitions>
+        </SolidColorBrush.Transitions>
+    </SolidColorBrush>
+    <SolidColorBrush x:Key="Ansi15Brush" Color="#A6ADC8">
+        <SolidColorBrush.Transitions>
+            <Transitions>
+                <ColorTransition Property="Color" Duration="0:0:0.3" Easing="{StaticResource Motion.EaseInOut}" />
+            </Transitions>
+        </SolidColorBrush.Transitions>
+    </SolidColorBrush>
+
+</ResourceDictionary>
